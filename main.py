@@ -15,6 +15,7 @@ from aiogram.types import (
     BotCommand,
     LabeledPrice,
     PreCheckoutQuery
+    WebAppInfo
 )
 
 TOKEN = os.getenv("BOT_TOKEN")
