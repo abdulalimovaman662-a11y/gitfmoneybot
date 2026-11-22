@@ -19,22 +19,25 @@ const pool = new Pool({ connectionString: DATABASE_URL });
 
 const toStars = (gram) => Math.ceil(gram * 62.6 / 10) * 10;
 
+const giftImage = (slug) =>
+  `https://fragment.com/file/gifts/${slug}/thumb.webp`;
+
 const PRODUCTS = [
-  { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸' },
-  { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍' },
-  { id: 'genie_lamp', name: 'Genie Lamp', stars: toStars(44), discount: 10, emoji: '🪔' },
-  { id: 'voodoo_doll', name: 'Voodoo Doll', stars: toStars(49), discount: 10, emoji: '🧸' },
-  { id: 'bonded_ring', name: 'Bonded Ring', stars: toStars(55), discount: 10, emoji: '💍' },
-  { id: 'sharp_tongue', name: 'Sharp Tongue', stars: toStars(58), discount: 10, emoji: '👅' },
-  { id: 'kissed_frog', name: 'Kissed Frog', stars: toStars(68), discount: 10, emoji: '🐸' },
-  { id: 'magic_potion', name: 'Magic Potion', stars: toStars(75), discount: 10, emoji: '🧪' },
-  { id: 'crystal_ball', name: 'Crystal Ball', stars: toStars(17), discount: 5, emoji: '🔮' },
-  { id: 'flying_broom', name: 'Flying Broom', stars: toStars(16), discount: 5, emoji: '🧹' },
-  { id: 'record_player', name: 'Record Player', stars: toStars(15), discount: 5, emoji: '🎵' },
-  { id: 'sakura_flower', name: 'Sakura Flower', stars: toStars(14), discount: 5, emoji: '🌸' },
-  { id: 'top_hat', name: 'Top Hat', stars: toStars(13), discount: 5, emoji: '🎩' },
-  { id: 'jingle_bell', name: 'Jingle Bell', stars: toStars(12), discount: 5, emoji: '🔔' },
-  { id: 'snow_globe', name: 'Snow Globe', stars: toStars(9), discount: 5, emoji: '❄️' }
+  { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸', image_url: giftImage('toybear') },
+  { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍', image_url: giftImage('diamondring') },
+  { id: 'genie_lamp', name: 'Genie Lamp', stars: toStars(44), discount: 10, emoji: '🪔', image_url: giftImage('genielamp') },
+  { id: 'voodoo_doll', name: 'Voodoo Doll', stars: toStars(49), discount: 10, emoji: '🧸', image_url: giftImage('voodoodoll') },
+  { id: 'bonded_ring', name: 'Bonded Ring', stars: toStars(55), discount: 10, emoji: '💍', image_url: giftImage('bondedring') },
+  { id: 'sharp_tongue', name: 'Sharp Tongue', stars: toStars(58), discount: 10, emoji: '👅', image_url: giftImage('sharptongue') },
+  { id: 'kissed_frog', name: 'Kissed Frog', stars: toStars(68), discount: 10, emoji: '🐸', image_url: giftImage('kissedfrog') },
+  { id: 'magic_potion', name: 'Magic Potion', stars: toStars(75), discount: 10, emoji: '🧪', image_url: giftImage('magicpotion') },
+  { id: 'crystal_ball', name: 'Crystal Ball', stars: toStars(17), discount: 5, emoji: '🔮', image_url: giftImage('crystalball') },
+  { id: 'flying_broom', name: 'Flying Broom', stars: toStars(16), discount: 5, emoji: '🧹', image_url: giftImage('flyingbroom') },
+  { id: 'record_player', name: 'Record Player', stars: toStars(15), discount: 5, emoji: '🎵', image_url: giftImage('recordplayer') },
+  { id: 'sakura_flower', name: 'Sakura Flower', stars: toStars(14), discount: 5, emoji: '🌸', image_url: giftImage('sakuraflower') },
+  { id: 'top_hat', name: 'Top Hat', stars: toStars(13), discount: 5, emoji: '🎩', image_url: giftImage('tophat') },
+  { id: 'jingle_bell', name: 'Jingle Bell', stars: toStars(12), discount: 5, emoji: '🔔', image_url: giftImage('jinglebells') },
+  { id: 'snow_globe', name: 'Snow Globe', stars: toStars(9), discount: 5, emoji: '❄️', image_url: giftImage('snowglobe') }
 ];
 
 async function initDatabase() {
