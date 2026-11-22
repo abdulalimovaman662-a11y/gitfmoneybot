@@ -4,95 +4,191 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GiftsDrop</title>
+<title>GiftsDrop — NFT Roulette</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#090710;color:white;font-family:Arial,sans-serif;padding:20px}
-header{text-align:center;margin-top:15px}
-h1{font-size:29px;color:#c18aff}
-p{color:#aaa;line-height:1.5}
-.stats{display:flex;gap:10px;margin-top:22px}
-.stats div{flex:1;background:#21182e;padding:17px 10px;border-radius:15px;text-align:center;border:1px solid #38234d}
-.stats b{display:block;font-size:23px;margin-top:8px}
-.card{background:#171221;border:1px solid #38234d;border-radius:22px;padding:20px;margin-top:20px;text-align:center}
-.wheel{width:190px;height:190px;border-radius:50%;margin:20px auto;border:9px solid #a855f7;box-shadow:0 0 30px #8b35e8;background:conic-gradient(#34104e 0 60deg,#8b35e8 60deg 120deg,#34104e 120deg 180deg,#8b35e8 180deg 240deg,#34104e 240deg 300deg,#8b35e8 300deg);display:flex;align-items:center;justify-content:center;font-size:48px}
-.wheel.spinning{animation:spin 1.5s ease-in-out}
-@keyframes spin{to{transform:rotate(1080deg)}}
-button{width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(90deg,#7925cf,#bd65ff);color:white;font-size:16px;font-weight:bold;margin-top:12px}
-button:disabled{opacity:.5}
-.secondary{background:#30213e}
-input,select{width:100%;padding:15px;margin-top:12px;border-radius:12px;border:1px solid #49315e;background:#21182e;color:white;font-size:16px}
-.odds{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #38234d;color:#ccc;font-size:14px}
-.message{min-height:22px;margin-top:13px;color:#d7aaff;font-size:14px}
-.small{font-size:12px;color:#888}
-.request{background:#21182e;border:1px solid #49315e;border-radius:14px;padding:14px;margin-top:12px;text-align:left}
-.request p{margin:6px 0}
-.hidden{display:none}
-a{color:#d7aaff}
+body{
+ margin:0;
+ background:#090710;
+ color:white;
+ font-family:Arial,sans-serif;
+ padding:22px;
+}
+header{text-align:center;margin:10px 0 25px}
+.logo{
+ font-size:32px;
+ font-weight:900;
+ background:linear-gradient(90deg,#a855f7,#ec4899);
+ -webkit-background-clip:text;
+ color:transparent;
+}
+.subtitle{color:#999;font-size:13px;margin-top:7px}
+.card{
+ background:#171222;
+ border:1px solid #302342;
+ border-radius:18px;
+ padding:18px;
+ margin-bottom:16px;
+}
+.stats{display:flex;gap:12px}
+.stat{
+ flex:1;
+ background:#211832;
+ border-radius:14px;
+ padding:15px;
+ text-align:center;
+}
+.stat small{color:#aaa}
+.stat strong{display:block;font-size:25px;margin-top:7px}
+h2{font-size:18px;margin:0 0 14px}
+.wheel{
+ width:230px;height:230px;
+ margin:20px auto;
+ border-radius:50%;
+ border:9px solid #a855f7;
+ background:conic-gradient(
+ #a855f7 0deg 90deg,
+ #321c4b 90deg 180deg,
+ #ec4899 180deg 270deg,
+ #321c4b 270deg 360deg
+ );
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ box-shadow:0 0 35px #a855f755;
+}
+.wheel-center{
+ width:90px;height:90px;
+ background:#090710;
+ border-radius:50%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:28px;
+}
+button{
+ width:100%;
+ border:0;
+ border-radius:13px;
+ padding:15px;
+ font-size:16px;
+ font-weight:bold;
+ color:white;
+ background:linear-gradient(90deg,#9333ea,#db2777);
+ margin-top:10px;
+}
+button:disabled{opacity:.45}
+input,select{
+ width:100%;
+ padding:14px;
+ border-radius:11px;
+ border:1px solid #49365f;
+ background:#0e0a16;
+ color:white;
+ margin:8px 0;
+ font-size:15px;
+}
+.muted{color:#aaa;font-size:13px;line-height:1.5}
+.notice{
+ background:#211832;
+ padding:13px;
+ border-radius:12px;
+ color:#d8c8ed;
+ font-size:13px;
+ line-height:1.5;
+ margin-top:12px;
+}
+.request{
+ background:#211832;
+ padding:13px;
+ border-radius:12px;
+ margin:10px 0;
+}
+.request button{width:48%;display:inline-block}
+.reject{background:#633044}
+#adminPanel{display:none}
+#message,#adminMessage,#topupMessage{
+ color:#d8b4fe;
+ font-size:13px;
+ margin-top:12px;
+ line-height:1.5;
+}
+.odds{display:flex;justify-content:space-between;margin:10px 0;font-size:14px}
 </style>
 </head>
 <body>
 
 <header>
-<h1>🎁 GIFTSDROP</h1>
-<p>Испытай свою удачу!</p>
+ <div class="logo">GIFTS DROP</div>
+ <div class="subtitle">NFT ROULETTE</div>
 </header>
 
-<div class="stats">
- <div>⭐ Серебро<b id="silver">—</b></div>
- <div>🎰 Бесплатные прокрутки<b id="spins">—</b></div>
+<div class="card">
+ <div class="stats">
+  <div class="stat">
+   <small>Серебро</small>
+   <strong id="silver">0</strong>
+  </div>
+  <div class="stat">
+   <small>Бесплатные прокрутки</small>
+   <strong id="spins">0</strong>
+  </div>
+ </div>
 </div>
 
 <div class="card">
- <h2>🎰 Твоя рулетка</h2>
- <div class="wheel" id="wheel">🎁</div>
- <button id="spinButton" disabled onclick="spin()">ЗАГРУЗКА...</button>
- <div class="message" id="message">Подключаем Telegram...</div>
- <p class="small">Одна платная прокрутка стоит 20 серебра</p>
+ <h2>🎰 NFT-рулетка</h2>
+ <div class="wheel">
+  <div class="wheel-center">🎁</div>
+ </div>
+ <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ</button>
+ <div id="message"></div>
+ <div class="notice">
+  Первые 3 прокрутки бесплатные. Далее стоимость одной прокрутки — 20 серебра.
+  Выдача NFT осуществляется администратором вручную после проверки результата.
+ </div>
 </div>
 
 <div class="card">
- <h2>⭐ Пополнить серебро</h2>
- <p>1 звезда = 1 серебро</p>
+ <h2>🎁 Пополнить серебро</h2>
+ <p class="muted">
+  Выбери получателя, перейди в его профиль и отправь подарок.
+  После отправки создай заявку. Серебро будет начислено после ручной проверки администратором.
+ </p>
 
- <label for="recipient">Кому отправить подарок?</label>
  <select id="recipient">
   <option value="@traptrap4">@traptrap4</option>
   <option value="@RichGues">@RichGues</option>
  </select>
 
- <label for="stars">Количество звёзд</label>
- <input id="stars" type="number" min="1" max="100000" placeholder="Например: 100">
+ <button onclick="openRecipient()">🎁 ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
+
+ <input id="stars" type="number" min="1" max="100000"
+ placeholder="Количество Stars">
 
  <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ</button>
- <div class="message" id="topupMessage"></div>
+ <div id="topupMessage"></div>
 
- <p class="small">
- После создания заявки отправь подарок выбранному получателю.
- Серебро будет начислено только после ручной проверки получения подарка администратором.
- </p>
+ <div class="notice">
+  Важно: переход в профиль не отправляет подарок автоматически.
+  После отправки подарка создай заявку и дождись подтверждения администратора.
+ </div>
 </div>
 
 <div class="card">
- <h2>🎯 Шансы выигрыша</h2>
- <div class="odds"><span>😔 Без выигрыша</span><b>90%</b></div>
- <div class="odds"><span>🎁 Обычный NFT</span><b>9,99%</b></div>
- <div class="odds"><span>💎 Редкий NFT</span><b>0,01%</b></div>
- <p class="small">Результат определяется сервером.</p>
+ <h2>📊 Шансы выпадения</h2>
+ <div class="odds"><span>Без выигрыша</span><b>90%</b></div>
+ <div class="odds"><span>Обычный NFT</span><b>9,99%</b></div>
+ <div class="odds"><span>Редкий NFT</span><b>0,01%</b></div>
 </div>
 
-<div class="card">
- <h2>🏆 NFT подарки</h2>
- <p>Выигранные подарки выдаются вручную администратором.</p>
-</div>
-
-<div class="card hidden" id="adminPanel">
- <h2>🛡 Админ-панель</h2>
- <p>Заявки на пополнение серебра</p>
- <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
+<div class="card" id="adminPanel">
+ <h2>👑 Админ-панель</h2>
+ <p class="muted">Заявки на пополнение серебра</p>
+ <button onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
+ <div id="adminMessage"></div>
  <div id="requests"></div>
- <div class="message" id="adminMessage"></div>
 </div>
 
 <script>
@@ -100,206 +196,180 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const initData = tg.initData;
-
-const silverEl = document.getElementById('silver');
-const spinsEl = document.getElementById('spins');
-const spinButton = document.getElementById('spinButton');
-const message = document.getElementById('message');
-const wheel = document.getElementById('wheel');
-
-async function api(url, method = 'GET', body = null) {
- const options = {
-  method,
-  headers: {
-   'X-Telegram-Init-Data': initData,
-   'Content-Type': 'application/json'
+async function api(url, options={}) {
+ const response = await fetch(url,{
+  ...options,
+  headers:{
+   'Content-Type':'application/json',
+   'X-Telegram-Init-Data':tg.initData,
+   ...(options.headers||{})
   }
- };
+ });
 
- if (body !== null) options.body = JSON.stringify(body);
-
- const response = await fetch(url, options);
- const data = await response.json();
-
- if (!response.ok) throw new Error(data.error || 'Ошибка сервера');
+ const data = await response.json().catch(()=>({}));
+ if(!response.ok){
+  throw new Error(data.error || 'Ошибка сервера');
+ }
  return data;
 }
 
-function updateAccount(data) {
- silverEl.textContent = data.silver;
- spinsEl.textContent = data.free_spins;
+function openRecipient(){
+ const username=document.getElementById('recipient').value.replace('@','');
+ tg.openTelegramLink('https://t.me/'+username);
 }
 
-async function loadAccount() {
- if (!initData) {
-  message.textContent = 'Открой приложение через Telegram-бота.';
-  spinButton.textContent = 'НЕТ ПОДКЛЮЧЕНИЯ';
-  return;
- }
-
- try {
-  const data = await api('/api/me');
-  updateAccount(data);
-  spinButton.disabled = false;
-  spinButton.textContent = '🎰 КРУТИТЬ';
-  message.textContent = 'Аккаунт подключён!';
+async function loadAccount(){
+ try{
+  const data=await api('/api/me');
+  document.getElementById('silver').textContent=data.silver;
+  document.getElementById('spins').textContent=data.free_spins;
+  document.getElementById('spinButton').disabled=false;
   await checkAdmin();
- } catch (error) {
-  message.textContent = error.message;
-  spinButton.textContent = 'ОШИБКА ПОДКЛЮЧЕНИЯ';
+ }catch(error){
+  document.getElementById('message').textContent=error.message;
  }
 }
 
-async function spin() {
- spinButton.disabled = true;
- spinButton.textContent = 'КРУТИМ...';
- message.textContent = 'Удачи! 🍀';
+async function spin(){
+ const button=document.getElementById('spinButton');
+ const message=document.getElementById('message');
 
- wheel.classList.remove('spinning');
- void wheel.offsetWidth;
- wheel.classList.add('spinning');
+ button.disabled=true;
+ message.textContent='🎰 Рулетка крутится...';
 
- try {
-  const data = await api('/api/spin', 'POST');
-
-  setTimeout(() => {
-   if (data.prize === 'rare') {
-    wheel.textContent = '💎';
-    message.textContent = '🔥 Редкий NFT! Администратор свяжется с тобой.';
-   } else if (data.prize === 'ordinary') {
-    wheel.textContent = '🎁';
-    message.textContent = '🎉 Обычный NFT! Администратор проверит выигрыш.';
-   } else {
-    wheel.textContent = '😔';
-    message.textContent = 'В этот раз без выигрыша. Попробуй ещё!';
-   }
-
-   updateAccount(data);
-   spinButton.disabled = false;
-   spinButton.textContent = '🎰 КРУТИТЬ';
-  }, 1500);
-
- } catch (error) {
-  wheel.classList.remove('spinning');
-  wheel.textContent = '🎁';
-  message.textContent = error.message;
-  spinButton.disabled = false;
-  spinButton.textContent = '🎰 КРУТИТЬ';
- }
-}
-
-async function createTopup() {
- const stars = Number(document.getElementById('stars').value);
- const recipient = document.getElementById('recipient').value;
- const output = document.getElementById('topupMessage');
-
- if (!Number.isSafeInteger(stars) || stars < 1 || stars > 100000) {
-  output.textContent = 'Укажи количество от 1 до 100000 звёзд.';
-  return;
- }
-
- output.textContent = 'Создаём заявку...';
-
- try {
-  const data = await api('/api/topup', 'POST', {
-   stars,
-   recipient
+ try{
+  const data=await api('/api/spin',{
+   method:'POST',
+   body:JSON.stringify({})
   });
 
-  output.textContent =
-   `Заявка №${data.request.id} создана! Отправь подарок на ${recipient} и дождись проверки.`;
+  if(data.result==='none'){
+   message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
+  }else if(data.result==='ordinary'){
+   message.textContent='🎉 Выпал обычный NFT! Администратор свяжется с тобой.';
+  }else if(data.result==='rare'){
+   message.textContent='🔥 РЕДКИЙ NFT! Поздравляем! Администратор свяжется с тобой.';
+  }else{
+   message.textContent='Результат: '+data.result;
+  }
 
-  document.getElementById('stars').value = '';
- } catch (error) {
-  output.textContent = error.message;
+  await loadAccount();
+ }catch(error){
+  message.textContent=error.message;
+ }finally{
+  button.disabled=false;
  }
 }
 
-async function checkAdmin() {
- try {
+async function createTopup(){
+ const stars=Number(document.getElementById('stars').value);
+ const recipient=document.getElementById('recipient').value;
+ const output=document.getElementById('topupMessage');
+
+ if(!Number.isInteger(stars)||stars<1||stars>100000){
+  output.textContent='Укажи количество Stars от 1 до 100000.';
+  return;
+ }
+
+ output.textContent='Создаём заявку...';
+
+ try{
+  const data=await api('/api/topup',{
+   method:'POST',
+   body:JSON.stringify({stars,recipient})
+  });
+
+  output.textContent='✅ Заявка №'+data.id+
+   ' создана. Отправь подарок получателю '+recipient+
+   ' и дождись проверки администратором.';
+
+  document.getElementById('stars').value='';
+ }catch(error){
+  output.textContent=error.message;
+ }
+}
+
+async function checkAdmin(){
+ try{
   await api('/api/admin/topups');
-  document.getElementById('adminPanel').classList.remove('hidden');
+  document.getElementById('adminPanel').style.display='block';
   await loadRequests();
- } catch (error) {
-  document.getElementById('adminPanel').classList.add('hidden');
+ }catch(error){
+  document.getElementById('adminPanel').style.display='none';
  }
 }
 
-async function loadRequests() {
- const container = document.getElementById('requests');
- const output = document.getElementById('adminMessage');
+async function loadRequests(){
+ const output=document.getElementById('requests');
+ const message=document.getElementById('adminMessage');
 
- container.innerHTML = '';
- output.textContent = 'Загружаем...';
+ output.innerHTML='';
+ message.textContent='Загружаем заявки...';
 
- try {
-  const data = await api('/api/admin/topups');
+ try{
+  const data=await api('/api/admin/topups');
+  const requests=data.requests||[];
 
-  if (!data.requests.length) {
-   output.textContent = 'Новых заявок нет.';
+  if(requests.length===0){
+   message.textContent='Новых заявок пока нет.';
    return;
   }
 
-  output.textContent = '';
+  message.textContent='Заявок: '+requests.length;
 
-  data.requests.forEach(request => {
-   const item = document.createElement('div');
-   item.className = 'request';
+  requests.forEach(request=>{
+   const item=document.createElement('div');
+   item.className='request';
 
-   const title = document.createElement('b');
-   title.textContent = `Заявка №${request.id}`;
+   const info=document.createElement('div');
+   info.textContent='Заявка №'+request.id+
+    ' | Telegram ID: '+request.telegram_id+
+    ' | Stars: '+request.stars+
+    ' | Получатель: '+request.recipient;
 
-   const info = document.createElement('p');
-   info.textContent =
-    `Игрок: ${request.first_name || ''} ${request.username ? '@' + request.username : ''} (ID: ${request.telegram_id})`;
+   const approve=document.createElement('button');
+   approve.textContent='ПОДТВЕРДИТЬ';
+   approve.onclick=()=>processRequest(request.id,'approve');
 
-   const amount = document.createElement('p');
-   amount.textContent = `Сумма: ${request.stars} звёзд`;
+   const reject=document.createElement('button');
+   reject.textContent='ОТКЛОНИТЬ';
+   reject.className='reject';
+   reject.onclick=()=>processRequest(request.id,'reject');
 
-   const recipient = document.createElement('p');
-   recipient.textContent = `Получатель: ${request.recipient}`;
-
-   const approve = document.createElement('button');
-   approve.textContent = 'ПОДТВЕРДИТЬ ПОЛУЧЕНИЕ';
-   approve.onclick = () => processRequest(request.id, 'approve');
-
-   const reject = document.createElement('button');
-   reject.className = 'secondary';
-   reject.textContent = 'ОТКЛОНИТЬ';
-   reject.onclick = () => processRequest(request.id, 'reject');
-
-   item.append(title, info, amount, recipient, approve, reject);
-   container.appendChild(item);
+   item.appendChild(info);
+   item.appendChild(approve);
+   item.appendChild(reject);
+   output.appendChild(item);
   });
- } catch (error) {
-  output.textContent = error.message;
+ }catch(error){
+  message.textContent=error.message;
  }
 }
 
-async function processRequest(id, action) {
- const output = document.getElementById('adminMessage');
+async function processRequest(id,action){
+ const question=action==='approve'
+  ?'Подтвердить получение подарка и начислить серебро?'
+  :'Отклонить заявку?';
 
- const confirmed = confirm(
-  action === 'approve'
-   ? 'Ты лично проверил получение подарка и хочешь начислить серебро?'
-   : 'Отклонить эту заявку?'
- );
+ if(!confirm(question))return;
 
- if (!confirmed) return;
+ const message=document.getElementById('adminMessage');
+ message.textContent='Обрабатываем заявку...';
 
- output.textContent = 'Обрабатываем заявку...';
+ try{
+  await api('/api/admin/topups/'+id+'/'+action,{
+   method:'POST',
+   body:JSON.stringify({})
+  });
 
- try {
-  const data = await api(
-   `/api/admin/topups/${id}/${action}`,
-   'POST'
-  );
+  message.textContent=action==='approve'
+   ?'✅ Заявка подтверждена, серебро начислено.'
+   :'Заявка отклонена.';
 
-  output.textContent = data.message;
   await loadRequests();
- } catch (error) {
-  output.textContent = error.message;
+  await loadAccount();
+ }catch(error){
+  message.textContent=error.message;
  }
 }
 
