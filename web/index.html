@@ -8,113 +8,33 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;
- background:#090710;
- color:white;
- font-family:Arial,sans-serif;
- padding:22px;
-}
+body{margin:0;background:#090710;color:white;font-family:Arial,sans-serif;padding:22px}
 header{text-align:center;margin:10px 0 25px}
-.logo{
- font-size:32px;
- font-weight:900;
- background:linear-gradient(90deg,#a855f7,#ec4899);
- -webkit-background-clip:text;
- color:transparent;
-}
+.logo{font-size:32px;font-weight:900;background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;color:transparent}
 .subtitle{color:#999;font-size:13px;margin-top:7px}
-.card{
- background:#171222;
- border:1px solid #302342;
- border-radius:18px;
- padding:18px;
- margin-bottom:16px;
-}
+.card{background:#171222;border:1px solid #302342;border-radius:18px;padding:18px;margin-bottom:16px}
 .stats{display:flex;gap:12px}
-.stat{
- flex:1;
- background:#211832;
- border-radius:14px;
- padding:15px;
- text-align:center;
-}
+.stat{flex:1;background:#211832;border-radius:14px;padding:15px;text-align:center}
 .stat small{color:#aaa}
 .stat strong{display:block;font-size:25px;margin-top:7px}
 h2{font-size:18px;margin:0 0 14px}
-.wheel{
- width:230px;height:230px;
- margin:20px auto;
- border-radius:50%;
- border:9px solid #a855f7;
- background:conic-gradient(
- #a855f7 0deg 90deg,
- #321c4b 90deg 180deg,
- #ec4899 180deg 270deg,
- #321c4b 270deg 360deg
- );
- display:flex;
- align-items:center;
- justify-content:center;
- box-shadow:0 0 35px #a855f755;
-}
-.wheel-center{
- width:90px;height:90px;
- background:#090710;
- border-radius:50%;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:28px;
-}
-button{
- width:100%;
- border:0;
- border-radius:13px;
- padding:15px;
- font-size:16px;
- font-weight:bold;
- color:white;
- background:linear-gradient(90deg,#9333ea,#db2777);
- margin-top:10px;
-}
+.wheel{width:230px;height:230px;margin:20px auto;border-radius:50%;border:9px solid #a855f7;background:conic-gradient(#a855f7 0deg 90deg,#321c4b 90deg 180deg,#ec4899 180deg 270deg,#321c4b 270deg 360deg);display:flex;align-items:center;justify-content:center;box-shadow:0 0 35px #a855f755}
+.wheel-center{width:90px;height:90px;background:#090710;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px}
+button{width:100%;border:0;border-radius:13px;padding:15px;font-size:16px;font-weight:bold;color:white;background:linear-gradient(90deg,#9333ea,#db2777);margin-top:10px}
 button:disabled{opacity:.45}
-input,select{
- width:100%;
- padding:14px;
- border-radius:11px;
- border:1px solid #49365f;
- background:#0e0a16;
- color:white;
- margin:8px 0;
- font-size:15px;
-}
+input,select{width:100%;padding:14px;border-radius:11px;border:1px solid #49365f;background:#0e0a16;color:white;margin:8px 0;font-size:15px}
 .muted{color:#aaa;font-size:13px;line-height:1.5}
-.notice{
- background:#211832;
- padding:13px;
- border-radius:12px;
- color:#d8c8ed;
- font-size:13px;
- line-height:1.5;
- margin-top:12px;
-}
-.request{
- background:#211832;
- padding:13px;
- border-radius:12px;
- margin:10px 0;
-}
+.notice{background:#211832;padding:13px;border-radius:12px;color:#d8c8ed;font-size:13px;line-height:1.5;margin-top:12px}
+.request{background:#211832;padding:13px;border-radius:12px;margin:10px 0}
 .request button{width:48%;display:inline-block}
 .reject{background:#633044}
 #adminPanel{display:none}
-#message,#adminMessage,#topupMessage{
- color:#d8b4fe;
- font-size:13px;
- margin-top:12px;
- line-height:1.5;
-}
+#message,#adminMessage,#topupMessage,#refMessage{color:#d8b4fe;font-size:13px;margin-top:12px;line-height:1.5}
 .odds{display:flex;justify-content:space-between;margin:10px 0;font-size:14px}
+.ref-link{background:#0e0a16;border:1px solid #49365f;border-radius:11px;padding:13px;font-size:12px;line-height:1.5;word-break:break-all;margin-top:12px}
+.progress{height:12px;background:#302342;border-radius:20px;overflow:hidden;margin:14px 0}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#9333ea,#ec4899);transition:width .3s}
+.ref-stats{display:flex;justify-content:space-between;color:#d8c8ed;font-size:13px}
 </style>
 </head>
 <body>
@@ -151,6 +71,32 @@ input,select{
 </div>
 
 <div class="card">
+ <h2>👥 Пригласи друзей</h2>
+ <p class="muted">
+  Приглашай новых игроков в GiftsDrop! За каждые 10 приглашённых пользователей получишь 3 бесплатные прокрутки.
+ </p>
+
+ <div class="ref-stats">
+  <span>Приглашено друзей</span>
+  <b id="refCount">0</b>
+ </div>
+
+ <div class="progress">
+  <div class="progress-fill" id="refProgress"></div>
+ </div>
+
+ <div class="ref-stats">
+  <span id="refProgressText">0 из 10</span>
+  <span>🎁 +3 прокрутки</span>
+ </div>
+
+ <div class="ref-link" id="refLink">Загружаем ссылку...</div>
+ <button onclick="copyReferral()">📋 СКОПИРОВАТЬ ССЫЛКУ</button>
+ <button onclick="shareReferral()">📨 ПРИГЛАСИТЬ ДРУЗЕЙ</button>
+ <div id="refMessage"></div>
+</div>
+
+<div class="card">
  <h2>🎁 Пополнить серебро</h2>
  <p class="muted">
   Выбери получателя, перейди в его профиль и отправь подарок.
@@ -164,8 +110,7 @@ input,select{
 
  <button onclick="openRecipient()">🎁 ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
 
- <input id="stars" type="number" min="1" max="100000"
- placeholder="Количество Stars">
+ <input id="stars" type="number" min="1" max="100000" placeholder="Количество Stars">
 
  <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ</button>
  <div id="topupMessage"></div>
@@ -196,6 +141,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+let referralLink = '';
+
 async function api(url, options={}) {
  const response = await fetch(url,{
   ...options,
@@ -206,10 +153,8 @@ async function api(url, options={}) {
   }
  });
 
- const data = await response.json().catch(()=>({}));
- if(!response.ok){
-  throw new Error(data.error || 'Ошибка сервера');
- }
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok) throw new Error(data.error||'Ошибка сервера');
  return data;
 }
 
@@ -224,10 +169,59 @@ async function loadAccount(){
   document.getElementById('silver').textContent=data.silver;
   document.getElementById('spins').textContent=data.free_spins;
   document.getElementById('spinButton').disabled=false;
+  await loadReferrals();
   await checkAdmin();
  }catch(error){
   document.getElementById('message').textContent=error.message;
  }
+}
+
+async function loadReferrals(){
+ try{
+  const data=await api('/api/referrals');
+  referralLink=data.referral_link;
+
+  document.getElementById('refCount').textContent=data.referral_count;
+  document.getElementById('refProgress').style.width=(data.progress*10)+'%';
+  document.getElementById('refProgressText').textContent=
+   data.progress+' из 10 — осталось '+data.remaining;
+
+  document.getElementById('refLink').textContent=referralLink;
+ }catch(error){
+  document.getElementById('refMessage').textContent=error.message;
+ }
+}
+
+async function copyReferral(){
+ if(!referralLink){
+  document.getElementById('refMessage').textContent='Ссылка ещё загружается.';
+  return;
+ }
+
+ try{
+  if(navigator.clipboard && navigator.clipboard.writeText){
+   await navigator.clipboard.writeText(referralLink);
+  }else{
+   const input=document.createElement('textarea');
+   input.value=referralLink;
+   document.body.appendChild(input);
+   input.select();
+   document.execCommand('copy');
+   input.remove();
+  }
+  document.getElementById('refMessage').textContent='✅ Ссылка скопирована!';
+ }catch(error){
+  document.getElementById('refMessage').textContent='Не удалось скопировать. Скопируй ссылку вручную.';
+ }
+}
+
+function shareReferral(){
+ if(!referralLink)return;
+
+ tg.openTelegramLink(
+  'https://t.me/share/url?url='+encodeURIComponent(referralLink)+
+  '&text='+encodeURIComponent('🎁 Заходи в GiftsDrop и попробуй выиграть NFT!')
+ );
 }
 
 async function spin(){
@@ -279,7 +273,7 @@ async function createTopup(){
    body:JSON.stringify({stars,recipient})
   });
 
-  output.textContent='✅ Заявка №'+data.id+
+  output.textContent='✅ Заявка №'+data.request.id+
    ' создана. Отправь подарок получателю '+recipient+
    ' и дождись проверки администратором.';
 
