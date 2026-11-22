@@ -22,7 +22,7 @@ const toStars = (gram) => Math.ceil(gram * 62.6 / 10) * 10;
 const giftImage = (slug) =>
   `https://cdn.jsdelivr.net/gh/ssamy2/TG_Photos@main/webp/by_name/${slug}.webp`;
 const PRODUCTS = [
-  { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸', image_url: giftImage('toy_bear')
+  { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸', image_url: giftImage('toybear')
   { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍', image_url: giftImage('diamondring') },
   { id: 'genie_lamp', name: 'Genie Lamp', stars: toStars(44), discount: 10, emoji: '🪔', image_url: giftImage('genielamp') },
   { id: 'voodoo_doll', name: 'Voodoo Doll', stars: toStars(49), discount: 10, emoji: '🧸', image_url: giftImage('voodoodoll') },
