@@ -3,6 +3,7 @@ import os
 import asyncio
 import random
 import sqlite3
+import aiohttp
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
@@ -19,6 +20,7 @@ from aiogram.types import (
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 DB_PATH = os.getenv("DB_PATH", "bot.db")
+STORE_API_URL = os.getenv("STORE_API_URL", "").rstrip("/")
 
 if not TOKEN:
     raise RuntimeError("Не задан BOT_TOKEN")
@@ -46,7 +48,6 @@ CREATE TABLE IF NOT EXISTS wins (
 )
 """)
 
-# Защита от повторного начисления одной оплаты
 db.execute("""
 CREATE TABLE IF NOT EXISTS payments (
     charge_id TEXT PRIMARY KEY,
@@ -72,18 +73,14 @@ def main_keyboard():
             text="🎰 Крутить рулетку",
             callback_data="spin"
         )],
-        [
-            InlineKeyboardButton(
-                text="⭐ 1 прокрутка — 5 Stars",
-                callback_data="buy_1"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="⭐ 3 прокрутки — 15 Stars",
-                callback_data="buy_3"
-            )
-        ],
+        [InlineKeyboardButton(
+            text="⭐ 1 прокрутка — 5 Stars",
+            callback_data="buy_1"
+        )],
+        [InlineKeyboardButton(
+            text="⭐ 3 прокрутки — 15 Stars",
+            callback_data="buy_3"
+        )],
         [
             InlineKeyboardButton(
                 text="👤 Мой баланс",
@@ -189,12 +186,78 @@ async def send_spin_invoice(user_id, count):
         provider_token="",
         currency="XTR",
         prices=[
-            LabeledPrice(
-                label=title,
-                amount=price
-            )
+            LabeledPrice(label=title, amount=price)
         ]
     )
+
+
+def parse_gift_payload(payload):
+    try:
+        parts = payload.split(":")
+        if len(parts) != 4 or parts[0] != "gift":
+            return None
+
+        order_id = int(parts[1])
+        user_id = int(parts[2])
+        stars = int(parts[3])
+
+        if order_id < 1 or user_id < 1 or stars < 1:
+            return None
+
+        return {
+            "order_id": order_id,
+            "user_id": user_id,
+            "stars": stars
+        }
+    except (ValueError, IndexError):
+        return None
+
+
+async def sync_gift_payment(payment, user_id, order):
+    if not STORE_API_URL:
+        return False, "Не задан STORE_API_URL"
+
+    url = STORE_API_URL + "/api/internal/store/paid"
+
+    data = {
+        "order_id": order["order_id"],
+        "telegram_id": user_id,
+        "stars": payment.total_amount,
+        "currency": payment.currency,
+        "charge_id": payment.telegram_payment_charge_id,
+        "provider_charge_id": payment.provider_payment_charge_id
+    }
+
+    for attempt in range(3):
+        try:
+            timeout = aiohttp.ClientTimeout(total=8)
+
+            async with aiohttp.ClientSession(
+                timeout=timeout
+            ) as session:
+                async with session.post(
+                    url,
+                    json=data,
+                    headers={"x-bot-token": TOKEN}
+                ) as response:
+                    result = await response.json(
+                        content_type=None
+                    )
+
+                    if response.status == 200 and result.get("success"):
+                        return True, "Заказ обновлён"
+
+                    return False, result.get(
+                        "error", "Сервер отклонил платёж"
+                    )
+
+        except Exception as error:
+            if attempt < 2:
+                await asyncio.sleep(1 + attempt)
+            else:
+                return False, str(error)
+
+    return False, "Не удалось связаться с сервером магазина"
 
 
 @dp.message(CommandStart())
@@ -214,16 +277,14 @@ async def start(message: Message):
 
     if is_new:
         text = (
-            "🎉 Добро пожаловать в NFT Roulette!\n\n"
+            "🎉 Добро пожаловать в GiftsDrop!\n\n"
             "Тебе начислено 3 бесплатные прокрутки.\n"
             "Удачи! 🍀"
         )
     else:
         text = "С возвращением! 🎰"
 
-    await message.answer(
-        text, reply_markup=main_keyboard()
-    )
+    await message.answer(text, reply_markup=main_keyboard())
 
 
 @dp.message(Command("roulette"))
@@ -273,14 +334,14 @@ async def prizes_command(message: Message):
 @dp.message(Command("rules"))
 async def rules_command(message: Message):
     await message.answer(
-        "📜 Правила рулетки:\n\n"
+        "📜 Правила GiftsDrop:\n\n"
         "1. При первом запуске даются 3 бесплатные прокрутки.\n"
         "2. За каждые 10 новых приглашённых друзей "
         "начисляются ещё 3 прокрутки.\n"
         "3. Одна прокрутка стоит 5 Stars.\n"
         "4. Три прокрутки стоят 15 Stars.\n"
         "5. Вероятность главного приза — 0,01%.\n"
-        "6. При выигрыше администратор вручную выдаёт NFT.\n"
+        "6. Выдача призов и подарков производится вручную.\n"
         "7. Повторная регистрация не засчитывается."
     )
 
@@ -297,15 +358,14 @@ async def support_command(message: Message):
 @dp.message(Command("terms"))
 async def terms_command(message: Message):
     await message.answer(
-        "Условия использования NFT Roulette:\n\n"
-        "Прокрутки приобретаются за Telegram Stars.\n"
-        "Перед покупкой ознакомься с правилами и "
-        "вероятностью выигрыша через /rules.\n"
+        "Условия использования GiftsDrop:\n\n"
+        "Прокрутки и подарки приобретаются за Telegram Stars.\n"
+        "Подарки отправляются администратором вручную "
+        "после подтверждения оплаты.\n"
         "По вопросам платежей используй /paysupport."
     )
 
 
-# Покупка одной прокрутки
 @dp.callback_query(F.data == "buy_1")
 async def buy_one(callback: CallbackQuery):
     if not get_user(callback.from_user.id):
@@ -315,7 +375,6 @@ async def buy_one(callback: CallbackQuery):
     await callback.answer()
 
 
-# Покупка трёх прокруток
 @dp.callback_query(F.data == "buy_3")
 async def buy_three(callback: CallbackQuery):
     if not get_user(callback.from_user.id):
@@ -325,42 +384,126 @@ async def buy_three(callback: CallbackQuery):
     await callback.answer()
 
 
-# Проверка платежа перед списанием Stars
 @dp.pre_checkout_query()
 async def pre_checkout(query: PreCheckoutQuery):
-    try:
-        parts = query.invoice_payload.split(":")
-        count = int(parts[1])
-        user_id = int(parts[2])
+    payload = query.invoice_payload
+    valid = False
 
-        expected_price = 5 if count == 1 else 15
+    if payload.startswith("spinpack:"):
+        try:
+            parts = payload.split(":")
+            count = int(parts[1])
+            user_id = int(parts[2])
+            expected_price = 5 if count == 1 else 15
 
-        valid = (
-            parts[0] == "spinpack"
-            and count in (1, 3)
-            and user_id == query.from_user.id
+            valid = (
+                count in (1, 3)
+                and user_id == query.from_user.id
+                and query.currency == "XTR"
+                and query.total_amount == expected_price
+            )
+        except (ValueError, IndexError):
+            valid = False
+
+    elif payload.startswith("gift:"):
+        order = parse_gift_payload(payload)
+
+        valid = bool(
+            order
+            and order["user_id"] == query.from_user.id
+            and order["stars"] == query.total_amount
             and query.currency == "XTR"
-            and query.total_amount == expected_price
         )
-    except (ValueError, IndexError):
-        valid = False
 
     await query.answer(
         ok=valid,
         error_message=(
             "Не удалось проверить заказ. "
-            "Попробуй создать новый счёт."
+            "Создай новый счёт и попробуй ещё раз."
         ) if not valid else None
     )
 
 
-# Начисление только после подтверждённой оплаты
 @dp.message(F.successful_payment)
 async def successful_payment(message: Message):
     payment = message.successful_payment
+    payload = payment.invoice_payload
 
+    # Оплата подарка из магазина
+    if payload.startswith("gift:"):
+        order = parse_gift_payload(payload)
+
+        if not order:
+            await message.answer(
+                "Платёж получен, но данные заказа некорректны. "
+                "Администратор проверит оплату."
+            )
+            return
+
+        if (
+            order["user_id"] != message.from_user.id
+            or payment.currency != "XTR"
+            or payment.total_amount != order["stars"]
+        ):
+            await message.answer(
+                "Платёж получен, но данные не совпали. "
+                "Обратись в поддержку."
+            )
+            return
+
+        success, result = await sync_gift_payment(
+            payment,
+            message.from_user.id,
+            order
+        )
+
+        if success:
+            await message.answer(
+                "✅ Оплата подарка прошла успешно!\n\n"
+                f"Номер заказа: #{order['order_id']}\n"
+                "Заказ передан администратору.\n"
+                "Подарок будет отправлен вручную."
+            )
+
+            if ADMIN_ID:
+                try:
+                    await bot.send_message(
+                        ADMIN_ID,
+                        "🎁 НОВЫЙ ОПЛАЧЕННЫЙ ЗАКАЗ!\n\n"
+                        f"Заказ: #{order['order_id']}\n"
+                        f"Покупатель: {message.from_user.id}\n"
+                        f"Username: @{message.from_user.username or 'нет'}\n"
+                        f"Оплата: {payment.total_amount} ⭐\n"
+                        "Статус: ожидает отправки."
+                    )
+                except Exception:
+                    pass
+        else:
+            await message.answer(
+                "✅ Telegram подтвердил оплату.\n"
+                "Заказ передан на дополнительную проверку. "
+                "Не оплачивай его повторно."
+            )
+
+            if ADMIN_ID:
+                try:
+                    await bot.send_message(
+                        ADMIN_ID,
+                        "⚠️ НУЖНА ПРОВЕРКА ОПЛАТЫ ПОДАРКА!\n\n"
+                        f"Заказ: #{order['order_id']}\n"
+                        f"Покупатель: {message.from_user.id}\n"
+                        f"Сумма: {payment.total_amount} ⭐\n"
+                        f"Charge ID: {payment.telegram_payment_charge_id}\n"
+                        f"Ошибка синхронизации: {result}"
+                    )
+                except Exception:
+                    pass
+
+        return
+
+    # Старая оплата прокруток
     try:
-        parts = payment.invoice_payload.split(":")
+        parts = payload.split(":")
         count = int(parts[1])
         user_id = int(parts[2])
     except (ValueError, IndexError):
@@ -422,7 +565,7 @@ async def successful_payment(message: Message):
         try:
             await bot.send_message(
                 ADMIN_ID,
-                "💰 Новая оплата!\n"
+                "💰 Новая оплата прокруток!\n"
                 f"Пользователь: {user_id}\n"
                 f"Stars: {payment.total_amount}\n"
                 f"Прокруток: {count}"
@@ -605,7 +748,7 @@ async def main():
         BotCommand(command="done", description="Отметить выдачу (админ)")
     ])
 
-    print("NFT Roulette Bot запущен!")
+    print("GiftsDrop Bot запущен!")
     await dp.start_polling(bot)
 
 
