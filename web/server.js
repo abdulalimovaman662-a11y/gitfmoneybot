@@ -10,13 +10,11 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const DATABASE_URL = process.env.DATABASE_URL;
 const ADMIN_ID = process.env.ADMIN_ID;
 
-if (!BOT_TOKEN || !DATABASE_URL) {
-  throw new Error('Не заданы BOT_TOKEN или DATABASE_URL');
+if (!BOT_TOKEN || !DATABASE_URL || !ADMIN_ID) {
+  throw new Error('Проверь BOT_TOKEN, DATABASE_URL и ADMIN_ID');
 }
 
-const pool = new Pool({
-  connectionString: DATABASE_URL
-});
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 async function initDatabase() {
   await pool.query(`
@@ -67,6 +65,7 @@ function verifyTelegram(initData) {
 
     if (!hash || !authDate) return null;
     if (Date.now() / 1000 - authDate > 86400) return null;
+    if (authDate > Date.now() / 1000 + 60) return null;
 
     const entries = [...params.entries()]
       .filter(([key]) => key !== 'hash')
@@ -89,16 +88,11 @@ function verifyTelegram(initData) {
     const a = Buffer.from(hash, 'hex');
     const b = Buffer.from(calculatedHash, 'hex');
 
-    if (
-      a.length !== b.length ||
-      !crypto.timingSafeEqual(a, b)
-    ) return null;
+    if (a.length !== b.length ||
+        !crypto.timingSafeEqual(a, b)) return null;
 
     const user = JSON.parse(params.get('user') || 'null');
-
-    if (!user || !user.id) return null;
-
-    return user;
+    return user && user.id ? user : null;
   } catch {
     return null;
   }
@@ -114,7 +108,6 @@ async function readBody(req) {
 
     req.on('data', chunk => {
       body += chunk;
-
       if (body.length > 10000) {
         reject(new Error('Слишком большой запрос'));
         req.destroy();
@@ -133,31 +126,35 @@ async function readBody(req) {
   });
 }
 
+async function ensureUser(user) {
+  await pool.query(`
+    INSERT INTO users (telegram_id, username, first_name)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (telegram_id)
+    DO UPDATE SET
+      username = EXCLUDED.username,
+      first_name = EXCLUDED.first_name
+  `, [
+    String(user.id),
+    user.username || null,
+    user.first_name || null
+  ]);
+}
+
+async function requireAdmin(req) {
+  const user = getTelegramUser(req);
+  return user && String(user.id) === String(ADMIN_ID) ? user : null;
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
     if (url.pathname === '/api/me' && req.method === 'GET') {
       const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
 
-      if (!user) {
-        return send(res, 401, {
-          error: 'Не удалось проверить Telegram'
-        });
-      }
-
-      await pool.query(`
-        INSERT INTO users (telegram_id, username, first_name)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (telegram_id)
-        DO UPDATE SET
-          username = EXCLUDED.username,
-          first_name = EXCLUDED.first_name
-      `, [
-        String(user.id),
-        user.username || null,
-        user.first_name || null
-      ]);
+      await ensureUser(user);
 
       const result = await pool.query(
         'SELECT silver, free_spins FROM users WHERE telegram_id = $1',
@@ -169,12 +166,7 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/spin' && req.method === 'POST') {
       const user = getTelegramUser(req);
-
-      if (!user) {
-        return send(res, 401, {
-          error: 'Не удалось проверить Telegram'
-        });
-      }
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
 
       const client = await pool.connect();
 
@@ -188,21 +180,14 @@ const server = http.createServer(async (req, res) => {
 
         if (!result.rowCount) {
           await client.query('ROLLBACK');
-          return send(res, 404, {
-            error: 'Пользователь не найден'
-          });
+          return send(res, 404, { error: 'Пользователь не найден' });
         }
 
         const account = result.rows[0];
 
-        if (
-          account.free_spins <= 0 &&
-          account.silver < 20
-        ) {
+        if (account.free_spins <= 0 && account.silver < 20) {
           await client.query('ROLLBACK');
-          return send(res, 400, {
-            error: 'Недостаточно серебра'
-          });
+          return send(res, 400, { error: 'Недостаточно серебра' });
         }
 
         if (account.free_spins > 0) {
@@ -218,14 +203,10 @@ const server = http.createServer(async (req, res) => {
         }
 
         const chance = crypto.randomInt(100000);
-
         let prize = 'nothing';
 
-        if (chance >= 99990) {
-          prize = 'rare';
-        } else if (chance >= 90000) {
-          prize = 'ordinary';
-        }
+        if (chance >= 99990) prize = 'rare';
+        else if (chance >= 90000) prize = 'ordinary';
 
         await client.query(
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2)',
@@ -244,7 +225,112 @@ const server = http.createServer(async (req, res) => {
           silver: updated.rows[0].silver,
           free_spins: updated.rows[0].free_spins
         });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
 
+    // Создание заявки на пополнение
+    if (url.pathname === '/api/topup' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+
+      const body = await readBody(req);
+      const stars = Number(body.stars);
+      const recipient = body.recipient;
+
+      if (!Number.isSafeInteger(stars) || stars < 1 || stars > 100000) {
+        return send(res, 400, { error: 'Укажи корректное количество звёзд' });
+      }
+
+      if (!['@traptrap4', '@RichGues'].includes(recipient)) {
+        return send(res, 400, { error: 'Некорректный получатель' });
+      }
+
+      await ensureUser(user);
+
+      const result = await pool.query(`
+        INSERT INTO topup_requests (telegram_id, stars, recipient)
+        VALUES ($1, $2, $3)
+        RETURNING id, stars, recipient, status
+      `, [String(user.id), stars, recipient]);
+
+      return send(res, 201, {
+        message: 'Заявка создана. Отправь подарок и дождись проверки.',
+        request: result.rows[0]
+      });
+    }
+
+    // Список заявок для администратора
+    if (url.pathname === '/api/admin/topups' && req.method === 'GET') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+
+      const result = await pool.query(`
+        SELECT r.id, r.telegram_id, u.username, u.first_name,
+               r.stars, r.recipient, r.status, r.created_at
+        FROM topup_requests r
+        JOIN users u ON u.telegram_id = r.telegram_id
+        WHERE r.status = 'pending'
+        ORDER BY r.created_at ASC
+        LIMIT 100
+      `);
+
+      return send(res, 200, { requests: result.rows });
+    }
+
+    // Подтверждение или отклонение заявки
+    const decision = url.pathname.match(
+      /^\/api\/admin\/topups\/(\d+)\/(approve|reject)$/
+    );
+
+    if (decision && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+
+      const requestId = decision[1];
+      const action = decision[2];
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        const result = await client.query(
+          'SELECT * FROM topup_requests WHERE id = $1 FOR UPDATE',
+          [requestId]
+        );
+
+        if (!result.rowCount || result.rows[0].status !== 'pending') {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Заявка уже обработана или не найдена' });
+        }
+
+        const request = result.rows[0];
+
+        if (action === 'approve') {
+          await client.query(
+            'UPDATE users SET silver = silver + $1 WHERE telegram_id = $2',
+            [request.stars, request.telegram_id]
+          );
+        }
+
+        await client.query(`
+          UPDATE topup_requests
+          SET status = $1, processed_at = NOW()
+          WHERE id = $2
+        `, [action === 'approve' ? 'approved' : 'rejected', requestId]);
+
+        await client.query('COMMIT');
+
+        return send(res, 200, {
+          success: true,
+          message: action === 'approve'
+            ? 'Серебро начислено'
+            : 'Заявка отклонена'
+        });
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
@@ -254,9 +340,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === '/' && req.method === 'GET') {
-      const filePath = path.join(__dirname, 'index.html');
-
-      return fs.readFile(filePath, (err, content) => {
+      return fs.readFile(path.join(__dirname, 'index.html'), (err, content) => {
         if (err) {
           res.writeHead(500);
           return res.end('Ошибка загрузки сайта');
@@ -265,22 +349,16 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, {
           'Content-Type': 'text/html; charset=utf-8'
         });
-
         res.end(content);
       });
     }
 
-    return send(res, 404, {
-      error: 'Страница не найдена'
-    });
+    return send(res, 404, { error: 'Страница не найдена' });
 
   } catch (error) {
     console.error(error);
-
     if (!res.headersSent) {
-      send(res, 500, {
-        error: 'Внутренняя ошибка сервера'
-      });
+      send(res, 500, { error: 'Внутренняя ошибка сервера' });
     }
   }
 });
