@@ -213,6 +213,44 @@ def parse_gift_payload(payload):
         return None
 
 
+async def validate_gift_order(order):
+    if not STORE_API_URL:
+        return False
+
+    url = STORE_API_URL + "/api/internal/store/validate"
+
+    data = {
+        "order_id": order["order_id"],
+        "telegram_id": order["user_id"],
+        "stars": order["stars"],
+        "currency": "XTR"
+    }
+
+    timeout = aiohttp.ClientTimeout(total=8)
+
+    try:
+        async with aiohttp.ClientSession(
+            timeout=timeout
+        ) as session:
+            async with session.post(
+                url,
+                json=data,
+                headers={"x-bot-token": TOKEN}
+            ) as response:
+                result = await response.json(
+                    content_type=None
+                )
+
+                return (
+                    response.status == 200
+                    and result.get("valid") is True
+                )
+
+    except Exception as error:
+        print(f"Ошибка проверки заказа: {error}")
+        return False
+
+
 async def sync_gift_payment(payment, user_id, order):
     if not STORE_API_URL:
         return False, "Не задан STORE_API_URL"
@@ -408,12 +446,13 @@ async def pre_checkout(query: PreCheckoutQuery):
     elif payload.startswith("gift:"):
         order = parse_gift_payload(payload)
 
-        valid = bool(
+        if (
             order
             and order["user_id"] == query.from_user.id
             and order["stars"] == query.total_amount
             and query.currency == "XTR"
-        )
+        ):
+            valid = await validate_gift_order(order)
 
     await query.answer(
         ok=valid,
