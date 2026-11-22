@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NFT Roulette</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#090710;color:white;
+ font-family:Arial,sans-serif;padding:22px;
+}
+header{text-align:center;margin-top:20px}
+h1{font-size:30px;color:#c18aff}
+p{color:#aaa}
+.card{
+ background:#171221;border:1px solid #38234d;
+ border-radius:22px;padding:22px;margin-top:22px;
+ text-align:center;
+}
+.wheel{
+ width:190px;height:190px;border-radius:50%;
+ margin:20px auto;
+ border:9px solid #a855f7;
+ box-shadow:0 0 30px #8b35e8;
+ background:conic-gradient(#34104e 0 60deg,#8b35e8 60deg 120deg,#34104e 120deg 180deg,#8b35e8 180deg 240deg,#34104e 240deg 300deg,#8b35e8 300deg);
+ display:flex;align-items:center;justify-content:center;
+ font-size:42px;
+}
+button{
+ width:100%;padding:16px;border:0;border-radius:14px;
+ background:linear-gradient(90deg,#7925cf,#bd65ff);
+ color:white;font-size:17px;font-weight:bold;
+ margin-top:12px;
+}
+.stats{display:flex;gap:10px}
+.stats div{flex:1;background:#21182e;padding:15px;border-radius:14px}
+</style>
+</head>
+<body>
+<header>
+<h1>🎁 NFT ROULETTE</h1>
+<p>Испытай свою удачу!</p>
+</header>
+<div class="stats">
+<div>⭐ Stars<br><b>0</b></div>
+<div>🎰 Прокрутки<br><b>3</b></div>
+</div>
+<div class="card">
+<h2>Твоя рулетка</h2>
+<div class="wheel">🎁</div>
+<button onclick="alert('Скоро подключим настоящую рулетку!')">КРУТИТЬ</button>
+</div>
+<div class="card">
+<h2>🏆 NFT подарки</h2>
+<p>Здесь появятся доступные призы</p>
+</div>
+</body>
+</html>
