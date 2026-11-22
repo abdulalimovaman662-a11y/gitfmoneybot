@@ -38,6 +38,7 @@ const PRODUCTS = [
   { id: 'top_hat', name: 'Top Hat', stars: toStars(13), discount: 5, emoji: '🎩', image_url: giftImage('tophat') },
   { id: 'jingle_bell', name: 'Jingle Bell', stars: toStars(12), discount: 5, emoji: '🔔', image_url: giftImage('jinglebells') },
   { id: 'snow_globe', name: 'Snow Globe', stars: toStars(9), discount: 5, emoji: '❄️', image_url: giftImage('snowglobe') },
+{ id: 'snow_globe', name: 'Snow Globe', stars: toStars(9), discount: 5, emoji: '❄️', image_url: giftImage('snowglobe') },
 { id: 'neko_helmet', name: 'Neko Helmet', stars: toStars(49), discount: 10, emoji: '🐱', image_url: giftImage('nekohelmet') },
 { id: 'mighty_arms', name: 'Mighty Arms', stars: toStars(150), discount: 10, emoji: '💪', image_url: giftImage('mightyarms') },
 { id: 'nail_bracelets', name: 'Nail Bracelets', stars: toStars(150), discount: 10, emoji: '💅', image_url: giftImage('nailbracelets') },
@@ -135,7 +136,6 @@ const PRODUCTS = [
 { id: 'hex_pots', name: 'Hex Pots', stars: toStars(7), discount: 5, emoji: '🏺', image_url: giftImage('hexpots') },
 { id: 'homemade_cakes', name: 'Homemade Cakes', stars: toStars(7), discount: 5, emoji: '🍰', image_url: giftImage('homemadecakes') },
 { id: 'spiced_wines', name: 'Spiced Wines', stars: toStars(7), discount: 5, emoji: '🍷', image_url: giftImage('spicedwines') }
-];
 ];
 
 async function initDatabase() {
