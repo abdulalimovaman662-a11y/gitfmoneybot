@@ -14,7 +14,6 @@
 :root{
  --bg:#090909;
  --panel:#111110;
- --panel2:#171613;
  --gold:#d6b36a;
  --gold2:#f4dfa5;
  --muted:#929087;
@@ -27,7 +26,7 @@ html{scroll-behavior:smooth}
 
 body{
  margin:0;
- padding:22px 17px calc(35px + env(safe-area-inset-bottom));
+ padding:0 17px calc(105px + env(safe-area-inset-bottom));
  background:
  radial-gradient(ellipse at 50% -10%,rgba(180,135,53,.16),transparent 48%),
  radial-gradient(ellipse at 100% 45%,rgba(125,92,35,.07),transparent 38%),
@@ -48,11 +47,11 @@ body:before{
  z-index:0;
 }
 
-header,.card,.footer{position:relative;z-index:1}
+header,.card,.footer,.tab-page{position:relative;z-index:1}
 
 header{
  text-align:center;
- padding:18px 0 27px;
+ padding:25px 0 25px;
 }
 
 .brand-mark{
@@ -76,8 +75,12 @@ header{
  font-size:32px;
  font-weight:800;
  letter-spacing:3px;
- color:var(--gold2);
- text-shadow:0 0 30px rgba(214,179,106,.17);
+ background:linear-gradient(90deg,#b48b46,#f6e6b4,#c49b52,#f6e6b4);
+ background-size:200% auto;
+ -webkit-background-clip:text;
+ background-clip:text;
+ color:transparent;
+ animation:shine 7s linear infinite;
 }
 
 .subtitle{
@@ -97,6 +100,11 @@ header{
  color:var(--gold);
  font-size:10px;
  letter-spacing:2px;
+}
+
+@keyframes shine{
+ 0%{background-position:0% 50%}
+ 100%{background-position:200% 50%}
 }
 
 .card{
@@ -185,8 +193,7 @@ h2{
  margin:10px auto;
  border-radius:50%;
  border:5px solid #b9934f;
- background:
- conic-gradient(
+ background:conic-gradient(
  #e6c77f 0deg 45deg,
  #211b10 45deg 90deg,
  #c4a15d 90deg 135deg,
@@ -245,9 +252,7 @@ h2{
  filter:drop-shadow(0 2px 5px #000);
 }
 
-.wheel-result{
- animation:resultGlow 1s ease;
-}
+.wheel-result{animation:resultGlow 1s ease}
 
 @keyframes resultGlow{
  0%{filter:brightness(1)}
@@ -412,27 +417,114 @@ input::placeholder{color:#777165}
  letter-spacing:3px;
 }
 
-.logo{
- background:linear-gradient(90deg,#b48b46,#f6e6b4,#c49b52,#f6e6b4);
- background-size:200% auto;
- -webkit-background-clip:text;
- background-clip:text;
- color:transparent;
- animation:shine 7s linear infinite;
+/* Переключение экранов */
+
+.tab-page{
+ display:none;
+ animation:pageIn .28s ease;
 }
 
-@keyframes shine{
- 0%{background-position:0% 50%}
- 100%{background-position:200% 50%}
+.tab-page.active{display:block}
+
+@keyframes pageIn{
+ from{opacity:0;transform:translateY(8px)}
+ to{opacity:1;transform:translateY(0)}
+}
+
+/* Нижняя навигация */
+
+.bottom-nav{
+ position:fixed;
+ z-index:20;
+ bottom:0;
+ left:0;
+ right:0;
+ padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+ background:rgba(12,12,11,.94);
+ backdrop-filter:blur(18px);
+ -webkit-backdrop-filter:blur(18px);
+ border-top:1px solid rgba(214,179,106,.2);
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:5px;
+}
+
+.nav-button{
+ margin:0;
+ padding:9px 2px 7px;
+ border:1px solid transparent;
+ border-radius:13px;
+ background:transparent;
+ color:#777267;
+ box-shadow:none;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:5px;
+ font-size:9px;
+ font-weight:700;
+ letter-spacing:.3px;
+ min-width:0;
+}
+
+.nav-button .nav-icon{
+ font-size:20px;
+ line-height:1.2;
+ filter:grayscale(1);
+ opacity:.7;
+}
+
+.nav-button.active{
+ color:var(--gold2);
+ background:linear-gradient(145deg,rgba(214,179,106,.14),rgba(214,179,106,.045));
+ border-color:rgba(214,179,106,.2);
+ box-shadow:inset 0 1px 0 rgba(244,223,165,.08);
+}
+
+.nav-button.active .nav-icon{
+ filter:none;
+ opacity:1;
+}
+
+.gift-hero{
+ text-align:center;
+ padding:24px 12px;
+}
+
+.gift-icon{
+ font-size:58px;
+ margin-bottom:15px;
+ filter:drop-shadow(0 0 20px rgba(214,179,106,.3));
+}
+
+.gift-soon{
+ display:inline-block;
+ border:1px solid rgba(214,179,106,.28);
+ color:var(--gold2);
+ background:rgba(214,179,106,.07);
+ padding:8px 13px;
+ border-radius:30px;
+ font-size:10px;
+ letter-spacing:1.5px;
+ margin:12px 0;
 }
 
 @media(min-width:600px){
- body{max-width:480px;margin:0 auto;padding-top:35px}
+ body{max-width:480px;margin:0 auto}
+ .bottom-nav{
+  max-width:480px;
+  left:50%;
+  transform:translateX(-50%);
+  border-left:1px solid rgba(214,179,106,.15);
+  border-right:1px solid rgba(214,179,106,.15);
+ }
 }
 
 @media(prefers-reduced-motion:reduce){
  .wheel{transition-duration:0.01ms}
  .logo{animation:none}
+ .tab-page{animation:none}
 }
 </style>
 </head>
@@ -446,110 +538,220 @@ input::placeholder{color:#777165}
  <div class="top-label">✦ &nbsp; PREMIUM EXPERIENCE &nbsp; ✦</div>
 </header>
 
-<div class="card">
- <div class="section-tag">YOUR BALANCE</div>
- <div class="stats">
-  <div class="stat">
-   <small>Серебро</small>
-   <strong id="silver">0</strong>
-  </div>
-  <div class="stat">
-   <small>Бесплатные прокрутки</small>
-   <strong id="spins">0</strong>
-  </div>
- </div>
-</div>
+<!-- ЭКРАН 1: РУЛЕТКА -->
+<section class="tab-page active" id="tab-spin">
 
-<div class="card">
- <div class="section-tag">THE MAIN EVENT</div>
- <h2>Колесо удачи</h2>
-
- <div class="wheel-wrap">
-  <div class="wheel-glow"></div>
-  <div class="spin-pointer"></div>
-  <div class="wheel" id="wheel">
-   <div class="wheel-center">✦</div>
+ <div class="card">
+  <div class="section-tag">YOUR BALANCE</div>
+  <div class="stats">
+   <div class="stat">
+    <small>Серебро</small>
+    <strong id="silver">0</strong>
+   </div>
+   <div class="stat">
+    <small>Бесплатные прокрутки</small>
+    <strong id="spins">0</strong>
+   </div>
   </div>
  </div>
 
- <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ &nbsp; ✦</button>
- <div id="message"></div>
+ <div class="card">
+  <div class="section-tag">THE MAIN EVENT</div>
+  <h2>Колесо удачи</h2>
 
- <div class="notice">
-  Первые 3 прокрутки бесплатные. Далее стоимость одной прокрутки — 20 серебра.
-  Выдача NFT осуществляется администратором вручную после проверки результата.
- </div>
-</div>
+  <div class="wheel-wrap">
+   <div class="wheel-glow"></div>
+   <div class="spin-pointer"></div>
+   <div class="wheel" id="wheel">
+    <div class="wheel-center">✦</div>
+   </div>
+  </div>
 
-<div class="card">
- <div class="section-tag">INVITE & EARN</div>
- <h2>Приглашай друзей</h2>
- <p class="muted">
-  Приглашай новых игроков в GiftsDrop. За каждые 10 приглашённых пользователей получишь 3 бесплатные прокрутки.
- </p>
+  <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ &nbsp; ✦</button>
+  <div id="message"></div>
 
- <div class="ref-stats">
-  <span>Твои приглашения</span>
-  <b id="refCount">0</b>
- </div>
-
- <div class="progress">
-  <div class="progress-fill" id="refProgress"></div>
+  <div class="notice">
+   Первые 3 прокрутки бесплатные. Далее стоимость одной прокрутки — 20 серебра.
+   Выдача NFT осуществляется администратором после проверки результата.
+  </div>
  </div>
 
- <div class="ref-stats">
-  <span id="refProgressText">0 из 10</span>
-  <span>✦ +3 прокрутки</span>
+ <div class="card">
+  <div class="section-tag">WINNING PROBABILITIES</div>
+  <h2>Шансы выпадения</h2>
+  <div class="odds"><span>Без выигрыша</span><b>90%</b></div>
+  <div class="odds"><span>Обычный NFT</span><b>9,99%</b></div>
+  <div class="odds"><span>Редкий NFT</span><b>0,01%</b></div>
  </div>
 
- <div class="ref-link" id="refLink">Загружаем ссылку...</div>
- <button class="secondary" onclick="copyReferral()">СКОПИРОВАТЬ ССЫЛКУ</button>
- <button onclick="shareReferral()">ПРИГЛАСИТЬ ДРУЗЕЙ &nbsp; ✦</button>
- <div id="refMessage"></div>
-</div>
+</section>
 
-<div class="card">
- <div class="section-tag">ADD FUNDS</div>
- <h2>Пополнить серебро</h2>
- <p class="muted">
-  Выбери получателя, перейди в его профиль и отправь подарок. После отправки создай заявку. Серебро будет начислено после ручной проверки администратором.
- </p>
+<!-- ЭКРАН 2: ДРУЗЬЯ -->
+<section class="tab-page" id="tab-friends">
 
- <select id="recipient">
-  <option value="@traptrap4">@traptrap4</option>
-  <option value="@RichGues">@RichGues</option>
- </select>
+ <div class="card">
+  <div class="section-tag">INVITE & EARN</div>
+  <h2>Приглашай друзей</h2>
+  <p class="muted">
+   Приглашай новых игроков в GiftsDrop. За каждые 10 приглашённых пользователей получишь 3 бесплатные прокрутки.
+  </p>
 
- <button class="secondary" onclick="openRecipient()">ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
+  <div class="ref-stats">
+   <span>Твои приглашения</span>
+   <b id="refCount">0</b>
+  </div>
 
- <input id="stars" type="number" min="1" max="100000" placeholder="Количество Stars">
+  <div class="progress">
+   <div class="progress-fill" id="refProgress"></div>
+  </div>
 
- <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ &nbsp; ✦</button>
- <div id="topupMessage"></div>
+  <div class="ref-stats">
+   <span id="refProgressText">0 из 10</span>
+   <span>✦ +3 прокрутки</span>
+  </div>
 
- <div class="notice">
-  Переход в профиль не отправляет подарок автоматически. После отправки подарка создай заявку и дождись подтверждения администратора.
+  <div class="ref-link" id="refLink">Загружаем ссылку...</div>
+  <button class="secondary" onclick="copyReferral()">СКОПИРОВАТЬ ССЫЛКУ</button>
+  <button onclick="shareReferral()">ПРИГЛАСИТЬ ДРУЗЕЙ &nbsp; ✦</button>
+  <div id="refMessage"></div>
  </div>
-</div>
 
-<div class="card">
- <div class="section-tag">WINNING PROBABILITIES</div>
- <h2>Шансы выпадения</h2>
- <div class="odds"><span>Без выигрыша</span><b>90%</b></div>
- <div class="odds"><span>Обычный NFT</span><b>9,99%</b></div>
- <div class="odds"><span>Редкий NFT</span><b>0,01%</b></div>
-</div>
+ <div class="card">
+  <div class="section-tag">YOUR REWARDS</div>
+  <h2>Награды</h2>
+  <p class="muted">
+   За каждые 10 новых приглашённых пользователей начисляются 3 дополнительные бесплатные прокрутки.
+  </p>
+  <div class="notice">
+   Приглашай друзей по своей ссылке. Прогресс обновляется автоматически.
+  </div>
+ </div>
 
-<div class="card" id="adminPanel">
- <div class="section-tag">CONTROL CENTER</div>
- <h2>Админ-панель</h2>
- <p class="muted">Заявки на пополнение серебра</p>
- <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
- <div id="adminMessage"></div>
- <div id="requests"></div>
-</div>
+</section>
+
+<!-- ЭКРАН 3: БАЛАНС -->
+<section class="tab-page" id="tab-balance">
+
+ <div class="card">
+  <div class="section-tag">ADD FUNDS</div>
+  <h2>Пополнить серебро</h2>
+  <p class="muted">
+   Выбери получателя, перейди в его профиль и отправь подарок. После отправки создай заявку. Серебро будет начислено после ручной проверки администратором.
+  </p>
+
+  <select id="recipient">
+   <option value="@traptrap4">@traptrap4</option>
+   <option value="@RichGues">@RichGues</option>
+  </select>
+
+  <button class="secondary" onclick="openRecipient()">ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
+
+  <input id="stars" type="number" min="1" max="100000" placeholder="Количество Stars">
+
+  <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ &nbsp; ✦</button>
+  <div id="topupMessage"></div>
+
+  <div class="notice">
+   Переход в профиль не отправляет подарок автоматически. После отправки подарка создай заявку и дождись подтверждения администратора.
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="section-tag">YOUR ACCOUNT</div>
+  <h2>Твой баланс</h2>
+  <div class="stats">
+   <div class="stat">
+    <small>Серебро</small>
+    <strong id="silverBalance">0</strong>
+   </div>
+   <div class="stat">
+    <small>Бесплатные прокрутки</small>
+    <strong id="spinsBalance">0</strong>
+   </div>
+  </div>
+  <div class="notice">
+   1 Telegram Star соответствует 1 единице внутреннего серебра по правилам GiftsDrop.
+  </div>
+ </div>
+
+ <div class="card" id="adminPanel">
+  <div class="section-tag">CONTROL CENTER</div>
+  <h2>Админ-панель</h2>
+  <p class="muted">Заявки на пополнение серебра</p>
+  <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
+  <div id="adminMessage"></div>
+  <div id="requests"></div>
+ </div>
+
+</section>
+
+<!-- ЭКРАН 4: ПОДАРКИ -->
+<section class="tab-page" id="tab-gifts">
+
+ <div class="card">
+  <div class="gift-hero">
+   <div class="section-tag">GIFTS MARKET</div>
+   <div class="gift-icon">🎁</div>
+   <h2>Магазин подарков</h2>
+   <p class="muted">
+    Выбирай подарки Telegram и получай их прямо на свой аккаунт.
+   </p>
+   <div class="gift-soon">✦ ГОТОВИМ К ЗАПУСКУ ✦</div>
+  </div>
+
+  <div class="notice">
+   Скоро здесь появится каталог подарков с ценами GiftsDrop. Мы готовим систему оплаты, проверки наличия и автоматической выдачи подарков через Telegram-бота.
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="section-tag">COMING SOON</div>
+  <h2>Что появится в магазине?</h2>
+
+  <div class="odds">
+   <span>🎁 Каталог подарков</span>
+   <b>Скоро</b>
+  </div>
+  <div class="odds">
+   <span>💎 Цены ниже обычных</span>
+   <b>Скоро</b>
+  </div>
+  <div class="odds">
+   <span>⚡ Автоматическая выдача</span>
+   <b>Скоро</b>
+  </div>
+
+  <p class="muted" style="margin-top:14px">
+   Цены будут указаны отдельно для каждого подарка после подключения магазина. Пока покупка через эту вкладку недоступна.
+  </p>
+ </div>
+
+</section>
 
 <div class="footer">GIFTS DROP &nbsp; • &nbsp; PREMIUM NFT</div>
+
+<!-- НИЖНЯЯ ПАНЕЛЬ -->
+<nav class="bottom-nav">
+ <button class="nav-button active" id="nav-spin" onclick="showTab('spin')">
+  <span class="nav-icon">🎰</span>
+  <span>Рулетка</span>
+ </button>
+
+ <button class="nav-button" id="nav-friends" onclick="showTab('friends')">
+  <span class="nav-icon">👥</span>
+  <span>Друзья</span>
+ </button>
+
+ <button class="nav-button" id="nav-balance" onclick="showTab('balance')">
+  <span class="nav-icon">💎</span>
+  <span>Баланс</span>
+ </button>
+
+ <button class="nav-button" id="nav-gifts" onclick="showTab('gifts')">
+  <span class="nav-icon">🎁</span>
+  <span>Подарки</span>
+ </button>
+</nav>
 
 <script>
 const tg = window.Telegram.WebApp;
@@ -559,6 +761,25 @@ tg.expand();
 let referralLink = '';
 let wheelRotation = 0;
 let spinning = false;
+
+function showTab(name){
+ const tabs=['spin','friends','balance','gifts'];
+
+ tabs.forEach(tab=>{
+  document.getElementById('tab-'+tab).classList.toggle('active',tab===name);
+  document.getElementById('nav-'+tab).classList.toggle('active',tab===name);
+ });
+
+ window.scrollTo({top:0,behavior:'smooth'});
+
+ if(name==='friends'){
+  loadReferrals();
+ }
+
+ if(name==='balance'){
+  loadAccount();
+ }
+}
 
 async function api(url, options={}) {
  const response = await fetch(url,{
@@ -583,10 +804,16 @@ function openRecipient(){
 async function loadAccount(){
  try{
   const data=await api('/api/me');
+
   document.getElementById('silver').textContent=data.silver;
   document.getElementById('spins').textContent=data.free_spins;
+
+  document.getElementById('silverBalance').textContent=data.silver;
+  document.getElementById('spinsBalance').textContent=data.free_spins;
+
   await loadReferrals();
   await checkAdmin();
+
  }catch(error){
   document.getElementById('message').textContent=error.message;
  }
@@ -599,10 +826,12 @@ async function loadReferrals(){
 
   document.getElementById('refCount').textContent=data.referral_count;
   document.getElementById('refProgress').style.width=(data.progress*10)+'%';
+
   document.getElementById('refProgressText').textContent=
    data.progress+' из 10 — осталось '+data.remaining;
 
   document.getElementById('refLink').textContent=referralLink;
+
  }catch(error){
   document.getElementById('refMessage').textContent=error.message;
  }
@@ -625,7 +854,9 @@ async function copyReferral(){
    document.execCommand('copy');
    input.remove();
   }
+
   document.getElementById('refMessage').textContent='Ссылка скопирована!';
+
  }catch(error){
   document.getElementById('refMessage').textContent='Не удалось скопировать. Скопируй ссылку вручную.';
  }
@@ -653,16 +884,13 @@ async function spin(){
 
  wheel.classList.remove('wheel-result');
 
- // Каждый новый запуск добавляет несколько полных оборотов.
  wheelRotation += 1800 + Math.floor(Math.random()*360);
 
- // Запрос отправляется серверу, который определяет настоящий результат.
  const request=api('/api/spin',{
   method:'POST',
   body:JSON.stringify({})
  });
 
- // Запускаем плавное вращение.
  wheel.style.transform='rotate('+wheelRotation+'deg)';
 
  try{
@@ -675,7 +903,6 @@ async function spin(){
    throw error;
   }
 
-  // Ждём завершения анимации колеса.
   await new Promise(resolve=>setTimeout(resolve,5300));
 
   wheel.classList.add('wheel-result');
@@ -694,6 +921,7 @@ async function spin(){
 
  }catch(error){
   message.textContent=error.message;
+
  }finally{
   spinning=false;
   button.disabled=false;
@@ -723,6 +951,7 @@ async function createTopup(){
    ' и дождись проверки администратором.';
 
   document.getElementById('stars').value='';
+
  }catch(error){
   output.textContent=error.message;
  }
@@ -733,6 +962,7 @@ async function checkAdmin(){
   await api('/api/admin/topups');
   document.getElementById('adminPanel').style.display='block';
   await loadRequests();
+
  }catch(error){
   document.getElementById('adminPanel').style.display='none';
  }
@@ -780,6 +1010,7 @@ async function loadRequests(){
    item.appendChild(reject);
    output.appendChild(item);
   });
+
  }catch(error){
   message.textContent=error.message;
  }
@@ -807,6 +1038,7 @@ async function processRequest(id,action){
 
   await loadRequests();
   await loadAccount();
+
  }catch(error){
   message.textContent=error.message;
  }
