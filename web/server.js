@@ -17,15 +17,24 @@ if (!BOT_TOKEN || !DATABASE_URL || !ADMIN_ID) {
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 
+const toStars = (gram) => Math.ceil(gram * 62.6 / 10) * 10;
+
 const PRODUCTS = [
-  { id: 'gift_300', name: 'Telegram Gift 300', stars: 300, discount: 5, emoji: '🎁' },
-  { id: 'gift_500', name: 'Telegram Gift 500', stars: 500, discount: 5, emoji: '🎁' },
-  { id: 'gift_750', name: 'Telegram Gift 750', stars: 750, discount: 5, emoji: '💎' },
-  { id: 'gift_1000', name: 'Telegram Gift 1000', stars: 1000, discount: 10, emoji: '💎' },
-  { id: 'gift_1500', name: 'Telegram Gift 1500', stars: 1500, discount: 10, emoji: '👑' },
-  { id: 'gift_2000', name: 'Telegram Gift 2000', stars: 2000, discount: 10, emoji: '👑' },
-  { id: 'gift_3000', name: 'Telegram Gift 3000', stars: 3000, discount: 10, emoji: '✨' },
-  { id: 'gift_5000', name: 'Telegram Gift 5000', stars: 5000, discount: 10, emoji: '✨' }
+  { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸' },
+  { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍' },
+  { id: 'genie_lamp', name: 'Genie Lamp', stars: toStars(44), discount: 10, emoji: '🪔' },
+  { id: 'voodoo_doll', name: 'Voodoo Doll', stars: toStars(49), discount: 10, emoji: '🧸' },
+  { id: 'bonded_ring', name: 'Bonded Ring', stars: toStars(55), discount: 10, emoji: '💍' },
+  { id: 'sharp_tongue', name: 'Sharp Tongue', stars: toStars(58), discount: 10, emoji: '👅' },
+  { id: 'kissed_frog', name: 'Kissed Frog', stars: toStars(68), discount: 10, emoji: '🐸' },
+  { id: 'magic_potion', name: 'Magic Potion', stars: toStars(75), discount: 10, emoji: '🧪' },
+  { id: 'crystal_ball', name: 'Crystal Ball', stars: toStars(17), discount: 5, emoji: '🔮' },
+  { id: 'flying_broom', name: 'Flying Broom', stars: toStars(16), discount: 5, emoji: '🧹' },
+  { id: 'record_player', name: 'Record Player', stars: toStars(15), discount: 5, emoji: '🎵' },
+  { id: 'sakura_flower', name: 'Sakura Flower', stars: toStars(14), discount: 5, emoji: '🌸' },
+  { id: 'top_hat', name: 'Top Hat', stars: toStars(13), discount: 5, emoji: '🎩' },
+  { id: 'jingle_bell', name: 'Jingle Bell', stars: toStars(12), discount: 5, emoji: '🔔' },
+  { id: 'snow_globe', name: 'Snow Globe', stars: toStars(9), discount: 5, emoji: '❄️' }
 ];
 
 async function initDatabase() {
