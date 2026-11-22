@@ -17,6 +17,17 @@ if (!BOT_TOKEN || !DATABASE_URL || !ADMIN_ID) {
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 
+const PRODUCTS = [
+  { id: 'gift_300', name: 'Telegram Gift 300', stars: 300, discount: 5, emoji: '🎁' },
+  { id: 'gift_500', name: 'Telegram Gift 500', stars: 500, discount: 5, emoji: '🎁' },
+  { id: 'gift_750', name: 'Telegram Gift 750', stars: 750, discount: 5, emoji: '💎' },
+  { id: 'gift_1000', name: 'Telegram Gift 1000', stars: 1000, discount: 10, emoji: '💎' },
+  { id: 'gift_1500', name: 'Telegram Gift 1500', stars: 1500, discount: 10, emoji: '👑' },
+  { id: 'gift_2000', name: 'Telegram Gift 2000', stars: 2000, discount: 10, emoji: '👑' },
+  { id: 'gift_3000', name: 'Telegram Gift 3000', stars: 3000, discount: 10, emoji: '✨' },
+  { id: 'gift_5000', name: 'Telegram Gift 5000', stars: 5000, discount: 10, emoji: '✨' }
+];
+
 async function initDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -50,6 +61,33 @@ async function initDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       processed_at TIMESTAMPTZ
     );
+
+    CREATE TABLE IF NOT EXISTS gift_orders (
+      id BIGSERIAL PRIMARY KEY,
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      stars INTEGER NOT NULL CHECK (stars BETWEEN 300 AND 5000),
+      discount INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'pending_payment'
+        CHECK (status IN (
+          'pending_payment',
+          'paid',
+          'completed',
+          'cancelled'
+        )),
+      telegram_charge_id TEXT UNIQUE,
+      provider_charge_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      paid_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ
+    );
+
+    CREATE INDEX IF NOT EXISTS gift_orders_user_idx
+      ON gift_orders(telegram_id, created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS gift_orders_status_idx
+      ON gift_orders(status, created_at DESC);
   `);
 }
 
@@ -149,11 +187,9 @@ async function readBody(req) {
   });
 }
 
-// Создание пользователя и однократная регистрация приглашения
 async function ensureUser(user, req) {
   const telegramId = String(user.id);
   const referralId = getReferralId(req);
-
   const client = await pool.connect();
 
   try {
@@ -180,7 +216,6 @@ async function ensureUser(user, req) {
       telegramId
     ]);
 
-    // Реферал засчитывается только при первой регистрации
     if (
       inserted.rowCount === 1 &&
       referralId &&
@@ -224,15 +259,342 @@ async function ensureUser(user, req) {
 async function requireAdmin(req) {
   const user = getTelegramUser(req);
 
-  return user &&
-    String(user.id) === String(ADMIN_ID)
-      ? user
-      : null;
+  return user && String(user.id) === String(ADMIN_ID)
+    ? user
+    : null;
+}
+
+async function createTelegramInvoice(order) {
+  const payload = [
+    'gift',
+    order.id,
+    order.telegram_id,
+    order.stars
+  ].join(':');
+
+  const response = await fetch(
+    `https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: order.product_name,
+        description: `Покупка подарка GIFTSDROP MARKET. Заказ №${order.id}`,
+        payload,
+        currency: 'XTR',
+        prices: [
+          {
+            label: order.product_name,
+            amount: order.stars
+          }
+        ]
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok || !data.result) {
+    throw new Error(
+      data.description || 'Telegram не создал счёт'
+    );
+  }
+
+  return data.result;
 }
 
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
+
+    // Внутреннее подтверждение оплаты от Python-бота
+    if (
+      url.pathname === '/api/internal/store/paid' &&
+      req.method === 'POST'
+    ) {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const body = await readBody(req);
+      const orderId = String(body.order_id || '');
+      const telegramId = String(body.telegram_id || '');
+      const stars = Number(body.stars);
+      const chargeId = String(body.charge_id || '');
+
+      if (
+        !/^\d+$/.test(orderId) ||
+        !/^\d+$/.test(telegramId) ||
+        !Number.isSafeInteger(stars) ||
+        stars < 300 ||
+        stars > 5000 ||
+        body.currency !== 'XTR' ||
+        !chargeId
+      ) {
+        return send(res, 400, {
+          error: 'Некорректные данные платежа'
+        });
+      }
+
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        const result = await client.query(
+          'SELECT * FROM gift_orders WHERE id = $1 FOR UPDATE',
+          [orderId]
+        );
+
+        if (!result.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 404, {
+            error: 'Заказ не найден'
+          });
+        }
+
+        const order = result.rows[0];
+
+        if (
+          String(order.telegram_id) !== telegramId ||
+          Number(order.stars) !== stars
+        ) {
+          await client.query('ROLLBACK');
+          return send(res, 400, {
+            error: 'Данные платежа не совпадают с заказом'
+          });
+        }
+
+        if (order.status === 'paid' || order.status === 'completed') {
+          if (order.telegram_charge_id === chargeId) {
+            await client.query('COMMIT');
+            return send(res, 200, { success: true, already_paid: true });
+          }
+
+          await client.query('ROLLBACK');
+          return send(res, 409, {
+            error: 'Заказ уже оплачен другим платежом'
+          });
+        }
+
+        if (order.status !== 'pending_payment') {
+          await client.query('ROLLBACK');
+          return send(res, 409, {
+            error: 'Заказ нельзя оплатить'
+          });
+        }
+
+        await client.query(`
+          UPDATE gift_orders
+          SET status = 'paid',
+              telegram_charge_id = $1,
+              provider_charge_id = $2,
+              paid_at = NOW()
+          WHERE id = $3
+        `, [
+          chargeId,
+          body.provider_charge_id || null,
+          orderId
+        ]);
+
+        await client.query('COMMIT');
+
+        return send(res, 200, { success: true });
+
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    // Каталог магазина
+    if (
+      url.pathname === '/api/store/catalog' &&
+      req.method === 'GET'
+    ) {
+      return send(res, 200, {
+        products: PRODUCTS.map(product => ({
+          ...product,
+          old_stars: product.stars + product.discount
+        }))
+      });
+    }
+
+    // Создание заказа и Telegram-счёта
+    if (
+      url.pathname === '/api/store/invoice' &&
+      req.method === 'POST'
+    ) {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      await ensureUser(user, req);
+
+      const body = await readBody(req);
+      const product = PRODUCTS.find(
+        item => item.id === String(body.product_id || '')
+      );
+
+      if (!product) {
+        return send(res, 404, {
+          error: 'Товар не найден'
+        });
+      }
+
+      const created = await pool.query(`
+        INSERT INTO gift_orders (
+          telegram_id,
+          product_id,
+          product_name,
+          stars,
+          discount
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, telegram_id, product_name, stars
+      `, [
+        String(user.id),
+        product.id,
+        product.name,
+        product.stars,
+        product.discount
+      ]);
+
+      const order = created.rows[0];
+
+      try {
+        const invoiceLink = await createTelegramInvoice(order);
+
+        return send(res, 201, {
+          order_id: order.id,
+          invoice_link: invoiceLink,
+          stars: order.stars
+        });
+      } catch (error) {
+        await pool.query(`
+          UPDATE gift_orders
+          SET status = 'cancelled'
+          WHERE id = $1 AND status = 'pending_payment'
+        `, [order.id]);
+
+        throw error;
+      }
+    }
+
+    // История заказов покупателя
+    if (
+      url.pathname === '/api/store/orders' &&
+      req.method === 'GET'
+    ) {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      const result = await pool.query(`
+        SELECT
+          id,
+          product_name,
+          stars,
+          status,
+          created_at,
+          paid_at,
+          completed_at
+        FROM gift_orders
+        WHERE telegram_id = $1
+        ORDER BY created_at DESC
+        LIMIT 50
+      `, [String(user.id)]);
+
+      return send(res, 200, {
+        orders: result.rows
+      });
+    }
+
+    // Админ-панель: заказы магазина
+    if (
+      url.pathname === '/api/admin/store/orders' &&
+      req.method === 'GET'
+    ) {
+      const admin = await requireAdmin(req);
+
+      if (!admin) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const result = await pool.query(`
+        SELECT
+          o.id,
+          o.telegram_id,
+          u.username,
+          u.first_name,
+          o.product_name,
+          o.stars,
+          o.discount,
+          o.status,
+          o.created_at,
+          o.paid_at
+        FROM gift_orders o
+        JOIN users u ON u.telegram_id = o.telegram_id
+        WHERE o.status IN ('paid', 'completed')
+        ORDER BY
+          CASE WHEN o.status = 'paid' THEN 0 ELSE 1 END,
+          o.created_at DESC
+        LIMIT 100
+      `);
+
+      return send(res, 200, {
+        orders: result.rows
+      });
+    }
+
+    // Отметить подарок как отправленный
+    const giftDone = url.pathname.match(
+      /^\/api\/admin\/store\/orders\/(\d+)\/done$/
+    );
+
+    if (giftDone && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+
+      if (!admin) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const result = await pool.query(`
+        UPDATE gift_orders
+        SET status = 'completed',
+            completed_at = NOW()
+        WHERE id = $1
+          AND status = 'paid'
+        RETURNING id
+      `, [giftDone[1]]);
+
+      if (!result.rowCount) {
+        return send(res, 409, {
+          error: 'Заказ не найден или уже выполнен'
+        });
+      }
+
+      return send(res, 200, {
+        success: true,
+        message: 'Заказ отмечен как выполненный'
+      });
+    }
 
     // Аккаунт
     if (url.pathname === '/api/me' && req.method === 'GET') {
@@ -255,7 +617,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, result.rows[0]);
     }
 
-    // Реферальная статистика
+    // Рефералы
     if (url.pathname === '/api/referrals' && req.method === 'GET') {
       const user = getTelegramUser(req);
 
@@ -294,6 +656,8 @@ const server = http.createServer(async (req, res) => {
           error: 'Ошибка авторизации Telegram'
         });
       }
+
+      await ensureUser(user, req);
 
       const client = await pool.connect();
 
@@ -372,7 +736,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // Пополнение
+    // Пополнение серебра
     if (url.pathname === '/api/topup' && req.method === 'POST') {
       const user = getTelegramUser(req);
 
@@ -417,7 +781,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // Заявки администратора
+    // Заявки на пополнение для администратора
     if (url.pathname === '/api/admin/topups' && req.method === 'GET') {
       const admin = await requireAdmin(req);
 
@@ -449,7 +813,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // Подтверждение / отклонение
+    // Подтверждение / отклонение пополнения
     const decision = url.pathname.match(
       /^\/api\/admin\/topups\/(\d+)\/(approve|reject)$/
     );
