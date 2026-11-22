@@ -5,577 +5,219 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#090909">
-<title>GiftsDrop — Luxury NFT</title>
+<title>GIFTSDROP MARKET</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
 
 :root{
- --bg:#090909;
- --panel:#111110;
- --gold:#d6b36a;
- --gold2:#f4dfa5;
- --muted:#929087;
- --line:rgba(214,179,106,.17);
+ --bg:#090909;--panel:#111110;--gold:#d6b36a;
+ --gold2:#f4dfa5;--muted:#929087;--line:rgba(214,179,106,.17);
  --white:#f5f1e8;
 }
-
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-
 body{
- margin:0;
- padding:0 17px calc(105px + env(safe-area-inset-bottom));
- background:
- radial-gradient(ellipse at 50% -10%,rgba(180,135,53,.16),transparent 48%),
- radial-gradient(ellipse at 100% 45%,rgba(125,92,35,.07),transparent 38%),
- var(--bg);
- color:var(--white);
- font-family:'DM Sans',Arial,sans-serif;
- min-height:100vh;
- overflow-x:hidden;
+ margin:0;padding:0 17px calc(105px + env(safe-area-inset-bottom));
+ background:radial-gradient(ellipse at 50% -10%,rgba(180,135,53,.16),transparent 48%),var(--bg);
+ color:var(--white);font-family:'DM Sans',Arial,sans-serif;min-height:100vh;overflow-x:hidden;
 }
-
-body:before{
- content:"";
- position:fixed;
- inset:0;
- pointer-events:none;
- opacity:.13;
- background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.15'/%3E%3C/svg%3E");
- z-index:0;
-}
-
 header,.card,.footer,.tab-page{position:relative;z-index:1}
-
-header{
- text-align:center;
- padding:25px 0 25px;
-}
-
+header{text-align:center;padding:25px 0}
 .brand-mark{
- width:54px;
- height:54px;
- border:1px solid rgba(214,179,106,.5);
- border-radius:18px;
- margin:0 auto 15px;
- display:flex;
- align-items:center;
- justify-content:center;
- color:var(--gold2);
- font-family:'Playfair Display',serif;
- font-size:29px;
- box-shadow:0 0 35px rgba(214,179,106,.12),inset 0 0 20px rgba(214,179,106,.07);
- transform:rotate(-5deg);
+ width:54px;height:54px;border:1px solid rgba(214,179,106,.5);
+ border-radius:18px;margin:0 auto 15px;display:flex;align-items:center;
+ justify-content:center;color:var(--gold2);font:29px 'Playfair Display';
+ box-shadow:0 0 35px rgba(214,179,106,.12);transform:rotate(-5deg)
 }
-
 .logo{
- font-family:'Playfair Display',serif;
- font-size:32px;
- font-weight:800;
- letter-spacing:3px;
+ font:800 32px 'Playfair Display';letter-spacing:3px;
  background:linear-gradient(90deg,#b48b46,#f6e6b4,#c49b52,#f6e6b4);
- background-size:200% auto;
- -webkit-background-clip:text;
- background-clip:text;
- color:transparent;
- animation:shine 7s linear infinite;
+ -webkit-background-clip:text;background-clip:text;color:transparent
 }
-
-.subtitle{
- color:#8d877a;
- font-size:10px;
- letter-spacing:5px;
- margin-top:8px;
- text-transform:uppercase;
+.subtitle{color:#8d877a;font-size:10px;letter-spacing:4px;margin-top:8px}
+.top-label,.gift-soon{
+ display:inline-block;margin-top:15px;border:1px solid var(--line);
+ border-radius:30px;padding:8px 13px;color:var(--gold);
+ font-size:10px;letter-spacing:1.5px
 }
-
-.top-label{
- display:inline-block;
- margin-top:17px;
- border:1px solid var(--line);
- border-radius:30px;
- padding:7px 13px;
- color:var(--gold);
- font-size:10px;
- letter-spacing:2px;
-}
-
-@keyframes shine{
- 0%{background-position:0% 50%}
- 100%{background-position:200% 50%}
-}
-
 .card{
  background:linear-gradient(145deg,rgba(26,25,22,.97),rgba(15,15,14,.97));
- border:1px solid var(--line);
- border-radius:22px;
- padding:19px;
- margin-bottom:15px;
- box-shadow:0 12px 35px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.025);
- position:relative;
- overflow:hidden;
+ border:1px solid var(--line);border-radius:22px;padding:19px;margin-bottom:15px;
+ box-shadow:0 12px 35px rgba(0,0,0,.23);overflow:hidden
 }
-
 .card:after{
- content:"";
- position:absolute;
- top:0;
- left:18px;
- right:18px;
- height:1px;
- background:linear-gradient(90deg,transparent,rgba(244,223,165,.3),transparent);
- pointer-events:none;
+ content:"";position:absolute;top:0;left:18px;right:18px;height:1px;
+ background:linear-gradient(90deg,transparent,rgba(244,223,165,.3),transparent)
 }
-
 .stats{display:flex;gap:11px}
-
 .stat{
- flex:1;
- background:linear-gradient(145deg,#211f19,#151512);
- border:1px solid rgba(214,179,106,.14);
- border-radius:17px;
- padding:16px 10px;
- text-align:center;
+ flex:1;background:linear-gradient(145deg,#211f19,#151512);
+ border:1px solid rgba(214,179,106,.14);border-radius:17px;padding:16px 10px;text-align:center
 }
-
-.stat small{color:var(--muted);font-size:11px;letter-spacing:.4px}
-
-.stat strong{
- display:block;
- color:var(--gold2);
- font-family:'Playfair Display',serif;
- font-size:29px;
- margin-top:8px;
-}
-
-h2{
- font-family:'Playfair Display',serif;
- font-size:21px;
- font-weight:700;
- letter-spacing:.2px;
- margin:0 0 15px;
- color:#f1e5c8;
-}
-
-.section-tag{
- color:var(--gold);
- font-size:9px;
- letter-spacing:2.5px;
- text-transform:uppercase;
- margin-bottom:8px;
-}
-
-.wheel-wrap{
- position:relative;
- padding:10px 0 14px;
-}
-
-.wheel-glow{
- position:absolute;
- width:220px;
- height:220px;
- border-radius:50%;
- background:rgba(214,179,106,.13);
- filter:blur(40px);
- top:50%;
- left:50%;
- transform:translate(-50%,-50%);
-}
-
-.wheel{
- position:relative;
- width:228px;
- height:228px;
- max-width:75vw;
- max-height:75vw;
- margin:10px auto;
- border-radius:50%;
- border:5px solid #b9934f;
- background:conic-gradient(
- #e6c77f 0deg 45deg,
- #211b10 45deg 90deg,
- #c4a15d 90deg 135deg,
- #181611 135deg 180deg,
- #e6c77f 180deg 225deg,
- #211b10 225deg 270deg,
- #c4a15d 270deg 315deg,
- #181611 315deg 360deg
- );
- box-shadow:
- 0 0 0 7px rgba(214,179,106,.07),
- 0 0 35px rgba(214,179,106,.2),
- inset 0 0 20px rgba(0,0,0,.7);
- display:flex;
- align-items:center;
- justify-content:center;
- transform:rotate(0deg);
- transition:transform 5.2s cubic-bezier(.12,.72,.12,1);
- will-change:transform;
-}
-
-.wheel:before{
- content:"";
- position:absolute;
- inset:11px;
- border:1px solid rgba(255,239,195,.5);
- border-radius:50%;
-}
-
-.wheel-center{
- width:94px;
- height:94px;
- border-radius:50%;
- background:radial-gradient(circle at 35% 30%,#393020,#100f0c 70%);
- border:2px solid #d6b36a;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:35px;
- box-shadow:0 0 25px rgba(214,179,106,.28);
- position:relative;
- z-index:2;
-}
-
-.spin-pointer{
- position:absolute;
- top:0;
- left:50%;
- transform:translateX(-50%);
- z-index:3;
- width:0;
- height:0;
- border-left:11px solid transparent;
- border-right:11px solid transparent;
- border-top:22px solid #f1d58d;
- filter:drop-shadow(0 2px 5px #000);
-}
-
-.wheel-result{animation:resultGlow 1s ease}
-
-@keyframes resultGlow{
- 0%{filter:brightness(1)}
- 50%{filter:brightness(1.8);transform:scale(1.035)}
- 100%{filter:brightness(1);transform:scale(1)}
-}
-
+.stat small{color:var(--muted);font-size:11px}
+.stat strong{display:block;color:var(--gold2);font:29px 'Playfair Display';margin-top:8px}
+h2{font:700 21px 'Playfair Display';margin:0 0 15px;color:#f1e5c8}
+.section-tag{color:var(--gold);font-size:9px;letter-spacing:2.5px;margin-bottom:8px}
+.muted{color:var(--muted);font-size:12px;line-height:1.75;margin:0 0 13px}
 button{
- width:100%;
- border:1px solid rgba(255,235,185,.45);
- border-radius:14px;
- padding:16px;
- margin-top:11px;
- font-family:'DM Sans',sans-serif;
- font-size:12px;
- font-weight:800;
- letter-spacing:1.5px;
- color:#17130b;
- background:linear-gradient(110deg,#a77d36,#f1d997,#bd954d);
- box-shadow:0 5px 20px rgba(185,143,63,.13),inset 0 1px 0 rgba(255,255,255,.5);
- transition:transform .2s,filter .2s,box-shadow .2s;
- cursor:pointer;
+ width:100%;border:1px solid rgba(255,235,185,.45);border-radius:14px;
+ padding:15px;margin-top:11px;font:800 12px 'DM Sans';letter-spacing:1px;
+ color:#17130b;background:linear-gradient(110deg,#a77d36,#f1d997,#bd954d);
+ cursor:pointer
 }
-
-button:active{transform:scale(.98);filter:brightness(.92)}
 button:disabled{opacity:.45;cursor:not-allowed}
-
+button:active{transform:scale(.98)}
 button.secondary{
- color:var(--gold2);
- background:linear-gradient(145deg,#252117,#171510);
- border:1px solid rgba(214,179,106,.25);
- box-shadow:none;
+ color:var(--gold2);background:linear-gradient(145deg,#252117,#171510);
+ border:1px solid rgba(214,179,106,.25)
 }
-
-button.danger{
- color:#f0dada;
- background:linear-gradient(145deg,#4b2424,#291717);
- border:1px solid rgba(190,90,90,.3);
-}
-
-.muted{
- color:var(--muted);
- font-size:12px;
- line-height:1.75;
- margin:0 0 13px;
-}
-
+button.danger{color:#f0dada;background:#391d1d;border-color:#784040}
 .notice{
- background:rgba(214,179,106,.055);
- border:1px solid rgba(214,179,106,.15);
- border-radius:13px;
- padding:13px;
- color:#bcb19a;
- font-size:11px;
- line-height:1.7;
- margin-top:14px;
+ background:rgba(214,179,106,.055);border:1px solid rgba(214,179,106,.15);
+ border-radius:13px;padding:13px;color:#bcb19a;font-size:11px;line-height:1.7;margin-top:14px
 }
-
-#message,#adminMessage,#topupMessage,#refMessage{
- color:var(--gold2);
- font-size:12px;
- line-height:1.6;
- margin-top:12px;
+#message,#adminMessage,#topupMessage,#refMessage,#giftMessage,#giftAdminMessage{
+ color:var(--gold2);font-size:12px;line-height:1.6;margin-top:12px
 }
-
 .odds{
- display:flex;
- justify-content:space-between;
- align-items:center;
- padding:12px 0;
- border-bottom:1px solid rgba(255,255,255,.055);
- font-size:12px;
- color:#bdb8ac;
+ display:flex;justify-content:space-between;align-items:center;
+ padding:12px 0;border-bottom:1px solid rgba(255,255,255,.055);
+ font-size:12px;color:#bdb8ac
 }
-
 .odds:last-child{border-bottom:0}
 .odds b{color:var(--gold2);font-size:13px}
-
-.ref-stats{
- display:flex;
- justify-content:space-between;
- color:#c6bda9;
- font-size:11px;
-}
-
+.ref-stats{display:flex;justify-content:space-between;color:#c6bda9;font-size:11px}
 .ref-stats b{color:var(--gold2)}
-
-.progress{
- height:7px;
- background:#29261e;
- border-radius:20px;
- overflow:hidden;
- margin:14px 0;
-}
-
+.progress{height:7px;background:#29261e;border-radius:20px;overflow:hidden;margin:14px 0}
 .progress-fill{
- height:100%;
- width:0;
- background:linear-gradient(90deg,#9c7130,#f4dfa5);
- border-radius:20px;
- transition:width .5s ease;
- box-shadow:0 0 12px rgba(214,179,106,.35);
+ height:100%;width:0;background:linear-gradient(90deg,#9c7130,#f4dfa5);
+ border-radius:20px;transition:width .5s
 }
-
 .ref-link{
- background:#0b0b09;
- border:1px solid rgba(214,179,106,.22);
- border-radius:12px;
- padding:14px;
- font-size:11px;
- color:#d9c28e;
- line-height:1.6;
- word-break:break-all;
- margin-top:13px;
+ background:#0b0b09;border:1px solid rgba(214,179,106,.22);
+ border-radius:12px;padding:14px;font-size:11px;color:#d9c28e;
+ line-height:1.6;word-break:break-all;margin-top:13px
 }
-
 input,select{
- width:100%;
- padding:15px;
- border-radius:13px;
- border:1px solid rgba(214,179,106,.2);
- background:#0c0c0a;
- color:#f1e5c8;
- margin:8px 0;
- font-family:'DM Sans',sans-serif;
- font-size:13px;
- outline:none;
+ width:100%;padding:15px;border-radius:13px;border:1px solid rgba(214,179,106,.2);
+ background:#0c0c0a;color:#f1e5c8;margin:8px 0;font:13px 'DM Sans';outline:none
 }
-
-input:focus,select:focus{
- border-color:#c5a15c;
- box-shadow:0 0 0 3px rgba(214,179,106,.07);
-}
-
-input::placeholder{color:#777165}
-
 .request{
- background:#171612;
- border:1px solid var(--line);
- border-radius:13px;
- padding:13px;
- margin:10px 0;
- color:#cfc4ae;
- font-size:12px;
- line-height:1.7;
+ background:#171612;border:1px solid var(--line);border-radius:13px;
+ padding:13px;margin:10px 0;color:#cfc4ae;font-size:12px;line-height:1.7
 }
-
-.request button{
- width:48%;
- display:inline-block;
- font-size:10px;
- padding:13px 5px;
-}
-
-#adminPanel{display:none}
-
-.footer{
- text-align:center;
- padding:15px 0 5px;
- color:#666052;
- font-size:9px;
- letter-spacing:3px;
-}
-
-/* Переключение экранов */
-
-.tab-page{
- display:none;
- animation:pageIn .28s ease;
-}
-
+.request button{width:48%;display:inline-block;font-size:10px;padding:12px 5px}
+#adminPanel,#giftAdminPanel{display:none}
+.tab-page{display:none;animation:pageIn .28s ease}
 .tab-page.active{display:block}
-
-@keyframes pageIn{
- from{opacity:0;transform:translateY(8px)}
- to{opacity:1;transform:translateY(0)}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.wheel-wrap{position:relative;padding:10px 0 14px}
+.wheel-glow{
+ position:absolute;width:220px;height:220px;border-radius:50%;
+ background:rgba(214,179,106,.13);filter:blur(40px);top:50%;left:50%;transform:translate(-50%,-50%)
 }
-
-/* Нижняя навигация */
-
+.wheel{
+ position:relative;width:228px;height:228px;max-width:75vw;max-height:75vw;
+ margin:10px auto;border-radius:50%;border:5px solid #b9934f;
+ background:conic-gradient(#e6c77f 0deg 45deg,#211b10 45deg 90deg,#c4a15d 90deg 135deg,#181611 135deg 180deg,#e6c77f 180deg 225deg,#211b10 225deg 270deg,#c4a15d 270deg 315deg,#181611 315deg 360deg);
+ box-shadow:0 0 0 7px rgba(214,179,106,.07),0 0 35px rgba(214,179,106,.2);
+ display:flex;align-items:center;justify-content:center;
+ transition:transform 5.2s cubic-bezier(.12,.72,.12,1)
+}
+.wheel:before{content:"";position:absolute;inset:11px;border:1px solid rgba(255,239,195,.5);border-radius:50%}
+.wheel-center{
+ width:94px;height:94px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#393020,#100f0c 70%);
+ border:2px solid #d6b36a;display:flex;align-items:center;justify-content:center;
+ font-size:35px;box-shadow:0 0 25px rgba(214,179,106,.28);position:relative;z-index:2
+}
+.spin-pointer{
+ position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:3;
+ width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;
+ border-top:22px solid #f1d58d
+}
+.wheel-result{animation:resultGlow 1s ease}
+@keyframes resultGlow{50%{filter:brightness(1.8);transform:scale(1.035)}}
+.gift-hero{text-align:center;padding:12px 8px 20px}
+.gift-icon{font-size:55px;margin:10px 0;filter:drop-shadow(0 0 20px rgba(214,179,106,.3))}
+.market-title{font:800 25px 'Playfair Display';letter-spacing:2px;color:var(--gold2)}
+.market-subtitle{font-size:9px;letter-spacing:3px;color:#9d927d;margin-top:8px}
+.gift-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.gift-product{
+ min-width:0;border:1px solid rgba(214,179,106,.2);border-radius:17px;
+ background:linear-gradient(145deg,#211f19,#11110f);padding:12px;text-align:center
+}
+.gift-art{
+ height:104px;border-radius:12px;background:radial-gradient(circle,#40331b,#15130f 70%);
+ display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:11px
+}
+.gift-name{font-size:11px;font-weight:800;color:#f2e4c5;min-height:30px}
+.gift-price{color:var(--gold2);font-weight:800;font-size:16px;margin-top:8px}
+.gift-old{font-size:10px;color:#777;text-decoration:line-through;margin-top:4px}
+.gift-discount{font-size:9px;color:#d8bd7d;margin-top:5px}
+.gift-product button{padding:12px 5px;font-size:10px;margin-top:10px}
+.order-status{font-weight:800;color:var(--gold2)}
+.order-card{
+ background:#171612;border:1px solid var(--line);border-radius:13px;
+ padding:13px;margin:10px 0;font-size:12px;line-height:1.8;color:#d0c5ae
+}
 .bottom-nav{
- position:fixed;
- z-index:20;
- bottom:0;
- left:0;
- right:0;
+ position:fixed;z-index:20;bottom:0;left:0;right:0;
  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
- background:rgba(12,12,11,.94);
- backdrop-filter:blur(18px);
- -webkit-backdrop-filter:blur(18px);
+ background:rgba(12,12,11,.94);backdrop-filter:blur(18px);
  border-top:1px solid rgba(214,179,106,.2);
- display:grid;
- grid-template-columns:repeat(4,1fr);
- gap:5px;
+ display:grid;grid-template-columns:repeat(4,1fr);gap:5px
 }
-
 .nav-button{
- margin:0;
- padding:9px 2px 7px;
- border:1px solid transparent;
- border-radius:13px;
- background:transparent;
- color:#777267;
- box-shadow:none;
- display:flex;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- gap:5px;
- font-size:9px;
- font-weight:700;
- letter-spacing:.3px;
- min-width:0;
+ margin:0;padding:9px 2px 7px;border:1px solid transparent;border-radius:13px;
+ background:transparent;color:#777267;box-shadow:none;display:flex;flex-direction:column;
+ align-items:center;gap:5px;font-size:9px;letter-spacing:.3px
 }
-
-.nav-button .nav-icon{
- font-size:20px;
- line-height:1.2;
- filter:grayscale(1);
- opacity:.7;
-}
-
+.nav-icon{font-size:20px;line-height:1.2;opacity:.7}
 .nav-button.active{
- color:var(--gold2);
- background:linear-gradient(145deg,rgba(214,179,106,.14),rgba(214,179,106,.045));
- border-color:rgba(214,179,106,.2);
- box-shadow:inset 0 1px 0 rgba(244,223,165,.08);
+ color:var(--gold2);background:rgba(214,179,106,.1);
+ border-color:rgba(214,179,106,.2)
 }
-
-.nav-button.active .nav-icon{
- filter:none;
- opacity:1;
-}
-
-.gift-hero{
- text-align:center;
- padding:24px 12px;
-}
-
-.gift-icon{
- font-size:58px;
- margin-bottom:15px;
- filter:drop-shadow(0 0 20px rgba(214,179,106,.3));
-}
-
-.gift-soon{
- display:inline-block;
- border:1px solid rgba(214,179,106,.28);
- color:var(--gold2);
- background:rgba(214,179,106,.07);
- padding:8px 13px;
- border-radius:30px;
- font-size:10px;
- letter-spacing:1.5px;
- margin:12px 0;
-}
-
+.nav-button.active .nav-icon{opacity:1}
+.footer{text-align:center;padding:15px 0 5px;color:#666052;font-size:9px;letter-spacing:3px}
 @media(min-width:600px){
  body{max-width:480px;margin:0 auto}
- .bottom-nav{
-  max-width:480px;
-  left:50%;
-  transform:translateX(-50%);
-  border-left:1px solid rgba(214,179,106,.15);
-  border-right:1px solid rgba(214,179,106,.15);
- }
+ .bottom-nav{max-width:480px;left:50%;transform:translateX(-50%);border-left:1px solid var(--line);border-right:1px solid var(--line)}
 }
-
-@media(prefers-reduced-motion:reduce){
- .wheel{transition-duration:0.01ms}
- .logo{animation:none}
- .tab-page{animation:none}
-}
+@media(prefers-reduced-motion:reduce){.wheel{transition-duration:.01ms}.tab-page{animation:none}}
 </style>
 </head>
-
 <body>
 
 <header>
  <div class="brand-mark">G</div>
  <div class="logo">GIFTS DROP</div>
- <div class="subtitle">NFT ROULETTE</div>
- <div class="top-label">✦ &nbsp; PREMIUM EXPERIENCE &nbsp; ✦</div>
+ <div class="subtitle">THE WORLD OF TELEGRAM GIFTS</div>
+ <div class="top-label">✦ PREMIUM EXPERIENCE ✦</div>
 </header>
 
-<!-- ЭКРАН 1: РУЛЕТКА -->
 <section class="tab-page active" id="tab-spin">
-
  <div class="card">
   <div class="section-tag">YOUR BALANCE</div>
   <div class="stats">
-   <div class="stat">
-    <small>Серебро</small>
-    <strong id="silver">0</strong>
-   </div>
-   <div class="stat">
-    <small>Бесплатные прокрутки</small>
-    <strong id="spins">0</strong>
-   </div>
+   <div class="stat"><small>Серебро</small><strong id="silver">0</strong></div>
+   <div class="stat"><small>Бесплатные прокрутки</small><strong id="spins">0</strong></div>
   </div>
  </div>
-
  <div class="card">
   <div class="section-tag">THE MAIN EVENT</div>
   <h2>Колесо удачи</h2>
-
   <div class="wheel-wrap">
-   <div class="wheel-glow"></div>
-   <div class="spin-pointer"></div>
-   <div class="wheel" id="wheel">
-    <div class="wheel-center">✦</div>
-   </div>
+   <div class="wheel-glow"></div><div class="spin-pointer"></div>
+   <div class="wheel" id="wheel"><div class="wheel-center">✦</div></div>
   </div>
-
-  <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ &nbsp; ✦</button>
+  <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ ✦</button>
   <div id="message"></div>
-
   <div class="notice">
    Первые 3 прокрутки бесплатные. Далее стоимость одной прокрутки — 20 серебра.
    Выдача NFT осуществляется администратором после проверки результата.
   </div>
  </div>
-
  <div class="card">
   <div class="section-tag">WINNING PROBABILITIES</div>
   <h2>Шансы выпадения</h2>
@@ -583,174 +225,112 @@ input::placeholder{color:#777165}
   <div class="odds"><span>Обычный NFT</span><b>9,99%</b></div>
   <div class="odds"><span>Редкий NFT</span><b>0,01%</b></div>
  </div>
-
 </section>
 
-<!-- ЭКРАН 2: ДРУЗЬЯ -->
 <section class="tab-page" id="tab-friends">
-
  <div class="card">
   <div class="section-tag">INVITE & EARN</div>
   <h2>Приглашай друзей</h2>
-  <p class="muted">
-   Приглашай новых игроков в GiftsDrop. За каждые 10 приглашённых пользователей получишь 3 бесплатные прокрутки.
-  </p>
-
-  <div class="ref-stats">
-   <span>Твои приглашения</span>
-   <b id="refCount">0</b>
-  </div>
-
-  <div class="progress">
-   <div class="progress-fill" id="refProgress"></div>
-  </div>
-
-  <div class="ref-stats">
-   <span id="refProgressText">0 из 10</span>
-   <span>✦ +3 прокрутки</span>
-  </div>
-
+  <p class="muted">За каждые 10 приглашённых пользователей получишь 3 бесплатные прокрутки.</p>
+  <div class="ref-stats"><span>Твои приглашения</span><b id="refCount">0</b></div>
+  <div class="progress"><div class="progress-fill" id="refProgress"></div></div>
+  <div class="ref-stats"><span id="refProgressText">0 из 10</span><span>✦ +3 прокрутки</span></div>
   <div class="ref-link" id="refLink">Загружаем ссылку...</div>
   <button class="secondary" onclick="copyReferral()">СКОПИРОВАТЬ ССЫЛКУ</button>
-  <button onclick="shareReferral()">ПРИГЛАСИТЬ ДРУЗЕЙ &nbsp; ✦</button>
+  <button onclick="shareReferral()">ПРИГЛАСИТЬ ДРУЗЕЙ ✦</button>
   <div id="refMessage"></div>
  </div>
-
  <div class="card">
   <div class="section-tag">YOUR REWARDS</div>
   <h2>Награды</h2>
-  <p class="muted">
-   За каждые 10 новых приглашённых пользователей начисляются 3 дополнительные бесплатные прокрутки.
-  </p>
-  <div class="notice">
-   Приглашай друзей по своей ссылке. Прогресс обновляется автоматически.
-  </div>
+  <p class="muted">За каждые 10 новых приглашённых пользователей начисляются 3 дополнительные бесплатные прокрутки.</p>
  </div>
-
 </section>
 
-<!-- ЭКРАН 3: БАЛАНС -->
 <section class="tab-page" id="tab-balance">
-
  <div class="card">
   <div class="section-tag">ADD FUNDS</div>
   <h2>Пополнить серебро</h2>
-  <p class="muted">
-   Выбери получателя, перейди в его профиль и отправь подарок. После отправки создай заявку. Серебро будет начислено после ручной проверки администратором.
-  </p>
-
+  <p class="muted">Выбери получателя, отправь ему подарок и создай заявку. Серебро будет начислено после ручной проверки.</p>
   <select id="recipient">
    <option value="@traptrap4">@traptrap4</option>
    <option value="@RichGues">@RichGues</option>
   </select>
-
   <button class="secondary" onclick="openRecipient()">ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
-
   <input id="stars" type="number" min="1" max="100000" placeholder="Количество Stars">
-
-  <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ &nbsp; ✦</button>
+  <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ ✦</button>
   <div id="topupMessage"></div>
-
-  <div class="notice">
-   Переход в профиль не отправляет подарок автоматически. После отправки подарка создай заявку и дождись подтверждения администратора.
-  </div>
+  <div class="notice">Переход в профиль не отправляет подарок автоматически. После отправки создай заявку и дождись проверки.</div>
  </div>
-
  <div class="card">
   <div class="section-tag">YOUR ACCOUNT</div>
   <h2>Твой баланс</h2>
   <div class="stats">
-   <div class="stat">
-    <small>Серебро</small>
-    <strong id="silverBalance">0</strong>
-   </div>
-   <div class="stat">
-    <small>Бесплатные прокрутки</small>
-    <strong id="spinsBalance">0</strong>
-   </div>
+   <div class="stat"><small>Серебро</small><strong id="silverBalance">0</strong></div>
+   <div class="stat"><small>Бесплатные прокрутки</small><strong id="spinsBalance">0</strong></div>
   </div>
-  <div class="notice">
-   1 Telegram Star соответствует 1 единице внутреннего серебра по правилам GiftsDrop.
-  </div>
+  <div class="notice">1 Telegram Star соответствует 1 единице внутреннего серебра по правилам GiftsDrop.</div>
  </div>
-
  <div class="card" id="adminPanel">
   <div class="section-tag">CONTROL CENTER</div>
-  <h2>Админ-панель</h2>
-  <p class="muted">Заявки на пополнение серебра</p>
+  <h2>Заявки на пополнение</h2>
   <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
-  <div id="adminMessage"></div>
-  <div id="requests"></div>
+  <div id="adminMessage"></div><div id="requests"></div>
  </div>
-
 </section>
 
-<!-- ЭКРАН 4: ПОДАРКИ -->
 <section class="tab-page" id="tab-gifts">
-
  <div class="card">
   <div class="gift-hero">
-   <div class="section-tag">GIFTS MARKET</div>
+   <div class="section-tag">THE WORLD OF TELEGRAM GIFTS</div>
    <div class="gift-icon">🎁</div>
-   <h2>Магазин подарков</h2>
-   <p class="muted">
-    Выбирай подарки Telegram и получай их прямо на свой аккаунт.
+   <div class="market-title">GIFTSDROP MARKET</div>
+   <div class="market-subtitle">EXCLUSIVE TELEGRAM GIFTS</div>
+   <p class="muted" style="margin-top:15px">
+    Выбирай подарок, оплачивай Telegram Stars и получай его на свой аккаунт.
    </p>
-   <div class="gift-soon">✦ ГОТОВИМ К ЗАПУСКУ ✦</div>
-  </div>
-
-  <div class="notice">
-   Скоро здесь появится каталог подарков с ценами GiftsDrop. Мы готовим систему оплаты, проверки наличия и автоматической выдачи подарков через Telegram-бота.
+   <div class="gift-soon">✦ РУЧНАЯ ВЫДАЧА ПОСЛЕ ОПЛАТЫ ✦</div>
   </div>
  </div>
 
  <div class="card">
-  <div class="section-tag">COMING SOON</div>
-  <h2>Что появится в магазине?</h2>
-
-  <div class="odds">
-   <span>🎁 Каталог подарков</span>
-   <b>Скоро</b>
+  <div class="section-tag">EXCLUSIVE CATALOG</div>
+  <h2>Каталог подарков</h2>
+  <p class="muted">Оплата проходит внутри Telegram. Цена указана в Stars.</p>
+  <div id="giftCatalog" class="gift-grid">
+   <div class="muted">Загружаем каталог...</div>
   </div>
-  <div class="odds">
-   <span>💎 Цены ниже обычных</span>
-   <b>Скоро</b>
-  </div>
-  <div class="odds">
-   <span>⚡ Автоматическая выдача</span>
-   <b>Скоро</b>
-  </div>
-
-  <p class="muted" style="margin-top:14px">
-   Цены будут указаны отдельно для каждого подарка после подключения магазина. Пока покупка через эту вкладку недоступна.
-  </p>
+  <div id="giftMessage"></div>
  </div>
 
+ <div class="card">
+  <div class="section-tag">YOUR PURCHASES</div>
+  <h2>Мои заказы</h2>
+  <button class="secondary" onclick="loadGiftOrders()">ОБНОВИТЬ ИСТОРИЮ</button>
+  <div id="giftOrders"><p class="muted">Загружаем историю...</p></div>
+ </div>
+
+ <div class="card" id="giftAdminPanel">
+  <div class="section-tag">MARKET CONTROL CENTER</div>
+  <h2>Заказы магазина</h2>
+  <button class="secondary" onclick="loadGiftAdminOrders()">ОБНОВИТЬ ЗАКАЗЫ</button>
+  <div id="giftAdminMessage"></div>
+  <div id="giftAdminOrders"></div>
+ </div>
+
+ <div class="notice">
+  Важно: после успешной оплаты заказ поступает администратору.
+  Подарок отправляется вручную. Статус заказа обновляется после отметки администратора.
+ </div>
 </section>
 
-<div class="footer">GIFTS DROP &nbsp; • &nbsp; PREMIUM NFT</div>
+<div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
 
-<!-- НИЖНЯЯ ПАНЕЛЬ -->
 <nav class="bottom-nav">
- <button class="nav-button active" id="nav-spin" onclick="showTab('spin')">
-  <span class="nav-icon">🎰</span>
-  <span>Рулетка</span>
- </button>
-
- <button class="nav-button" id="nav-friends" onclick="showTab('friends')">
-  <span class="nav-icon">👥</span>
-  <span>Друзья</span>
- </button>
-
- <button class="nav-button" id="nav-balance" onclick="showTab('balance')">
-  <span class="nav-icon">💎</span>
-  <span>Баланс</span>
- </button>
-
- <button class="nav-button" id="nav-gifts" onclick="showTab('gifts')">
-  <span class="nav-icon">🎁</span>
-  <span>Подарки</span>
- </button>
+ <button class="nav-button active" id="nav-spin" onclick="showTab('spin')"><span class="nav-icon">🎰</span><span>Рулетка</span></button>
+ <button class="nav-button" id="nav-friends" onclick="showTab('friends')"><span class="nav-icon">👥</span><span>Друзья</span></button>
+ <button class="nav-button" id="nav-balance" onclick="showTab('balance')"><span class="nav-icon">💎</span><span>Баланс</span></button>
+ <button class="nav-button" id="nav-gifts" onclick="showTab('gifts')"><span class="nav-icon">🎁</span><span>Подарки</span></button>
 </nav>
 
 <script>
@@ -761,23 +341,21 @@ tg.expand();
 let referralLink = '';
 let wheelRotation = 0;
 let spinning = false;
+let catalogLoaded = false;
 
-function showTab(name){
- const tabs=['spin','friends','balance','gifts'];
-
- tabs.forEach(tab=>{
+function showTab(name) {
+ const tabs = ['spin','friends','balance','gifts'];
+ tabs.forEach(tab => {
   document.getElementById('tab-'+tab).classList.toggle('active',tab===name);
   document.getElementById('nav-'+tab).classList.toggle('active',tab===name);
  });
-
  window.scrollTo({top:0,behavior:'smooth'});
-
- if(name==='friends'){
-  loadReferrals();
- }
-
- if(name==='balance'){
-  loadAccount();
+ if(name==='friends') loadReferrals();
+ if(name==='balance') loadAccount();
+ if(name==='gifts') {
+  loadGiftCatalog();
+  loadGiftOrders();
+  loadGiftAdminOrders();
  }
 }
 
@@ -790,63 +368,53 @@ async function api(url, options={}) {
    ...(options.headers||{})
   }
  });
-
- const data=await response.json().catch(()=>({}));
+ const data = await response.json().catch(()=>({}));
  if(!response.ok) throw new Error(data.error||'Ошибка сервера');
  return data;
 }
 
-function openRecipient(){
+function openRecipient() {
  const username=document.getElementById('recipient').value.replace('@','');
  tg.openTelegramLink('https://t.me/'+username);
 }
 
-async function loadAccount(){
- try{
+async function loadAccount() {
+ try {
   const data=await api('/api/me');
-
   document.getElementById('silver').textContent=data.silver;
   document.getElementById('spins').textContent=data.free_spins;
-
   document.getElementById('silverBalance').textContent=data.silver;
   document.getElementById('spinsBalance').textContent=data.free_spins;
-
   await loadReferrals();
   await checkAdmin();
-
- }catch(error){
+ } catch(error) {
   document.getElementById('message').textContent=error.message;
  }
 }
 
-async function loadReferrals(){
- try{
+async function loadReferrals() {
+ try {
   const data=await api('/api/referrals');
   referralLink=data.referral_link;
-
   document.getElementById('refCount').textContent=data.referral_count;
   document.getElementById('refProgress').style.width=(data.progress*10)+'%';
-
   document.getElementById('refProgressText').textContent=
    data.progress+' из 10 — осталось '+data.remaining;
-
   document.getElementById('refLink').textContent=referralLink;
-
- }catch(error){
+ } catch(error) {
   document.getElementById('refMessage').textContent=error.message;
  }
 }
 
-async function copyReferral(){
- if(!referralLink){
+async function copyReferral() {
+ if(!referralLink) {
   document.getElementById('refMessage').textContent='Ссылка ещё загружается.';
   return;
  }
-
- try{
-  if(navigator.clipboard && navigator.clipboard.writeText){
+ try {
+  if(navigator.clipboard && navigator.clipboard.writeText) {
    await navigator.clipboard.writeText(referralLink);
-  }else{
+  } else {
    const input=document.createElement('textarea');
    input.value=referralLink;
    document.body.appendChild(input);
@@ -854,198 +422,328 @@ async function copyReferral(){
    document.execCommand('copy');
    input.remove();
   }
-
   document.getElementById('refMessage').textContent='Ссылка скопирована!';
-
- }catch(error){
-  document.getElementById('refMessage').textContent='Не удалось скопировать. Скопируй ссылку вручную.';
+ } catch(error) {
+  document.getElementById('refMessage').textContent='Не удалось скопировать ссылку.';
  }
 }
 
-function shareReferral(){
+function shareReferral() {
  if(!referralLink)return;
-
  tg.openTelegramLink(
   'https://t.me/share/url?url='+encodeURIComponent(referralLink)+
   '&text='+encodeURIComponent('Заходи в GiftsDrop и попробуй выиграть NFT!')
  );
 }
 
-async function spin(){
+async function spin() {
  const button=document.getElementById('spinButton');
  const message=document.getElementById('message');
  const wheel=document.getElementById('wheel');
-
  if(spinning)return;
 
  spinning=true;
  button.disabled=true;
  message.textContent='🎰 Рулетка вращается...';
-
  wheel.classList.remove('wheel-result');
-
- wheelRotation += 1800 + Math.floor(Math.random()*360);
-
- const request=api('/api/spin',{
-  method:'POST',
-  body:JSON.stringify({})
- });
-
+ wheelRotation+=1800+Math.floor(Math.random()*360);
+ const request=api('/api/spin',{method:'POST',body:JSON.stringify({})});
  wheel.style.transform='rotate('+wheelRotation+'deg)';
 
- try{
+ try {
   let data;
-
-  try{
+  try {
    data=await request;
-  }catch(error){
+  } catch(error) {
    await new Promise(resolve=>setTimeout(resolve,5300));
    throw error;
   }
-
   await new Promise(resolve=>setTimeout(resolve,5300));
-
   wheel.classList.add('wheel-result');
-
-  if(data.result==='none'){
-   message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
-  }else if(data.result==='ordinary'){
-   message.textContent='🎉 Выпал обычный NFT! Администратор свяжется с тобой.';
-  }else if(data.result==='rare'){
-   message.textContent='🔥 РЕДКИЙ NFT! Поздравляем! Администратор свяжется с тобой.';
-  }else{
-   message.textContent='Результат: '+data.result;
-  }
-
+  if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
+  else if(data.result==='ordinary') message.textContent='🎉 Выпал обычный NFT! Администратор свяжется с тобой.';
+  else if(data.result==='rare') message.textContent='🔥 РЕДКИЙ NFT! Администратор свяжется с тобой.';
+  else message.textContent='Результат: '+data.result;
   await loadAccount();
-
- }catch(error){
+ } catch(error) {
   message.textContent=error.message;
-
- }finally{
+ } finally {
   spinning=false;
   button.disabled=false;
  }
 }
 
-async function createTopup(){
+async function createTopup() {
  const stars=Number(document.getElementById('stars').value);
  const recipient=document.getElementById('recipient').value;
  const output=document.getElementById('topupMessage');
 
- if(!Number.isInteger(stars)||stars<1||stars>100000){
+ if(!Number.isInteger(stars)||stars<1||stars>100000) {
   output.textContent='Укажи количество Stars от 1 до 100000.';
   return;
  }
-
  output.textContent='Создаём заявку...';
-
- try{
+ try {
   const data=await api('/api/topup',{
    method:'POST',
    body:JSON.stringify({stars,recipient})
   });
-
   output.textContent='Заявка №'+data.request.id+
    ' создана. Отправь подарок получателю '+recipient+
-   ' и дождись проверки администратором.';
-
+   ' и дождись проверки.';
   document.getElementById('stars').value='';
-
- }catch(error){
+ } catch(error) {
   output.textContent=error.message;
  }
 }
 
-async function checkAdmin(){
- try{
+async function checkAdmin() {
+ try {
   await api('/api/admin/topups');
   document.getElementById('adminPanel').style.display='block';
+  document.getElementById('giftAdminPanel').style.display='block';
   await loadRequests();
-
- }catch(error){
+  await loadGiftAdminOrders();
+ } catch(error) {
   document.getElementById('adminPanel').style.display='none';
+  document.getElementById('giftAdminPanel').style.display='none';
  }
 }
 
-async function loadRequests(){
+async function loadRequests() {
  const output=document.getElementById('requests');
  const message=document.getElementById('adminMessage');
-
  output.innerHTML='';
  message.textContent='Загружаем заявки...';
-
- try{
+ try {
   const data=await api('/api/admin/topups');
   const requests=data.requests||[];
-
-  if(requests.length===0){
+  if(!requests.length) {
    message.textContent='Новых заявок пока нет.';
    return;
   }
-
   message.textContent='Заявок: '+requests.length;
-
   requests.forEach(request=>{
    const item=document.createElement('div');
    item.className='request';
-
    const info=document.createElement('div');
    info.textContent='Заявка №'+request.id+
     ' | Telegram ID: '+request.telegram_id+
     ' | Stars: '+request.stars+
     ' | Получатель: '+request.recipient;
-
    const approve=document.createElement('button');
    approve.textContent='ПОДТВЕРДИТЬ';
    approve.onclick=()=>processRequest(request.id,'approve');
-
    const reject=document.createElement('button');
    reject.textContent='ОТКЛОНИТЬ';
    reject.className='danger';
    reject.onclick=()=>processRequest(request.id,'reject');
-
-   item.appendChild(info);
-   item.appendChild(approve);
-   item.appendChild(reject);
+   item.append(info,approve,reject);
    output.appendChild(item);
   });
-
- }catch(error){
+ } catch(error) {
   message.textContent=error.message;
  }
 }
 
-async function processRequest(id,action){
+async function processRequest(id,action) {
  const question=action==='approve'
   ?'Подтвердить получение подарка и начислить серебро?'
   :'Отклонить заявку?';
-
  if(!confirm(question))return;
-
  const message=document.getElementById('adminMessage');
  message.textContent='Обрабатываем заявку...';
-
- try{
+ try {
   await api('/api/admin/topups/'+id+'/'+action,{
-   method:'POST',
-   body:JSON.stringify({})
+   method:'POST',body:JSON.stringify({})
   });
-
   message.textContent=action==='approve'
    ?'Заявка подтверждена, серебро начислено.'
    :'Заявка отклонена.';
-
   await loadRequests();
   await loadAccount();
-
- }catch(error){
+ } catch(error) {
   message.textContent=error.message;
+ }
+}
+
+async function loadGiftCatalog() {
+ const output=document.getElementById('giftCatalog');
+ if(catalogLoaded)return;
+ output.innerHTML='<p class="muted">Загружаем каталог...</p>';
+ try {
+  const data=await api('/api/store/catalog');
+  output.innerHTML='';
+  (data.products||[]).forEach(product=>{
+   const card=document.createElement('div');
+   card.className='gift-product';
+
+   const art=document.createElement('div');
+   art.className='gift-art';
+   art.textContent=product.emoji||'🎁';
+
+   const name=document.createElement('div');
+   name.className='gift-name';
+   name.textContent=product.name;
+
+   const price=document.createElement('div');
+   price.className='gift-price';
+   price.textContent=product.stars+' ⭐';
+
+   const old=document.createElement('div');
+   old.className='gift-old';
+   old.textContent=product.old_stars+' ⭐';
+
+   const discount=document.createElement('div');
+   discount.className='gift-discount';
+   discount.textContent='ВЫГОДА '+product.discount+' ⭐';
+
+   const buy=document.createElement('button');
+   buy.textContent='КУПИТЬ';
+   buy.onclick=()=>buyGift(product.id,buy);
+
+   card.append(art,name,price,old,discount,buy);
+   output.appendChild(card);
+  });
+  catalogLoaded=true;
+ } catch(error) {
+  output.innerHTML='';
+  document.getElementById('giftMessage').textContent=error.message;
+ }
+}
+
+async function buyGift(productId,button) {
+ const output=document.getElementById('giftMessage');
+ if(!tg.initData) {
+  output.textContent='Открой магазин через Telegram-бота.';
+  return;
+ }
+ button.disabled=true;
+ output.textContent='Создаём защищённый счёт Telegram...';
+
+ try {
+  const data=await api('/api/store/invoice',{
+   method:'POST',
+   body:JSON.stringify({product_id:productId})
+  });
+
+  if(!data.invoice_link)throw new Error('Не удалось получить ссылку на оплату.');
+
+  tg.openInvoice(data.invoice_link,async status=>{
+   if(status==='paid') {
+    output.textContent='Оплата прошла! Проверяем заказ...';
+    await loadGiftOrders();
+    setTimeout(loadGiftOrders,1500);
+    setTimeout(loadGiftOrders,4000);
+   } else if(status==='cancelled') {
+    output.textContent='Оплата отменена. Заказ можно оформить снова.';
+   } else if(status==='failed') {
+    output.textContent='Не удалось провести оплату. Попробуй ещё раз.';
+   }
+   button.disabled=false;
+  });
+ } catch(error) {
+  output.textContent=error.message;
+  button.disabled=false;
+ }
+}
+
+function giftStatus(status) {
+ const labels={
+  pending_payment:'Ожидает оплаты',
+  paid:'Оплачен — ожидает отправки',
+  completed:'Подарок отправлен',
+  cancelled:'Отменён'
+ };
+ return labels[status]||status;
+}
+
+async function loadGiftOrders() {
+ const output=document.getElementById('giftOrders');
+ if(!output)return;
+ output.innerHTML='<p class="muted">Загружаем историю...</p>';
+ try {
+  const data=await api('/api/store/orders');
+  const orders=data.orders||[];
+  output.innerHTML='';
+  if(!orders.length) {
+   output.innerHTML='<p class="muted">Покупок пока нет.</p>';
+   return;
+  }
+  orders.forEach(order=>{
+   const item=document.createElement('div');
+   item.className='order-card';
+   item.textContent='Заказ №'+order.id+
+    '\n'+order.product_name+
+    '\n'+order.stars+' ⭐'+
+    '\nСтатус: '+giftStatus(order.status);
+   output.appendChild(item);
+  });
+ } catch(error) {
+  output.innerHTML='<p class="muted">'+error.message+'</p>';
+ }
+}
+
+async function loadGiftAdminOrders() {
+ const output=document.getElementById('giftAdminOrders');
+ const message=document.getElementById('giftAdminMessage');
+ if(!output)return;
+ try {
+  const data=await api('/api/admin/store/orders');
+  const orders=data.orders||[];
+  output.innerHTML='';
+  if(!orders.length) {
+   message.textContent='Оплаченных заказов пока нет.';
+   return;
+  }
+  message.textContent='Заказов: '+orders.length;
+  orders.forEach(order=>{
+   const item=document.createElement('div');
+   item.className='order-card';
+
+   const info=document.createElement('div');
+   info.textContent='Заказ №'+order.id+
+    '\nПокупатель: '+order.telegram_id+
+    '\nUsername: '+(order.username?'@'+order.username:'не указан')+
+    '\nПодарок: '+order.product_name+
+    '\nОплата: '+order.stars+' ⭐'+
+    '\nСтатус: '+giftStatus(order.status);
+
+   item.appendChild(info);
+
+   if(order.status==='paid') {
+    const done=document.createElement('button');
+    done.textContent='ОТМЕТИТЬ КАК ВЫПОЛНЕННЫЙ';
+    done.onclick=()=>completeGiftOrder(order.id,done);
+    item.appendChild(done);
+   }
+
+   output.appendChild(item);
+  });
+ } catch(error) {
+  message.textContent=error.message;
+ }
+}
+
+async function completeGiftOrder(id,button) {
+ if(!confirm('Ты уже отправил подарок покупателю?'))return;
+ button.disabled=true;
+ const message=document.getElementById('giftAdminMessage');
+ message.textContent='Обновляем заказ...';
+ try {
+  await api('/api/admin/store/orders/'+id+'/done',{
+   method:'POST',body:JSON.stringify({})
+  });
+  message.textContent='Заказ №'+id+' отмечен как выполненный.';
+  await loadGiftAdminOrders();
+ } catch(error) {
+  message.textContent=error.message;
+  button.disabled=false;
  }
 }
 
 loadAccount();
+loadGiftCatalog();
 </script>
-
 </body>
 </html>
