@@ -23,7 +23,7 @@ const giftImage = (slug) =>
   `https://fragment.com/file/gifts/${slug}/thumb.webp`;
 const PRODUCTS = [
   { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸', image_url: giftImage('toybear')
-  { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍', image_url: giftImage('diamondring') },
+  { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍', image_url: giftImage('diamondring') }
   { id: 'genie_lamp', name: 'Genie Lamp', stars: toStars(44), discount: 10, emoji: '🪔', image_url: giftImage('genielamp') },
   { id: 'voodoo_doll', name: 'Voodoo Doll', stars: toStars(49), discount: 10, emoji: '🧸', image_url: giftImage('voodoodoll') },
   { id: 'bonded_ring', name: 'Bonded Ring', stars: toStars(55), discount: 10, emoji: '💍', image_url: giftImage('bondedring') },
