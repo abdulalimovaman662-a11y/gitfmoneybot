@@ -4,59 +4,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GiftsDrop — NFT Roulette</title>
+<title>GiftsDrop</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;background:#090710;color:white;
- font-family:Arial,sans-serif;padding:22px;
-}
-header{text-align:center;margin-top:20px}
+body{margin:0;background:#090710;color:white;font-family:Arial,sans-serif;padding:20px}
+header{text-align:center;margin-top:15px}
 h1{font-size:29px;color:#c18aff}
 p{color:#aaa;line-height:1.5}
 .stats{display:flex;gap:10px;margin-top:22px}
-.stats div{
- flex:1;background:#21182e;padding:17px 10px;
- border-radius:15px;text-align:center;
- border:1px solid #38234d;
-}
+.stats div{flex:1;background:#21182e;padding:17px 10px;border-radius:15px;text-align:center;border:1px solid #38234d}
 .stats b{display:block;font-size:23px;margin-top:8px}
-.card{
- background:#171221;border:1px solid #38234d;
- border-radius:22px;padding:22px;margin-top:22px;
- text-align:center;
-}
-.wheel{
- width:190px;height:190px;border-radius:50%;
- margin:20px auto;
- border:9px solid #a855f7;
- box-shadow:0 0 30px #8b35e8;
- background:conic-gradient(
- #34104e 0 60deg,#8b35e8 60deg 120deg,
- #34104e 120deg 180deg,#8b35e8 180deg 240deg,
- #34104e 240deg 300deg,#8b35e8 300deg
- );
- display:flex;align-items:center;justify-content:center;
- font-size:48px;
-}
+.card{background:#171221;border:1px solid #38234d;border-radius:22px;padding:20px;margin-top:20px;text-align:center}
+.wheel{width:190px;height:190px;border-radius:50%;margin:20px auto;border:9px solid #a855f7;box-shadow:0 0 30px #8b35e8;background:conic-gradient(#34104e 0 60deg,#8b35e8 60deg 120deg,#34104e 120deg 180deg,#8b35e8 180deg 240deg,#34104e 240deg 300deg,#8b35e8 300deg);display:flex;align-items:center;justify-content:center;font-size:48px}
 .wheel.spinning{animation:spin 1.5s ease-in-out}
 @keyframes spin{to{transform:rotate(1080deg)}}
-button{
- width:100%;padding:16px;border:0;border-radius:14px;
- background:linear-gradient(90deg,#7925cf,#bd65ff);
- color:white;font-size:17px;font-weight:bold;
- margin-top:12px;
-}
+button{width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(90deg,#7925cf,#bd65ff);color:white;font-size:16px;font-weight:bold;margin-top:12px}
 button:disabled{opacity:.5}
 .secondary{background:#30213e}
-.odds{
- display:flex;justify-content:space-between;
- padding:12px 0;border-bottom:1px solid #38234d;
- color:#ccc;font-size:14px;
-}
-#message{min-height:24px;margin-top:15px;color:#d7aaff}
+input,select{width:100%;padding:15px;margin-top:12px;border-radius:12px;border:1px solid #49315e;background:#21182e;color:white;font-size:16px}
+.odds{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #38234d;color:#ccc;font-size:14px}
+.message{min-height:22px;margin-top:13px;color:#d7aaff;font-size:14px}
 .small{font-size:12px;color:#888}
+.request{background:#21182e;border:1px solid #49315e;border-radius:14px;padding:14px;margin-top:12px;text-align:left}
+.request p{margin:6px 0}
+.hidden{display:none}
+a{color:#d7aaff}
 </style>
 </head>
 <body>
@@ -72,11 +45,33 @@ button:disabled{opacity:.5}
 </div>
 
 <div class="card">
- <h2>Твоя рулетка</h2>
+ <h2>🎰 Твоя рулетка</h2>
  <div class="wheel" id="wheel">🎁</div>
  <button id="spinButton" disabled onclick="spin()">ЗАГРУЗКА...</button>
- <div id="message">Подключаем аккаунт Telegram...</div>
+ <div class="message" id="message">Подключаем Telegram...</div>
  <p class="small">Одна платная прокрутка стоит 20 серебра</p>
+</div>
+
+<div class="card">
+ <h2>⭐ Пополнить серебро</h2>
+ <p>1 звезда = 1 серебро</p>
+
+ <label for="recipient">Кому отправить подарок?</label>
+ <select id="recipient">
+  <option value="@traptrap4">@traptrap4</option>
+  <option value="@RichGues">@RichGues</option>
+ </select>
+
+ <label for="stars">Количество звёзд</label>
+ <input id="stars" type="number" min="1" max="100000" placeholder="Например: 100">
+
+ <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ</button>
+ <div class="message" id="topupMessage"></div>
+
+ <p class="small">
+ После создания заявки отправь подарок выбранному получателю.
+ Серебро будет начислено только после ручной проверки получения подарка администратором.
+ </p>
 </div>
 
 <div class="card">
@@ -84,12 +79,20 @@ button:disabled{opacity:.5}
  <div class="odds"><span>😔 Без выигрыша</span><b>90%</b></div>
  <div class="odds"><span>🎁 Обычный NFT</span><b>9,99%</b></div>
  <div class="odds"><span>💎 Редкий NFT</span><b>0,01%</b></div>
- <p class="small">Результат каждой прокрутки определяется сервером.</p>
+ <p class="small">Результат определяется сервером.</p>
 </div>
 
 <div class="card">
  <h2>🏆 NFT подарки</h2>
- <p>Скоро здесь появится каталог доступных подарков.</p>
+ <p>Выигранные подарки выдаются вручную администратором.</p>
+</div>
+
+<div class="card hidden" id="adminPanel">
+ <h2>🛡 Админ-панель</h2>
+ <p>Заявки на пополнение серебра</p>
+ <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
+ <div id="requests"></div>
+ <div class="message" id="adminMessage"></div>
 </div>
 
 <script>
@@ -101,56 +104,57 @@ const initData = tg.initData;
 
 const silverEl = document.getElementById('silver');
 const spinsEl = document.getElementById('spins');
-const button = document.getElementById('spinButton');
+const spinButton = document.getElementById('spinButton');
 const message = document.getElementById('message');
 const wheel = document.getElementById('wheel');
 
-function showMessage(text) {
- message.textContent = text;
-}
-
-async function api(url, method = 'GET') {
- const response = await fetch(url, {
+async function api(url, method = 'GET', body = null) {
+ const options = {
   method,
   headers: {
    'X-Telegram-Init-Data': initData,
    'Content-Type': 'application/json'
   }
- });
+ };
 
+ if (body !== null) options.body = JSON.stringify(body);
+
+ const response = await fetch(url, options);
  const data = await response.json();
 
- if (!response.ok) {
-  throw new Error(data.error || 'Ошибка сервера');
- }
-
+ if (!response.ok) throw new Error(data.error || 'Ошибка сервера');
  return data;
+}
+
+function updateAccount(data) {
+ silverEl.textContent = data.silver;
+ spinsEl.textContent = data.free_spins;
 }
 
 async function loadAccount() {
  if (!initData) {
-  showMessage('Открой приложение через Telegram-бота.');
-  button.textContent = 'НЕТ ПОДКЛЮЧЕНИЯ';
+  message.textContent = 'Открой приложение через Telegram-бота.';
+  spinButton.textContent = 'НЕТ ПОДКЛЮЧЕНИЯ';
   return;
  }
 
  try {
   const data = await api('/api/me');
-  silverEl.textContent = data.silver;
-  spinsEl.textContent = data.free_spins;
-  button.disabled = false;
-  button.textContent = '🎰 КРУТИТЬ';
-  showMessage('Аккаунт подключён!');
+  updateAccount(data);
+  spinButton.disabled = false;
+  spinButton.textContent = '🎰 КРУТИТЬ';
+  message.textContent = 'Аккаунт подключён!';
+  await checkAdmin();
  } catch (error) {
-  showMessage(error.message);
-  button.textContent = 'ОШИБКА ПОДКЛЮЧЕНИЯ';
+  message.textContent = error.message;
+  spinButton.textContent = 'ОШИБКА ПОДКЛЮЧЕНИЯ';
  }
 }
 
 async function spin() {
- button.disabled = true;
- button.textContent = 'КРУТИМ...';
- showMessage('Удачи! 🍀');
+ spinButton.disabled = true;
+ spinButton.textContent = 'КРУТИМ...';
+ message.textContent = 'Удачи! 🍀';
 
  wheel.classList.remove('spinning');
  void wheel.offsetWidth;
@@ -162,32 +166,144 @@ async function spin() {
   setTimeout(() => {
    if (data.prize === 'rare') {
     wheel.textContent = '💎';
-    showMessage('🔥 НЕВЕРОЯТНО! Редкий NFT!');
+    message.textContent = '🔥 Редкий NFT! Администратор свяжется с тобой.';
    } else if (data.prize === 'ordinary') {
     wheel.textContent = '🎁';
-    showMessage('🎉 Поздравляем! Обычный NFT!');
+    message.textContent = '🎉 Обычный NFT! Администратор проверит выигрыш.';
    } else {
     wheel.textContent = '😔';
-    showMessage('В этот раз без выигрыша. Попробуй ещё!');
+    message.textContent = 'В этот раз без выигрыша. Попробуй ещё!';
    }
 
-   silverEl.textContent = data.silver;
-   spinsEl.textContent = data.free_spins;
-   button.disabled = false;
-   button.textContent = '🎰 КРУТИТЬ';
+   updateAccount(data);
+   spinButton.disabled = false;
+   spinButton.textContent = '🎰 КРУТИТЬ';
   }, 1500);
 
  } catch (error) {
   wheel.classList.remove('spinning');
   wheel.textContent = '🎁';
-  showMessage(error.message);
-  button.disabled = false;
-  button.textContent = '🎰 КРУТИТЬ';
+  message.textContent = error.message;
+  spinButton.disabled = false;
+  spinButton.textContent = '🎰 КРУТИТЬ';
+ }
+}
+
+async function createTopup() {
+ const stars = Number(document.getElementById('stars').value);
+ const recipient = document.getElementById('recipient').value;
+ const output = document.getElementById('topupMessage');
+
+ if (!Number.isSafeInteger(stars) || stars < 1 || stars > 100000) {
+  output.textContent = 'Укажи количество от 1 до 100000 звёзд.';
+  return;
+ }
+
+ output.textContent = 'Создаём заявку...';
+
+ try {
+  const data = await api('/api/topup', 'POST', {
+   stars,
+   recipient
+  });
+
+  output.textContent =
+   `Заявка №${data.request.id} создана! Отправь подарок на ${recipient} и дождись проверки.`;
+
+  document.getElementById('stars').value = '';
+ } catch (error) {
+  output.textContent = error.message;
+ }
+}
+
+async function checkAdmin() {
+ try {
+  await api('/api/admin/topups');
+  document.getElementById('adminPanel').classList.remove('hidden');
+  await loadRequests();
+ } catch (error) {
+  document.getElementById('adminPanel').classList.add('hidden');
+ }
+}
+
+async function loadRequests() {
+ const container = document.getElementById('requests');
+ const output = document.getElementById('adminMessage');
+
+ container.innerHTML = '';
+ output.textContent = 'Загружаем...';
+
+ try {
+  const data = await api('/api/admin/topups');
+
+  if (!data.requests.length) {
+   output.textContent = 'Новых заявок нет.';
+   return;
+  }
+
+  output.textContent = '';
+
+  data.requests.forEach(request => {
+   const item = document.createElement('div');
+   item.className = 'request';
+
+   const title = document.createElement('b');
+   title.textContent = `Заявка №${request.id}`;
+
+   const info = document.createElement('p');
+   info.textContent =
+    `Игрок: ${request.first_name || ''} ${request.username ? '@' + request.username : ''} (ID: ${request.telegram_id})`;
+
+   const amount = document.createElement('p');
+   amount.textContent = `Сумма: ${request.stars} звёзд`;
+
+   const recipient = document.createElement('p');
+   recipient.textContent = `Получатель: ${request.recipient}`;
+
+   const approve = document.createElement('button');
+   approve.textContent = 'ПОДТВЕРДИТЬ ПОЛУЧЕНИЕ';
+   approve.onclick = () => processRequest(request.id, 'approve');
+
+   const reject = document.createElement('button');
+   reject.className = 'secondary';
+   reject.textContent = 'ОТКЛОНИТЬ';
+   reject.onclick = () => processRequest(request.id, 'reject');
+
+   item.append(title, info, amount, recipient, approve, reject);
+   container.appendChild(item);
+  });
+ } catch (error) {
+  output.textContent = error.message;
+ }
+}
+
+async function processRequest(id, action) {
+ const output = document.getElementById('adminMessage');
+
+ const confirmed = confirm(
+  action === 'approve'
+   ? 'Ты лично проверил получение подарка и хочешь начислить серебро?'
+   : 'Отклонить эту заявку?'
+ );
+
+ if (!confirmed) return;
+
+ output.textContent = 'Обрабатываем заявку...';
+
+ try {
+  const data = await api(
+   `/api/admin/topups/${id}/${action}`,
+   'POST'
+  );
+
+  output.textContent = data.message;
+  await loadRequests();
+ } catch (error) {
+  output.textContent = error.message;
  }
 }
 
 loadAccount();
 </script>
-
 </body>
 </html>
