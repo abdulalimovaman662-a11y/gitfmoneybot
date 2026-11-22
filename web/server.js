@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 8080;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const DATABASE_URL = process.env.DATABASE_URL;
 const ADMIN_ID = process.env.ADMIN_ID;
+const BOT_USERNAME = 'Gitfmoneybot';
 
 if (!BOT_TOKEN || !DATABASE_URL || !ADMIN_ID) {
   throw new Error('Проверь BOT_TOKEN, DATABASE_URL и ADMIN_ID');
@@ -26,6 +27,10 @@ async function initDatabase() {
       free_spins INTEGER NOT NULL DEFAULT 3,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS referred_by BIGINT,
+      ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0;
 
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
@@ -104,6 +109,21 @@ function getTelegramUser(req) {
   return verifyTelegram(req.headers['x-telegram-init-data']);
 }
 
+function getReferralId(req) {
+  try {
+    const params = new URLSearchParams(
+      req.headers['x-telegram-init-data'] || ''
+    );
+
+    const startParam = params.get('start_param') || '';
+    const match = startParam.match(/^ref_(\d+)$/);
+
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
 async function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -129,19 +149,76 @@ async function readBody(req) {
   });
 }
 
-async function ensureUser(user) {
-  await pool.query(`
-    INSERT INTO users (telegram_id, username, first_name)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (telegram_id)
-    DO UPDATE SET
-      username = EXCLUDED.username,
-      first_name = EXCLUDED.first_name
-  `, [
-    String(user.id),
-    user.username || null,
-    user.first_name || null
-  ]);
+// Создание пользователя и однократная регистрация приглашения
+async function ensureUser(user, req) {
+  const telegramId = String(user.id);
+  const referralId = getReferralId(req);
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const inserted = await client.query(`
+      INSERT INTO users (telegram_id, username, first_name)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (telegram_id) DO NOTHING
+      RETURNING telegram_id
+    `, [
+      telegramId,
+      user.username || null,
+      user.first_name || null
+    ]);
+
+    await client.query(`
+      UPDATE users
+      SET username = $1, first_name = $2
+      WHERE telegram_id = $3
+    `, [
+      user.username || null,
+      user.first_name || null,
+      telegramId
+    ]);
+
+    // Реферал засчитывается только при первой регистрации
+    if (
+      inserted.rowCount === 1 &&
+      referralId &&
+      referralId !== telegramId
+    ) {
+      const referrer = await client.query(`
+        UPDATE users
+        SET referral_count = referral_count + 1
+        WHERE telegram_id = $1
+        RETURNING referral_count
+      `, [referralId]);
+
+      if (referrer.rowCount === 1) {
+        await client.query(`
+          UPDATE users
+          SET referred_by = $1
+          WHERE telegram_id = $2
+        `, [referralId, telegramId]);
+
+        const count = Number(referrer.rows[0].referral_count);
+
+        if (count % 10 === 0) {
+          await client.query(`
+            UPDATE users
+            SET free_spins = free_spins + 3
+            WHERE telegram_id = $1
+          `, [referralId]);
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function requireAdmin(req) {
@@ -157,7 +234,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
-    // Получение баланса и бесплатных прокруток
+    // Аккаунт
     if (url.pathname === '/api/me' && req.method === 'GET') {
       const user = getTelegramUser(req);
 
@@ -167,14 +244,45 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      await ensureUser(user);
+      await ensureUser(user, req);
 
-      const result = await pool.query(
-        'SELECT silver, free_spins FROM users WHERE telegram_id = $1',
-        [String(user.id)]
-      );
+      const result = await pool.query(`
+        SELECT silver, free_spins, referral_count
+        FROM users
+        WHERE telegram_id = $1
+      `, [String(user.id)]);
 
       return send(res, 200, result.rows[0]);
+    }
+
+    // Реферальная статистика
+    if (url.pathname === '/api/referrals' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      await ensureUser(user, req);
+
+      const result = await pool.query(`
+        SELECT referral_count
+        FROM users
+        WHERE telegram_id = $1
+      `, [String(user.id)]);
+
+      const count = Number(result.rows[0].referral_count);
+
+      return send(res, 200, {
+        referral_count: count,
+        progress: count % 10,
+        total_rewards: Math.floor(count / 10) * 3,
+        remaining: 10 - (count % 10),
+        referral_link:
+          `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
+      });
     }
 
     // Рулетка
@@ -199,7 +307,6 @@ const server = http.createServer(async (req, res) => {
 
         if (!result.rowCount) {
           await client.query('ROLLBACK');
-
           return send(res, 404, {
             error: 'Пользователь не найден'
           });
@@ -209,30 +316,26 @@ const server = http.createServer(async (req, res) => {
 
         if (account.free_spins <= 0 && account.silver < 20) {
           await client.query('ROLLBACK');
-
           return send(res, 400, {
             error: 'Недостаточно серебра'
           });
         }
 
         if (account.free_spins > 0) {
-          await client.query(
-            `UPDATE users
-             SET free_spins = free_spins - 1
-             WHERE telegram_id = $1`,
-            [String(user.id)]
-          );
+          await client.query(`
+            UPDATE users
+            SET free_spins = free_spins - 1
+            WHERE telegram_id = $1
+          `, [String(user.id)]);
         } else {
-          await client.query(
-            `UPDATE users
-             SET silver = silver - 20
-             WHERE telegram_id = $1`,
-            [String(user.id)]
-          );
+          await client.query(`
+            UPDATE users
+            SET silver = silver - 20
+            WHERE telegram_id = $1
+          `, [String(user.id)]);
         }
 
         const chance = crypto.randomInt(100000);
-
         let prize = 'nothing';
 
         if (chance >= 99990) {
@@ -241,23 +344,22 @@ const server = http.createServer(async (req, res) => {
           prize = 'ordinary';
         }
 
-        await client.query(
-          `INSERT INTO spin_history (telegram_id, prize_type)
-           VALUES ($1, $2)`,
-          [String(user.id), prize]
-        );
+        await client.query(`
+          INSERT INTO spin_history (telegram_id, prize_type)
+          VALUES ($1, $2)
+        `, [String(user.id), prize]);
 
-        const updated = await client.query(
-          'SELECT silver, free_spins FROM users WHERE telegram_id = $1',
-          [String(user.id)]
-        );
+        const updated = await client.query(`
+          SELECT silver, free_spins
+          FROM users
+          WHERE telegram_id = $1
+        `, [String(user.id)]);
 
         await client.query('COMMIT');
 
-        // ВАЖНО: result — поле, которое читает index.html
         return send(res, 200, {
           result: prize === 'nothing' ? 'none' : prize,
-          prize: prize,
+          prize,
           silver: updated.rows[0].silver,
           free_spins: updated.rows[0].free_spins
         });
@@ -270,7 +372,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // Создание заявки на пополнение
+    // Пополнение
     if (url.pathname === '/api/topup' && req.method === 'POST') {
       const user = getTelegramUser(req);
 
@@ -300,7 +402,7 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      await ensureUser(user);
+      await ensureUser(user, req);
 
       const result = await pool.query(`
         INSERT INTO topup_requests (telegram_id, stars, recipient)
@@ -309,12 +411,13 @@ const server = http.createServer(async (req, res) => {
       `, [String(user.id), stars, recipient]);
 
       return send(res, 201, {
-        message: 'Заявка создана. Отправь подарок и дождись проверки.',
+        message: 'Заявка создана',
+        id: result.rows[0].id,
         request: result.rows[0]
       });
     }
 
-    // Список заявок для администратора
+    // Заявки администратора
     if (url.pathname === '/api/admin/topups' && req.method === 'GET') {
       const admin = await requireAdmin(req);
 
@@ -346,7 +449,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // Подтверждение или отклонение заявки
+    // Подтверждение / отклонение
     const decision = url.pathname.match(
       /^\/api\/admin\/topups\/(\d+)\/(approve|reject)$/
     );
@@ -362,7 +465,6 @@ const server = http.createServer(async (req, res) => {
 
       const requestId = decision[1];
       const action = decision[2];
-
       const client = await pool.connect();
 
       try {
@@ -378,7 +480,6 @@ const server = http.createServer(async (req, res) => {
           result.rows[0].status !== 'pending'
         ) {
           await client.query('ROLLBACK');
-
           return send(res, 409, {
             error: 'Заявка уже обработана или не найдена'
           });
@@ -387,12 +488,11 @@ const server = http.createServer(async (req, res) => {
         const request = result.rows[0];
 
         if (action === 'approve') {
-          await client.query(
-            `UPDATE users
-             SET silver = silver + $1
-             WHERE telegram_id = $2`,
-            [request.stars, request.telegram_id]
-          );
+          await client.query(`
+            UPDATE users
+            SET silver = silver + $1
+            WHERE telegram_id = $2
+          `, [request.stars, request.telegram_id]);
         }
 
         await client.query(`
