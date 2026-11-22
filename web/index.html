@@ -4,7 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NFT Roulette</title>
+<title>GiftsDrop — NFT Roulette</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box}
 body{
@@ -12,8 +13,15 @@ body{
  font-family:Arial,sans-serif;padding:22px;
 }
 header{text-align:center;margin-top:20px}
-h1{font-size:30px;color:#c18aff}
-p{color:#aaa}
+h1{font-size:29px;color:#c18aff}
+p{color:#aaa;line-height:1.5}
+.stats{display:flex;gap:10px;margin-top:22px}
+.stats div{
+ flex:1;background:#21182e;padding:17px 10px;
+ border-radius:15px;text-align:center;
+ border:1px solid #38234d;
+}
+.stats b{display:block;font-size:23px;margin-top:8px}
 .card{
  background:#171221;border:1px solid #38234d;
  border-radius:22px;padding:22px;margin-top:22px;
@@ -24,37 +32,162 @@ p{color:#aaa}
  margin:20px auto;
  border:9px solid #a855f7;
  box-shadow:0 0 30px #8b35e8;
- background:conic-gradient(#34104e 0 60deg,#8b35e8 60deg 120deg,#34104e 120deg 180deg,#8b35e8 180deg 240deg,#34104e 240deg 300deg,#8b35e8 300deg);
+ background:conic-gradient(
+ #34104e 0 60deg,#8b35e8 60deg 120deg,
+ #34104e 120deg 180deg,#8b35e8 180deg 240deg,
+ #34104e 240deg 300deg,#8b35e8 300deg
+ );
  display:flex;align-items:center;justify-content:center;
- font-size:42px;
+ font-size:48px;
 }
+.wheel.spinning{animation:spin 1.5s ease-in-out}
+@keyframes spin{to{transform:rotate(1080deg)}}
 button{
  width:100%;padding:16px;border:0;border-radius:14px;
  background:linear-gradient(90deg,#7925cf,#bd65ff);
  color:white;font-size:17px;font-weight:bold;
  margin-top:12px;
 }
-.stats{display:flex;gap:10px}
-.stats div{flex:1;background:#21182e;padding:15px;border-radius:14px}
+button:disabled{opacity:.5}
+.secondary{background:#30213e}
+.odds{
+ display:flex;justify-content:space-between;
+ padding:12px 0;border-bottom:1px solid #38234d;
+ color:#ccc;font-size:14px;
+}
+#message{min-height:24px;margin-top:15px;color:#d7aaff}
+.small{font-size:12px;color:#888}
 </style>
 </head>
 <body>
+
 <header>
-<h1>🎁 NFT ROULETTE</h1>
+<h1>🎁 GIFTSDROP</h1>
 <p>Испытай свою удачу!</p>
 </header>
+
 <div class="stats">
-<div>⭐ Stars<br><b>0</b></div>
-<div>🎰 Прокрутки<br><b>3</b></div>
+ <div>⭐ Серебро<b id="silver">—</b></div>
+ <div>🎰 Бесплатные прокрутки<b id="spins">—</b></div>
 </div>
+
 <div class="card">
-<h2>Твоя рулетка</h2>
-<div class="wheel">🎁</div>
-<button onclick="alert('Скоро подключим настоящую рулетку!')">КРУТИТЬ</button>
+ <h2>Твоя рулетка</h2>
+ <div class="wheel" id="wheel">🎁</div>
+ <button id="spinButton" disabled onclick="spin()">ЗАГРУЗКА...</button>
+ <div id="message">Подключаем аккаунт Telegram...</div>
+ <p class="small">Одна платная прокрутка стоит 20 серебра</p>
 </div>
+
 <div class="card">
-<h2>🏆 NFT подарки</h2>
-<p>Здесь появятся доступные призы</p>
+ <h2>🎯 Шансы выигрыша</h2>
+ <div class="odds"><span>😔 Без выигрыша</span><b>90%</b></div>
+ <div class="odds"><span>🎁 Обычный NFT</span><b>9,99%</b></div>
+ <div class="odds"><span>💎 Редкий NFT</span><b>0,01%</b></div>
+ <p class="small">Результат каждой прокрутки определяется сервером.</p>
 </div>
+
+<div class="card">
+ <h2>🏆 NFT подарки</h2>
+ <p>Скоро здесь появится каталог доступных подарков.</p>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+const initData = tg.initData;
+
+const silverEl = document.getElementById('silver');
+const spinsEl = document.getElementById('spins');
+const button = document.getElementById('spinButton');
+const message = document.getElementById('message');
+const wheel = document.getElementById('wheel');
+
+function showMessage(text) {
+ message.textContent = text;
+}
+
+async function api(url, method = 'GET') {
+ const response = await fetch(url, {
+  method,
+  headers: {
+   'X-Telegram-Init-Data': initData,
+   'Content-Type': 'application/json'
+  }
+ });
+
+ const data = await response.json();
+
+ if (!response.ok) {
+  throw new Error(data.error || 'Ошибка сервера');
+ }
+
+ return data;
+}
+
+async function loadAccount() {
+ if (!initData) {
+  showMessage('Открой приложение через Telegram-бота.');
+  button.textContent = 'НЕТ ПОДКЛЮЧЕНИЯ';
+  return;
+ }
+
+ try {
+  const data = await api('/api/me');
+  silverEl.textContent = data.silver;
+  spinsEl.textContent = data.free_spins;
+  button.disabled = false;
+  button.textContent = '🎰 КРУТИТЬ';
+  showMessage('Аккаунт подключён!');
+ } catch (error) {
+  showMessage(error.message);
+  button.textContent = 'ОШИБКА ПОДКЛЮЧЕНИЯ';
+ }
+}
+
+async function spin() {
+ button.disabled = true;
+ button.textContent = 'КРУТИМ...';
+ showMessage('Удачи! 🍀');
+
+ wheel.classList.remove('spinning');
+ void wheel.offsetWidth;
+ wheel.classList.add('spinning');
+
+ try {
+  const data = await api('/api/spin', 'POST');
+
+  setTimeout(() => {
+   if (data.prize === 'rare') {
+    wheel.textContent = '💎';
+    showMessage('🔥 НЕВЕРОЯТНО! Редкий NFT!');
+   } else if (data.prize === 'ordinary') {
+    wheel.textContent = '🎁';
+    showMessage('🎉 Поздравляем! Обычный NFT!');
+   } else {
+    wheel.textContent = '😔';
+    showMessage('В этот раз без выигрыша. Попробуй ещё!');
+   }
+
+   silverEl.textContent = data.silver;
+   spinsEl.textContent = data.free_spins;
+   button.disabled = false;
+   button.textContent = '🎰 КРУТИТЬ';
+  }, 1500);
+
+ } catch (error) {
+  wheel.classList.remove('spinning');
+  wheel.textContent = '🎁';
+  showMessage(error.message);
+  button.disabled = false;
+  button.textContent = '🎰 КРУТИТЬ';
+ }
+}
+
+loadAccount();
+</script>
+
 </body>
 </html>
