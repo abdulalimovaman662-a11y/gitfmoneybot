@@ -307,6 +307,64 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
+    // Проверка заказа перед подтверждением оплаты Telegram
+    if (
+      url.pathname === '/api/internal/store/validate' &&
+      req.method === 'POST'
+    ) {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) {
+        return send(res, 403, {
+          valid: false,
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const body = await readBody(req);
+
+      const orderId = String(body.order_id || '');
+      const telegramId = String(body.telegram_id || '');
+      const stars = Number(body.stars);
+
+      if (
+        !/^\d+$/.test(orderId) ||
+        !/^\d+$/.test(telegramId) ||
+        !Number.isSafeInteger(stars) ||
+        stars < 300 ||
+        stars > 5000 ||
+        body.currency !== 'XTR'
+      ) {
+        return send(res, 400, {
+          valid: false,
+          error: 'Некорректные данные'
+        });
+      }
+
+      const result = await pool.query(
+        `SELECT id, telegram_id, stars, status
+         FROM gift_orders
+         WHERE id = $1`,
+        [orderId]
+      );
+
+      if (!result.rowCount) {
+        return send(res, 404, {
+          valid: false,
+          error: 'Заказ не найден'
+        });
+      }
+
+      const order = result.rows[0];
+
+      const valid =
+        String(order.telegram_id) === telegramId &&
+        Number(order.stars) === stars &&
+        order.status === 'pending_payment';
+
+      return send(res, 200, {
+        valid
+      });
+    }
+
     // Внутреннее подтверждение оплаты от Python-бота
     if (
       url.pathname === '/api/internal/store/paid' &&
