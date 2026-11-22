@@ -8,6 +8,7 @@ const { Pool } = require('pg');
 const PORT = process.env.PORT || 8080;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const DATABASE_URL = process.env.DATABASE_URL;
+const ADMIN_ID = process.env.ADMIN_ID;
 
 if (!BOT_TOKEN || !DATABASE_URL) {
   throw new Error('Не заданы BOT_TOKEN или DATABASE_URL');
@@ -34,6 +35,18 @@ async function initDatabase() {
       prize_type TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS topup_requests (
+      id BIGSERIAL PRIMARY KEY,
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      stars INTEGER NOT NULL CHECK (stars > 0),
+      recipient TEXT NOT NULL
+        CHECK (recipient IN ('@traptrap4', '@RichGues')),
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'approved', 'rejected')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      processed_at TIMESTAMPTZ
+    );
   `);
 }
 
@@ -45,7 +58,7 @@ function send(res, status, data) {
 }
 
 function verifyTelegram(initData) {
-  if (!initData || !BOT_TOKEN) return null;
+  if (!initData) return null;
 
   try {
     const params = new URLSearchParams(initData);
@@ -53,8 +66,6 @@ function verifyTelegram(initData) {
     const authDate = Number(params.get('auth_date'));
 
     if (!hash || !authDate) return null;
-
-    // Не принимаем слишком старые данные авторизации
     if (Date.now() / 1000 - authDate > 86400) return null;
 
     const entries = [...params.entries()]
@@ -78,8 +89,10 @@ function verifyTelegram(initData) {
     const a = Buffer.from(hash, 'hex');
     const b = Buffer.from(calculatedHash, 'hex');
 
-    if (a.length !== b.length ||
-        !crypto.timingSafeEqual(a, b)) return null;
+    if (
+      a.length !== b.length ||
+      !crypto.timingSafeEqual(a, b)
+    ) return null;
 
     const user = JSON.parse(params.get('user') || 'null');
 
@@ -92,8 +105,7 @@ function verifyTelegram(initData) {
 }
 
 function getTelegramUser(req) {
-  const initData = req.headers['x-telegram-init-data'];
-  return verifyTelegram(initData);
+  return verifyTelegram(req.headers['x-telegram-init-data']);
 }
 
 async function readBody(req) {
@@ -102,6 +114,7 @@ async function readBody(req) {
 
     req.on('data', chunk => {
       body += chunk;
+
       if (body.length > 10000) {
         reject(new Error('Слишком большой запрос'));
         req.destroy();
@@ -128,16 +141,23 @@ const server = http.createServer(async (req, res) => {
       const user = getTelegramUser(req);
 
       if (!user) {
-        return send(res, 401, { error: 'Не удалось проверить Telegram' });
+        return send(res, 401, {
+          error: 'Не удалось проверить Telegram'
+        });
       }
 
       await pool.query(`
         INSERT INTO users (telegram_id, username, first_name)
         VALUES ($1, $2, $3)
         ON CONFLICT (telegram_id)
-        DO UPDATE SET username = EXCLUDED.username,
-                      first_name = EXCLUDED.first_name
-      `, [String(user.id), user.username || null, user.first_name || null]);
+        DO UPDATE SET
+          username = EXCLUDED.username,
+          first_name = EXCLUDED.first_name
+      `, [
+        String(user.id),
+        user.username || null,
+        user.first_name || null
+      ]);
 
       const result = await pool.query(
         'SELECT silver, free_spins FROM users WHERE telegram_id = $1',
@@ -151,7 +171,9 @@ const server = http.createServer(async (req, res) => {
       const user = getTelegramUser(req);
 
       if (!user) {
-        return send(res, 401, { error: 'Не удалось проверить Telegram' });
+        return send(res, 401, {
+          error: 'Не удалось проверить Telegram'
+        });
       }
 
       const client = await pool.connect();
@@ -166,14 +188,21 @@ const server = http.createServer(async (req, res) => {
 
         if (!result.rowCount) {
           await client.query('ROLLBACK');
-          return send(res, 404, { error: 'Пользователь не найден' });
+          return send(res, 404, {
+            error: 'Пользователь не найден'
+          });
         }
 
         const account = result.rows[0];
 
-        if (account.free_spins <= 0 && account.silver < 20) {
+        if (
+          account.free_spins <= 0 &&
+          account.silver < 20
+        ) {
           await client.query('ROLLBACK');
-          return send(res, 400, { error: 'Недостаточно серебра' });
+          return send(res, 400, {
+            error: 'Недостаточно серебра'
+          });
         }
 
         if (account.free_spins > 0) {
@@ -188,9 +217,6 @@ const server = http.createServer(async (req, res) => {
           );
         }
 
-        // 90% — без выигрыша
-        // 9.99% — обычный подарок
-        // 0.01% — редкий подарок
         const chance = crypto.randomInt(100000);
 
         let prize = 'nothing';
@@ -227,7 +253,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    if (req.method === 'GET' && url.pathname === '/') {
+    if (url.pathname === '/' && req.method === 'GET') {
       const filePath = path.join(__dirname, 'index.html');
 
       return fs.readFile(filePath, (err, content) => {
@@ -239,16 +265,22 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, {
           'Content-Type': 'text/html; charset=utf-8'
         });
+
         res.end(content);
       });
     }
 
-    return send(res, 404, { error: 'Страница не найдена' });
+    return send(res, 404, {
+      error: 'Страница не найдена'
+    });
 
   } catch (error) {
     console.error(error);
+
     if (!res.headersSent) {
-      send(res, 500, { error: 'Внутренняя ошибка сервера' });
+      send(res, 500, {
+        error: 'Внутренняя ошибка сервера'
+      });
     }
   }
 });
