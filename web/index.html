@@ -446,7 +446,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
   <div class="brand-copy"><div class="logo">GIFTS<span>DROP</span></div><div class="subtitle">ИГРАЙ • ПОЛУЧАЙ • ПОБЕЖДАЙ</div></div>
  </div>
  <button class="help-button" onclick="openHelp()" aria-label="Помощь"><span>?</span> Помощь</button>
- <div class="header-strip"><span class="live-dot"></span><span>Онлайн</span></div>
+ <div class="header-strip" aria-label="Текущий онлайн"><span class="live-dot"></span><span>Онлайн</span><strong class="activity-count" id="activityCount">123</strong></div>
 </header>
 
 <section class="tab-page active" id="tab-spin">
@@ -635,6 +635,16 @@ tg.expand();
 let referralLink = '';
 let spinning = false;
 let catalogLoaded = false;
+
+// Декоративный счётчик онлайна: число меняется раз в секунду.
+let displayedOnline = 123;
+const activityCount = document.getElementById('activityCount');
+if (activityCount) {
+ setInterval(() => {
+  displayedOnline = Math.max(100, Math.min(199, displayedOnline + Math.floor(Math.random()*13)-6));
+  activityCount.textContent = displayedOnline;
+ }, 1000);
+}
 
 function showTab(name) {
  const tabs = ['spin','prizes','friends','gifts','balance','profile'];
