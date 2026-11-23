@@ -705,6 +705,71 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
  #tab-gifts .gift-product{padding:10px}
 }
 
+
+/* Neon premium pass — richer light and dimensional cards */
+:root{--pink:#ff4fa3;--cyan:#48e8ff;--violet:#9b6cff;--lime:#71f5b2;--sun:#ffd45e}
+body{background:radial-gradient(ellipse at 5% 0%,rgba(116,74,255,.27),transparent 34%),radial-gradient(ellipse at 100% 22%,rgba(255,64,158,.19),transparent 30%),linear-gradient(180deg,#100d2b 0%,#0a0a1d 72%,#090817 100%)}
+.app-header{background:rgba(13,11,35,.92);border-bottom-color:rgba(166,129,255,.27)}
+.card{background:linear-gradient(145deg,rgba(34,29,75,.97),rgba(17,16,48,.98));border-color:rgba(165,139,255,.22);box-shadow:0 16px 38px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.06)}
+.home-title{font-size:31px;text-shadow:0 4px 25px rgba(155,108,255,.3)}.home-description{color:#c0bce0}
+.home-grid{gap:13px}.home-tile{border-radius:25px;box-shadow:0 15px 32px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.17);min-height:160px}
+.home-tile:before{width:180px;height:180px;right:-64px;top:-72px;filter:blur(3px);opacity:1}
+.home-tile-icon{width:60px;height:60px;font-size:32px;border-radius:20px;background:rgba(255,255,255,.15);box-shadow:0 0 25px var(--tile-glow),inset 0 1px rgba(255,255,255,.22)}
+.home-tile-title{font-size:16px;text-shadow:0 2px 12px rgba(0,0,0,.28)}.home-tile-subtitle{color:rgba(255,255,255,.82);font-size:9px}
+.home-tile-roulette{--tile-bg:linear-gradient(145deg,#743cff,#26134f 82%);--tile-border:rgba(198,164,255,.62);--tile-glow:rgba(166,103,255,.85)}
+.home-tile-prizes{--tile-bg:linear-gradient(145deg,#087eae,#102e59 82%);--tile-border:rgba(91,223,255,.58);--tile-glow:rgba(54,208,255,.8)}
+.home-tile-gifts{--tile-bg:linear-gradient(145deg,#d93691,#501b69 82%);--tile-border:rgba(255,143,208,.6);--tile-glow:rgba(255,76,177,.8)}
+.home-tile-balance{--tile-bg:linear-gradient(145deg,#b87918,#483018 82%);--tile-border:rgba(255,219,110,.58);--tile-glow:rgba(255,190,55,.8)}
+.home-tile-friends{--tile-bg:linear-gradient(145deg,#13996c,#123b4a 82%);--tile-border:rgba(112,255,192,.56);--tile-glow:rgba(73,241,166,.78)}
+.home-tile-profile{--tile-bg:linear-gradient(145deg,#4867d9,#252052 82%);--tile-border:rgba(161,183,255,.58);--tile-glow:rgba(109,145,255,.8)}
+.home-tile-inventory{--tile-bg:linear-gradient(145deg,#9a4ee9,#3c1c71 82%);--tile-border:rgba(216,169,255,.62);--tile-glow:rgba(192,111,255,.9)}
+.home-tile-rocket{--tile-bg:linear-gradient(145deg,#ed5b31,#7c183d 82%);--tile-border:rgba(255,163,119,.65);--tile-glow:rgba(255,104,72,.9)}
+.home-tile-upgrade{--tile-bg:linear-gradient(145deg,#12a8b2,#17416b 82%);--tile-border:rgba(102,245,255,.65);--tile-glow:rgba(63,232,255,.88)}
+.section-back button{background:linear-gradient(110deg,rgba(137,93,255,.2),rgba(255,255,255,.06));border-color:rgba(180,151,255,.3)}
+.page-intro{border-bottom-color:rgba(178,145,255,.22)}.page-intro .eyebrow{background:rgba(157,108,255,.14);border-color:rgba(190,155,255,.25);color:#d7c4ff}
+button:disabled{opacity:.55;filter:saturate(.65)}
+.inventory-intro h1{background:linear-gradient(90deg,#fff,#d7b5ff,#9ef3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.inventory-summary{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;margin:0 0 12px;border:1px solid rgba(201,155,255,.35);border-radius:16px;background:linear-gradient(100deg,rgba(144,75,255,.2),rgba(69,220,255,.08));color:#e6d7ff;font-size:10px;font-weight:900;letter-spacing:1px}
+.inventory-summary b{font-size:18px;color:#fff}.inventory-card{min-height:150px}
+.inventory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.inventory-item{min-width:0;padding:11px;border-radius:17px;border:1px solid rgba(187,150,255,.24);background:linear-gradient(145deg,rgba(133,85,214,.17),rgba(255,255,255,.035))}
+.inventory-art{height:100px;border-radius:12px;background:radial-gradient(circle,rgba(164,115,255,.24),rgba(30,24,64,.8));display:grid;place-items:center;overflow:hidden;font-size:38px}
+.inventory-art img{width:100%;height:100%;object-fit:contain;padding:7px}
+.inventory-name{display:block;margin-top:9px;font-size:11px;color:#fff;overflow-wrap:anywhere}
+.inventory-meta{display:block;margin-top:5px;color:#b8b0d9;font-size:9px}
+.inventory-status{display:inline-block;margin-top:8px;padding:5px 7px;border-radius:8px;background:rgba(255,207,90,.1);color:#ffe69a;font-size:8px;font-weight:800}
+.rocket-hero{position:relative;overflow:hidden;padding:24px 20px 22px;border:1px solid rgba(255,139,103,.38);border-radius:26px;background:radial-gradient(ellipse at 50% 42%,rgba(255,119,66,.23),transparent 47%),linear-gradient(150deg,#431c50,#17132f 70%,#10152e);text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.3),0 0 30px rgba(255,100,70,.09)}
+.rocket-orbit{position:relative;width:110px;height:110px;margin:0 auto 8px;border:1px solid rgba(255,151,110,.22);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,rgba(255,126,80,.22),transparent 70%);box-shadow:0 0 40px rgba(255,93,68,.15)}
+.rocket-emoji{font-size:56px;filter:drop-shadow(0 0 20px rgba(255,151,103,.65));transform:rotate(-28deg)}
+.rocket-orbit i{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffd45e;box-shadow:0 0 12px #ffd45e}
+.rocket-orbit i:nth-of-type(1){top:8px;right:17px}.rocket-orbit i:nth-of-type(2){bottom:15px;left:8px;background:#ff78a8}.rocket-orbit i:nth-of-type(3){top:45px;right:-3px;background:#65eaff}
+.rocket-eyebrow{color:#ffb18f;font-size:9px;font-weight:900;letter-spacing:3px}
+.rocket-hero h1,.upgrade-hero h1{margin:9px 0;font-size:25px;font-weight:1000;letter-spacing:1px;color:#fff}
+.rocket-hero p,.upgrade-hero p{margin:0 auto;color:#d0bfdc;font-size:11px;line-height:1.65;max-width:290px}
+.rocket-multiplier{margin:22px 0 14px;font-size:58px;font-weight:1000;line-height:1;color:#fff;text-shadow:0 0 28px rgba(255,112,76,.75)}
+.rocket-multiplier span{font-size:27px;color:#ffb28d}
+.rocket-track{position:relative;height:10px;border-radius:20px;background:rgba(255,255,255,.1);margin:25px 0 19px}
+.rocket-track-fill{height:100%;width:12%;border-radius:20px;background:linear-gradient(90deg,#ff7b47,#ffd45e);box-shadow:0 0 15px rgba(255,126,65,.65)}
+.rocket-track span,.rocket-track b{position:absolute;top:16px;color:#a99bbd;font-size:8px}.rocket-track span{left:0}.rocket-track b{right:0;color:#ffd1a9}
+.rocket-bet-card{margin-top:14px;border-color:rgba(255,132,102,.25)}
+.rocket-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.rocket-mode span{padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;text-align:center;color:#a9a1c5;font-size:10px;font-weight:900}
+.rocket-mode span.active{color:#ffe0c8;border-color:rgba(255,142,98,.45);background:rgba(255,117,72,.13)}
+.rocket-coming{text-align:center;margin-top:12px}
+.rocket-rules{display:grid;gap:9px;margin-top:12px}
+.rocket-rules div{padding:13px 15px;border-radius:14px;background:linear-gradient(100deg,rgba(255,110,70,.12),rgba(143,89,255,.08));border:1px solid rgba(255,145,112,.16)}
+.rocket-rules b,.rocket-rules span{display:block}.rocket-rules b{color:#ffbf9d;font-size:11px}.rocket-rules span{margin-top:4px;color:#b9b0d0;font-size:9px}
+.upgrade-hero{padding:24px 18px 21px;border:1px solid rgba(91,238,255,.34);border-radius:26px;text-align:center;background:radial-gradient(ellipse at 50% 15%,rgba(69,229,255,.22),transparent 48%),linear-gradient(150deg,#153f69,#211644 78%);box-shadow:0 18px 40px rgba(0,0,0,.3)}
+.upgrade-symbol{width:74px;height:74px;margin:0 auto 14px;display:grid;place-items:center;border-radius:24px;background:linear-gradient(145deg,#54f0ff,#6c76ff);font-size:42px;color:#14234b;box-shadow:0 0 32px rgba(75,225,255,.35)}
+.upgrade-hero .rocket-eyebrow{color:#8df5ff}
+.upgrade-visual{display:flex;align-items:center;justify-content:center;gap:12px;margin:24px auto 4px}
+.upgrade-slot{width:105px;height:105px;border:1px solid rgba(130,226,255,.3);border-radius:19px;background:rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:37px;box-shadow:inset 0 1px rgba(255,255,255,.1)}
+.upgrade-slot small{font-size:7px;letter-spacing:1px;color:#b8d9ef;font-weight:900}
+.upgrade-slot-target{border-color:rgba(255,209,99,.5);box-shadow:0 0 22px rgba(255,209,99,.12)}
+.upgrade-arrow{font-size:23px;color:#85efff;text-shadow:0 0 16px #4ce8ff}.upgrade-card{border-color:rgba(91,238,255,.24)}
+@media(max-width:360px){.home-grid{gap:9px}.home-tile{padding:12px 10px}.home-tile-icon{width:48px;height:48px;font-size:26px}.home-tile-title{font-size:13px}.rocket-multiplier{font-size:50px}.upgrade-slot{width:92px;height:92px}}
+@media(prefers-reduced-motion:no-preference){.rocket-emoji{animation:rocketFloat 2.8s ease-in-out infinite}.upgrade-symbol{animation:upgradePulse 2.3s ease-in-out infinite}@keyframes rocketFloat{50%{transform:translateY(-7px) rotate(-28deg)}}@keyframes upgradePulse{50%{box-shadow:0 0 43px rgba(75,225,255,.65);transform:translateY(-2px)}}}
+
 </style>
 </head>
 <body>
@@ -747,6 +812,15 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
   </button>
   <button class="home-tile home-tile-profile" onclick="showTab('profile')" aria-label="Открыть профиль и коллекцию">
    <span class="home-tile-icon">👤</span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
+   <span class="home-tile-icon">🎒</span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-rocket" onclick="showTab('rocket')" aria-label="Открыть ракету">
+   <span class="home-tile-icon">🚀</span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-upgrade" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
+   <span class="home-tile-icon">⚡</span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
 </section>
@@ -930,6 +1004,41 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
  </div>
 </section>
 
+<section class="tab-page" id="tab-inventory">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ИНВЕНТАРЬ</span></div>
+ <div class="page-intro inventory-intro"><span class="eyebrow">YOUR TREASURE</span><h1>Твой инвентарь</h1><p>Здесь собраны выигранные NFT и подарки. Предметы можно будет вывести в Telegram или обменять на внутреннее серебро.</p></div>
+ <div class="inventory-summary"><span>🎒 МОИ ПРЕДМЕТЫ</span><b id="inventoryCount">—</b></div>
+ <div class="card inventory-card"><div id="inventoryItems"><p class="muted">Загружаем инвентарь…</p></div></div>
+ <div class="notice">Серебро нельзя вывести. Выводятся только NFT и подарки. Кнопки вывода и обмена активируем после подключения защищённого учёта предметов.</div>
+</section>
+
+<section class="tab-page" id="tab-rocket">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ROCKET GAME</span></div>
+ <div class="rocket-hero">
+  <div class="rocket-orbit"><span class="rocket-emoji">🚀</span><i></i><i></i><i></i></div>
+  <div class="rocket-eyebrow">RISK IT • CASH OUT</div><h1>ПОЙМАЙ МОМЕНТ</h1>
+  <p>Забери выигрыш до того, как ракета улетит. Максимальный множитель — 10.00x.</p>
+  <div class="rocket-multiplier">1.00<span>x</span></div>
+  <div class="rocket-track"><div class="rocket-track-fill"></div><span>СТАРТ</span><b>10.00x</b></div>
+ </div>
+ <div class="card rocket-bet-card"><div class="section-tag">ТВОЯ СТАВКА</div><h2>Выбери актив</h2>
+  <div class="rocket-mode"><span class="active">🪙 СЕРЕБРО</span><span>🎁 NFT</span></div>
+  <label class="currency-input-label" for="rocketStake">СУММА СТАВКИ В СЕРЕБРЕ</label><input id="rocketStake" type="number" min="1" placeholder="Например, 100" disabled>
+  <button disabled>🚀 ЗАПУСТИТЬ РАКЕТУ</button>
+  <p class="muted rocket-coming">Игровой раунд и ставки подключим отдельным серверным этапом. Пока это дизайн будущей мини-игры.</p>
+ </div>
+ <div class="rocket-rules"><div><b>1.01x–10.00x</b><span>Случайная точка остановки</span></div><div><b>ЗАБРАТЬ</b><span>Успей нажать до вылета</span></div><div><b>NFT ИЛИ СЕРЕБРО</b><span>Можно ставить оба типа активов</span></div></div>
+</section>
+
+<section class="tab-page" id="tab-upgrade">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>UPGRADE</span></div>
+ <div class="upgrade-hero"><div class="upgrade-symbol">⚡</div><div class="rocket-eyebrow">LEVEL UP YOUR DROP</div><h1>АПГРЕЙД ПОДАРКОВ</h1>
+  <p>Выбирай предмет и пробуй улучшить его до более ценного NFT.</p>
+  <div class="upgrade-visual"><div class="upgrade-slot">🎁<small>ТВОЙ ПРЕДМЕТ</small></div><div class="upgrade-arrow">➜</div><div class="upgrade-slot upgrade-slot-target">💎<small>НОВЫЙ ПРИЗ</small></div></div>
+ </div>
+ <div class="card upgrade-card"><div class="section-tag">ТВОЙ ШАНС</div><h2>Собери свой апгрейд</h2><p class="muted">Здесь появится выбор NFT, цель улучшения и шанс успеха. Правила и проценты определим до запуска механики.</p><button disabled>⚡ УЛУЧШИТЬ ПРЕДМЕТ</button><p class="muted">Функция пока в разработке — предметы и баланс не списываются.</p></div>
+</section>
+
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
 
 
@@ -1035,7 +1144,7 @@ async function loadRecentWins() {
 }
 
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade'];
  const isHome = name === 'home';
  document.getElementById('tab-home').classList.toggle('active',isHome);
  tabs.forEach(tab => {
@@ -1055,6 +1164,45 @@ function showTab(name) {
 
 function openHelp() {
  tg.openTelegramLink('https://t.me/traptrap4');
+}
+
+async function loadInventory() {
+ const container=document.getElementById('inventoryItems');
+ const count=document.getElementById('inventoryCount');
+ if(!container)return;
+ container.replaceChildren();
+ try {
+  const data=await api('/api/me/wins');
+  const wins=Array.isArray(data.wins)?data.wins:[];
+  count.textContent=String(wins.length);
+  if(!wins.length) {
+   const empty=document.createElement('p');empty.className='muted';
+   empty.textContent='Пока здесь пусто. Выигранные подарки появятся в этом разделе.';
+   container.appendChild(empty);return;
+  }
+  const grid=document.createElement('div');grid.className='inventory-grid';
+  wins.forEach(win=>{
+   const item=document.createElement('article');item.className='inventory-item';
+   const art=document.createElement('div');art.className='inventory-art';
+   const url=typeof win.prize_image_url==='string'?win.prize_image_url:'';
+   try {
+    const parsed=new URL(url,window.location.origin);
+    if(parsed.protocol==='https:'||parsed.protocol==='http:') {
+     const img=document.createElement('img');img.src=parsed.href;img.alt=String(win.prize_name||'NFT-подарок');img.loading='lazy';
+     img.onerror=()=>{img.remove();art.textContent='🎁';};art.appendChild(img);
+    } else art.textContent='🎁';
+   } catch {art.textContent='🎁';}
+   const name=document.createElement('b');name.className='inventory-name';name.textContent=String(win.prize_name||'NFT-подарок');
+   const meta=document.createElement('span');meta.className='inventory-meta';
+   meta.textContent=(Number(win.prize_stars)>0?Number(win.prize_stars)+' ⭐ · ':'')+(win.created_at?new Date(win.created_at).toLocaleDateString('ru-RU'):'');
+   const status=document.createElement('span');status.className='inventory-status';status.textContent=win.status==='done'?'ВЫДАН':'ОЖИДАЕТ ВЫДАЧИ';
+   item.append(art,name,meta,status);grid.appendChild(item);
+  });
+  container.appendChild(grid);
+ } catch(error) {
+  count.textContent='—';const failed=document.createElement('p');failed.className='muted';
+  failed.textContent='Не удалось загрузить инвентарь. Открой раздел позже.';container.appendChild(failed);
+ }
 }
 
 async function loadProfile() {
