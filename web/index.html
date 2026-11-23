@@ -143,6 +143,7 @@ input,select{
 .legend-dot{width:11px;height:11px;flex:0 0 11px;border-radius:50%;box-shadow:0 0 10px currentColor}
 .empty-dot{background:#f3c85f;color:#f3c85f}
 .nft-dot{background:#9b83ef;color:#9b83ef}
+.unusual-dot{background:#b79cff;color:#b79cff}
 .rare-dot{background:#ff6f9f;color:#ff6f9f}
 .spin-pointer{
  position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:3;
@@ -384,6 +385,32 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
  .card{padding:22px}
 }
 
+
+/* Horizontal prize roulette */
+.roulette-wrap{position:relative;margin:22px 0 13px;padding:24px 0 15px}
+.roulette-glow{position:absolute;inset:15% 8%;background:linear-gradient(90deg,rgba(116,229,255,.12),rgba(255,114,182,.17));filter:blur(28px);pointer-events:none}
+.roulette-window{position:relative;overflow:hidden;width:100%;padding:13px 0;border:1px solid rgba(185,162,255,.24);border-radius:19px;background:linear-gradient(180deg,rgba(9,8,27,.94),rgba(30,24,65,.92));box-shadow:inset 0 0 22px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.2)}
+.roulette-window:before,.roulette-window:after{content:"";position:absolute;top:0;bottom:0;width:30px;z-index:2;pointer-events:none}
+.roulette-window:before{left:0;background:linear-gradient(90deg,#171536,transparent)}
+.roulette-window:after{right:0;background:linear-gradient(270deg,#171536,transparent)}
+.roulette-track{display:flex;align-items:stretch;gap:9px;width:max-content;padding:0 12px;will-change:transform}
+.roulette-item,.roulette-placeholder{width:88px;min-width:88px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(184,169,255,.18);border-radius:14px;background:linear-gradient(150deg,rgba(75,63,127,.68),rgba(28,24,66,.95));color:#fff;box-shadow:0 5px 14px rgba(0,0,0,.22)}
+.roulette-item-art,.roulette-placeholder span{font-size:32px;line-height:1.2;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+.roulette-item b,.roulette-placeholder small{font-size:10px;letter-spacing:.5px}
+.roulette-item small{font-size:8px;letter-spacing:1px;color:#aaa8c7}
+.roulette-placeholder{opacity:.72}
+.roulette-item-winner{border:2px solid #ffe69a;background:linear-gradient(145deg,rgba(255,207,90,.28),rgba(255,114,182,.2));box-shadow:0 0 20px rgba(255,207,90,.22)}
+.roulette-item-winner.is-ordinary{border-color:#74e5ff;box-shadow:0 0 24px rgba(116,229,255,.42)}
+.roulette-item-winner.is-unusual{border-color:#b79cff;background:linear-gradient(145deg,rgba(183,156,255,.24),rgba(116,229,255,.12));box-shadow:0 0 22px rgba(183,156,255,.55)}
+.roulette-item-winner.is-rare{border-color:#ffcf5a;background:linear-gradient(145deg,rgba(255,207,90,.34),rgba(255,114,182,.3));box-shadow:0 0 18px rgba(255,207,90,.65),0 0 38px rgba(255,114,182,.35);animation:rareWinPulse 1.15s ease-in-out infinite alternate}
+.roulette-item-winner.is-empty{border-color:#aaa8c7}
+.roulette-pointer{position:absolute;z-index:4;left:50%;top:3px;transform:translateX(-50%);display:flex;justify-content:center;filter:drop-shadow(0 3px 7px rgba(255,207,90,.5))}
+.roulette-pointer span{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:21px solid #ffe69a}
+.roulette-caption{text-align:center;color:#aaa8c7;font-size:8px;font-weight:800;letter-spacing:1.8px;margin-top:13px}
+@keyframes rareWinPulse{from{filter:brightness(1);transform:scale(1)}to{filter:brightness(1.45);transform:scale(1.045)}}
+@media(max-width:360px){.roulette-item,.roulette-placeholder{width:78px;min-width:78px;height:104px}.roulette-item-art,.roulette-placeholder span{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.roulette-item-winner.is-rare{animation:none}}
+
 </style>
 </head>
 <body>
@@ -408,14 +435,23 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
  <div class="card">
   <div class="section-tag">THE MAIN EVENT</div>
   <h2>Колесо удачи</h2>
-  <div class="wheel-wrap">
-   <div class="wheel-glow"></div><div class="spin-pointer"></div>
-   <div class="wheel" id="wheel" role="img" aria-label="Рулетка: без выигрыша 90 процентов, обычный NFT 9,99 процента, редкий NFT 0,01 процента"><div class="wheel-center"><span>GIFT</span><small>DROP</small></div></div>
+  <div class="roulette-wrap" aria-label="Горизонтальная рулетка подарков">
+   <div class="roulette-glow"></div>
+   <div class="roulette-pointer" aria-hidden="true"><span></span></div>
+   <div class="roulette-window">
+    <div class="roulette-track" id="rouletteTrack">
+     <div class="roulette-placeholder"><span>🎁</span><small>GIFT</small></div>
+     <div class="roulette-placeholder"><span>💎</span><small>DROP</small></div>
+     <div class="roulette-placeholder"><span>🎁</span><small>GIFT</small></div>
+    </div>
+   </div>
+   <div class="roulette-caption">ПРИЗ ОСТАНОВИТСЯ ПОД УКАЗАТЕЛЕМ</div>
   </div>
   <div class="wheel-legend" aria-label="Сектора рулетки">
-   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>90%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Обычный NFT</span><b>9,99%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>Редкий NFT</span><b>0,01%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>79,999%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Обычный NFT</span><b>15%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot unusual-dot"></i><span>Необычный NFT</span><b>5%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>Редкий NFT</span><b>0,001%</b></div>
   </div>
   <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ ✦</button>
   <div id="message"></div>
@@ -566,7 +602,6 @@ tg.ready();
 tg.expand();
 
 let referralLink = '';
-let wheelRotation = 0;
 let spinning = false;
 let catalogLoaded = false;
 
@@ -689,41 +724,59 @@ function shareReferral() {
  );
 }
 
+function buildRoulette(result) {
+ const track=document.getElementById('rouletteTrack');
+ const viewport=track.parentElement;
+ const icons={none:'🫧',ordinary:'🎁',unusual:'✨',rare:'💎'};
+ const labels={none:'Пусто',ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'};
+ const targetIndex=24;
+ const types=['none','none','none','ordinary','none','none','rare','none','ordinary'];
+ track.innerHTML='';
+ track.style.transition='none';
+ track.style.transform='translateX(0px)';
+ let targetCard=null;
+ for(let i=0;i<31;i++) {
+  const type=i===targetIndex?result:types[Math.floor(Math.random()*types.length)];
+  const card=document.createElement('div');
+  card.className='roulette-item'+(i===targetIndex?' roulette-item-winner '+(result==='rare'?'is-rare':result==='unusual'?'is-unusual':result==='ordinary'?'is-ordinary':'is-empty'):'');
+  const art=document.createElement('span');
+  art.className='roulette-item-art';
+  art.textContent=icons[type]||'🎁';
+  const name=document.createElement('b');
+  name.textContent=labels[type]||'Подарок';
+  const sub=document.createElement('small');
+  sub.textContent=type==='rare'?'LEGENDARY':type==='unusual'?'UNUSUAL NFT':type==='ordinary'?'NFT GIFT':'TRY AGAIN';
+  card.append(art,name,sub);
+  track.appendChild(card);
+  if(i===targetIndex)targetCard=card;
+ }
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const center=viewport.clientWidth/2;
+  const cardCenter=targetCard.offsetLeft+targetCard.offsetWidth/2;
+  track.style.transition='transform 5.2s cubic-bezier(.10,.72,.08,1)';
+  track.style.transform='translateX('+(center-cardCenter)+'px)';
+ }));
+ return new Promise(resolve=>setTimeout(resolve,5400));
+}
+
 async function spin() {
  const button=document.getElementById('spinButton');
  const message=document.getElementById('message');
- const wheel=document.getElementById('wheel');
  if(spinning)return;
 
  spinning=true;
  button.disabled=true;
- message.textContent='🎰 Рулетка вращается...';
- wheel.classList.remove('wheel-result');
- const request=api('/api/spin',{method:'POST',body:JSON.stringify({})});
-
+ message.textContent='🎰 Лента подарков запускается...';
  try {
-  let data;
-  try {
-   data=await request;
-  } catch(error) {
-   await new Promise(resolve=>setTimeout(resolve,5300));
-   throw error;
+  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({})});
+  if(!['none','ordinary','unusual','rare'].includes(data.result)) {
+   throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
-  const targetAngles={none:198,ordinary:18.018,rare:90.018};
-  const target=targetAngles[data.result];
-  if(target!==undefined) {
-   wheelRotation+=1800+((target-(wheelRotation%360)+360)%360);
-   wheel.style.transform='rotate('+wheelRotation+'deg)';
-  } else {
-   wheelRotation+=1800+Math.floor(Math.random()*360);
-   wheel.style.transform='rotate('+wheelRotation+'deg)';
-  }
-  await new Promise(resolve=>setTimeout(resolve,5300));
-  wheel.classList.add('wheel-result');
+  await buildRoulette(data.result);
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
-  else if(data.result==='ordinary') message.textContent='🎉 Выпал обычный NFT! Администратор свяжется с тобой.';
-  else if(data.result==='rare') message.textContent='🔥 РЕДКИЙ NFT! Администратор свяжется с тобой.';
-  else message.textContent='Результат: '+data.result;
+  else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
+  else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
+  else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
   await loadAccount();
  } catch(error) {
   message.textContent=error.message;

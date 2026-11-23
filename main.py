@@ -401,9 +401,10 @@ async def referral_command(message: Message):
 async def prizes_command(message: Message):
     await message.answer(
         "🎁 Призы GiftsDrop:\n"
-        "Обычный NFT — 9,99%.\n"
-        "Редкий NFT — 0,01%.\n"
-        "Без выигрыша — 90%.\n\n"
+        "Обычный NFT — 15%.\n"
+        "Необычный NFT — 5%.\n"
+        "Редкий NFT — 0,001%.\n"
+        "Без выигрыша — 79,999%.\n\n"
         "Выдача производится администратором вручную."
     )
 
@@ -724,6 +725,18 @@ async def spin(callback: CallbackQuery):
                 ADMIN_ID,
                 "🎁 НОВЫЙ ПОБЕДИТЕЛЬ!\n"
                 f"ID: {user.id}\nUsername: @{user.username or 'нет'}\n"
+                f"Заявка: #{result.get('claim_id')}"
+            )
+    elif prize == "unusual":
+        await callback.message.answer(
+            "💜 Поздравляем! Ты выиграл необычный NFT-подарок! "
+            "Администратор свяжется с тобой для выдачи."
+        )
+        if ADMIN_ID:
+            await bot.send_message(
+                ADMIN_ID,
+                f"💜 НЕОБЫЧНЫЙ NFT! ID: {user.id}; "
+                f"Username: @{user.username or 'нет'}; "
                 f"Заявка: #{result.get('claim_id')}"
             )
     else:
