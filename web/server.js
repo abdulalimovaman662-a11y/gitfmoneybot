@@ -1061,10 +1061,21 @@ const server = http.createServer(async (req, res) => {
           prize = 'ordinary';
         }
 
-        await client.query(`
+        const history = await client.query(`
           INSERT INTO spin_history (telegram_id, prize_type)
           VALUES ($1, $2)
+          RETURNING id
         `, [String(user.id), prize]);
+
+        let claimId = null;
+        if (prize !== 'nothing') {
+          const claim = await client.query(`
+            INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type)
+            VALUES ($1, $2, $3)
+            RETURNING id
+          `, [history.rows[0].id, String(user.id), prize]);
+          claimId = claim.rows[0].id;
+        }
 
         const updated = await client.query(`
           SELECT silver, free_spins
@@ -1078,7 +1089,8 @@ const server = http.createServer(async (req, res) => {
           result: prize === 'nothing' ? 'none' : prize,
           prize,
           silver: updated.rows[0].silver,
-          free_spins: updated.rows[0].free_spins
+          free_spins: updated.rows[0].free_spins,
+          claim_id: claimId
         });
 
       } catch (error) {
