@@ -175,8 +175,12 @@ async function initDatabase() {
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
       stars INTEGER NOT NULL,
       spins INTEGER NOT NULL,
+      silver INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE bot_payments
+      ADD COLUMN IF NOT EXISTS silver INTEGER NOT NULL DEFAULT 0;
 
     CREATE TABLE IF NOT EXISTS bot_legacy_migrations (
       telegram_id BIGINT PRIMARY KEY REFERENCES users(telegram_id),
@@ -735,6 +739,52 @@ const server = http.createServer(async (req, res) => {
           silver: Number(updated.rows[0].silver),
           free_spins: Number(updated.rows[0].free_spins),
           claim_id: claimId
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/internal/bot/silver-payment' && req.method === 'POST') {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
+      const body = await readBody(req);
+      const telegramId = String(body.telegram_id || '');
+      const amount = Number(body.amount);
+      const stars = Number(body.stars);
+      const chargeId = String(body.charge_id || '');
+      if (!/^\d+$/.test(telegramId) || ![20, 60].includes(amount) ||
+          stars !== amount || !chargeId) {
+        return send(res, 400, { error: 'Некорректные данные пополнения серебра' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          'INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING',
+          [telegramId]
+        );
+        const payment = await client.query(
+          `INSERT INTO bot_payments (charge_id, telegram_id, stars, spins, silver)
+           VALUES ($1, $2, $3, 0, $4)
+           ON CONFLICT (charge_id) DO NOTHING RETURNING charge_id`,
+          [chargeId, telegramId, stars, amount]
+        );
+        if (payment.rowCount === 1) {
+          await client.query(
+            'UPDATE users SET silver = silver + $1 WHERE telegram_id = $2',
+            [amount, telegramId]
+          );
+        }
+        const account = await client.query(
+          'SELECT silver FROM users WHERE telegram_id = $1', [telegramId]
+        );
+        await client.query('COMMIT');
+        return send(res, 200, {
+          success: true,
+          already_processed: payment.rowCount === 0,
+          credited_silver: payment.rowCount === 1 ? amount : 0,
+          silver: Number(account.rows[0].silver)
         });
       } catch (error) {
         await client.query('ROLLBACK');
