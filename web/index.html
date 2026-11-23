@@ -143,6 +143,7 @@ input,select{
 .legend-dot{width:11px;height:11px;flex:0 0 11px;border-radius:50%;box-shadow:0 0 10px currentColor}
 .empty-dot{background:#f3c85f;color:#f3c85f}
 .nft-dot{background:#9b83ef;color:#9b83ef}
+.unusual-dot{background:#b79cff;color:#b79cff}
 .rare-dot{background:#ff6f9f;color:#ff6f9f}
 .spin-pointer{
  position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:3;
@@ -446,9 +447,10 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
    <div class="roulette-caption">ПРИЗ ОСТАНОВИТСЯ ПОД УКАЗАТЕЛЕМ</div>
   </div>
   <div class="wheel-legend" aria-label="Сектора рулетки">
-   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>90%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Обычный NFT</span><b>9,99%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>Редкий NFT</span><b>0,01%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>79,999%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Обычный NFT</span><b>15%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot unusual-dot"></i><span>Необычный NFT</span><b>5%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>Редкий NFT</span><b>0,001%</b></div>
   </div>
   <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ ✦</button>
   <div id="message"></div>
@@ -724,8 +726,8 @@ function shareReferral() {
 function buildRoulette(result) {
  const track=document.getElementById('rouletteTrack');
  const viewport=track.parentElement;
- const icons={none:'🫧',ordinary:'🎁',rare:'💎'};
- const labels={none:'Пусто',ordinary:'NFT',rare:'Редкий'};
+ const icons={none:'🫧',ordinary:'🎁',unusual:'✨',rare:'💎'};
+ const labels={none:'Пусто',ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'};
  const targetIndex=24;
  const types=['none','none','none','ordinary','none','none','rare','none','ordinary'];
  track.innerHTML='';
@@ -735,14 +737,14 @@ function buildRoulette(result) {
  for(let i=0;i<31;i++) {
   const type=i===targetIndex?result:types[Math.floor(Math.random()*types.length)];
   const card=document.createElement('div');
-  card.className='roulette-item'+(i===targetIndex?' roulette-item-winner '+(result==='rare'?'is-rare':result==='ordinary'?'is-ordinary':'is-empty'):'');
+  card.className='roulette-item'+(i===targetIndex?' roulette-item-winner '+(result==='rare'?'is-rare':result==='unusual'?'is-unusual':result==='ordinary'?'is-ordinary':'is-empty'):'');
   const art=document.createElement('span');
   art.className='roulette-item-art';
   art.textContent=icons[type]||'🎁';
   const name=document.createElement('b');
   name.textContent=labels[type]||'Подарок';
   const sub=document.createElement('small');
-  sub.textContent=type==='rare'?'LEGENDARY':type==='ordinary'?'NFT GIFT':'TRY AGAIN';
+  sub.textContent=type==='rare'?'LEGENDARY':type==='unusual'?'UNUSUAL NFT':type==='ordinary'?'NFT GIFT':'TRY AGAIN';
   card.append(art,name,sub);
   track.appendChild(card);
   if(i===targetIndex)targetCard=card;
@@ -766,12 +768,13 @@ async function spin() {
  message.textContent='🎰 Лента подарков запускается...';
  try {
   const data=await api('/api/spin',{method:'POST',body:JSON.stringify({})});
-  if(!['none','ordinary','rare'].includes(data.result)) {
+  if(!['none','ordinary','unusual','rare'].includes(data.result)) {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
   await buildRoulette(data.result);
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
   else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
+  else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
   else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
   await loadAccount();
  } catch(error) {
