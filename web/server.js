@@ -867,6 +867,25 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { success: true });
     }
 
+    // Публичная лента реальных выигрышей: без Telegram ID и личных данных.
+    if (url.pathname === '/api/wins/recent' && req.method === 'GET') {
+      const result = await pool.query(
+        `SELECT prize_type, prize_name, prize_stars, created_at
+         FROM prize_claims
+         WHERE prize_name IS NOT NULL AND prize_name <> ''
+         ORDER BY created_at DESC
+         LIMIT 12`
+      );
+      return send(res, 200, {
+        wins: result.rows.map(row => ({
+          prize_type: row.prize_type,
+          prize_name: row.prize_name,
+          prize_stars: Number(row.prize_stars) || 0,
+          created_at: row.created_at
+        }))
+      });
+    }
+
     // Каталог магазина
     if (
       url.pathname === '/api/store/catalog' &&
