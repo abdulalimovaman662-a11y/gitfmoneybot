@@ -606,6 +606,10 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
  </div>
  <button class="help-button" onclick="openHelp()" aria-label="Помощь"><span>?</span> Помощь</button>
  <div class="header-strip" aria-label="Текущий онлайн"><span class="live-dot"></span><span>Онлайн</span><strong class="activity-count" id="activityCount">123</strong></div>
+  <div class="wins-ticker" id="winsTicker" aria-label="Последние реальные выигрыши">
+   <div class="wins-ticker-label">✦ ПОСЛЕДНИЕ ВЫИГРЫШИ</div>
+   <div class="wins-ticker-track" id="winsTickerTrack"><span class="win-chip">Загружаем результаты…</span></div>
+  </div>
 </header>
 
 <section class="tab-page active" id="tab-spin">
@@ -795,6 +799,9 @@ let referralLink = '';
 let spinning = false;
 let catalogLoaded = false;
 
+loadRecentWins();
+setInterval(loadRecentWins, 60000);
+
 // Декоративный счётчик онлайна: число меняется раз в секунду.
 let displayedOnline = 123;
 const activityCount = document.getElementById('activityCount');
@@ -803,6 +810,53 @@ if (activityCount) {
   displayedOnline = Math.max(100, Math.min(199, displayedOnline + Math.floor(Math.random()*13)-6));
   activityCount.textContent = displayedOnline;
  }, 1000);
+}
+
+async function loadRecentWins() {
+ const track=document.getElementById('winsTickerTrack');
+ if(!track)return;
+ try {
+  const data=await api('/api/wins/recent');
+  const wins=Array.isArray(data.wins)?data.wins:[];
+  track.replaceChildren();
+  if(!wins.length) {
+   const empty=document.createElement('span');
+   empty.className='win-chip';
+   empty.textContent='Пока нет выигрышей — будь первым!';
+   track.appendChild(empty);
+   track.style.animation='none';
+   return;
+  }
+  const addBatch=()=>wins.forEach(win=>{
+   const chip=document.createElement('span');
+   chip.className='win-chip';
+   const icon=document.createElement('span');
+   icon.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';
+   const label=document.createElement('span');
+   label.textContent='Игрок выиграл ';
+   const name=document.createElement('b');
+   name.textContent=String(win.prize_name||'NFT-подарок');
+   chip.append(icon,label,name);
+   if(Number(win.prize_stars)>0) {
+    const value=document.createElement('span');
+    value.textContent=' · '+Number(win.prize_stars)+' ⭐';
+    chip.appendChild(value);
+   }
+   track.appendChild(chip);
+  });
+  addBatch();
+  const duplicate=track.cloneNode(true);
+  duplicate.setAttribute('aria-hidden','true');
+  track.append(...Array.from(duplicate.children));
+  track.style.animation='';
+ } catch(error) {
+  track.replaceChildren();
+  const unavailable=document.createElement('span');
+  unavailable.className='win-chip';
+  unavailable.textContent='Лента выигрышей временно недоступна';
+  track.appendChild(unavailable);
+  track.style.animation='none';
+ }
 }
 
 function showTab(name) {
