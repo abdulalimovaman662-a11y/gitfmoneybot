@@ -1123,6 +1123,28 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, result.rows[0]);
     }
 
+    // История NFT-выигрышей только текущего Telegram-пользователя.
+    if (url.pathname === '/api/me/wins' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const result = await pool.query(
+        `SELECT prize_type, prize_name, prize_stars, status, created_at
+         FROM prize_claims
+         WHERE telegram_id = $1 AND prize_name IS NOT NULL AND prize_name <> ''
+         ORDER BY created_at DESC
+         LIMIT 20`,
+        [String(user.id)]
+      );
+      return send(res, 200, { wins: result.rows.map(row => ({
+        prize_type: row.prize_type,
+        prize_name: row.prize_name,
+        prize_stars: Number(row.prize_stars) || 0,
+        status: row.status,
+        created_at: row.created_at
+      })) });
+    }
+
     // Рефералы
     if (url.pathname === '/api/referrals' && req.method === 'GET') {
       const user = getTelegramUser(req);
