@@ -603,20 +603,24 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const telegramId = String(body.telegram_id || '');
       const legacySpins = body.legacy_spins;
+      const legacyReferrals = body.legacy_referrals;
       if (!/^\d+$/.test(telegramId) ||
           (legacySpins !== null && legacySpins !== undefined &&
-           (!Number.isSafeInteger(Number(legacySpins)) || Number(legacySpins) < 0))) {
+           (!Number.isSafeInteger(Number(legacySpins)) || Number(legacySpins) < 0)) ||
+          (legacyReferrals !== null && legacyReferrals !== undefined &&
+           (!Number.isSafeInteger(Number(legacyReferrals)) || Number(legacyReferrals) < 0))) {
         return send(res, 400, { error: 'Некорректный Telegram ID или старый баланс' });
       }
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
         const inserted = await client.query(
-          `INSERT INTO users (telegram_id, username, first_name, free_spins)
-           VALUES ($1, $2, $3, $4)
+          `INSERT INTO users (telegram_id, username, first_name, free_spins, referral_count)
+           VALUES ($1, $2, $3, $4, $5)
            ON CONFLICT (telegram_id) DO NOTHING RETURNING telegram_id`,
           [telegramId, body.username || null, body.first_name || null,
-           legacySpins === null || legacySpins === undefined ? 3 : Number(legacySpins)]
+           legacySpins === null || legacySpins === undefined ? 3 : Number(legacySpins),
+           legacyReferrals === null || legacyReferrals === undefined ? 0 : Number(legacyReferrals)]
         );
         await client.query(
           'UPDATE users SET username = $1, first_name = $2 WHERE telegram_id = $3',
