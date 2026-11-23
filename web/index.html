@@ -436,6 +436,112 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
 @media(max-width:360px){.roulette-item,.roulette-placeholder{width:78px;min-width:78px;height:104px}.roulette-item-art,.roulette-placeholder span{font-size:29px}}
 @media(prefers-reduced-motion:reduce){.roulette-item-winner.is-rare{animation:none}}
 
+
+/* Final home-page polish — presentation only */
+:root{
+ --surface-glass:rgba(28,26,67,.82);
+ --surface-edge:rgba(185,162,255,.2);
+ --text-soft:#c1bfdc;
+}
+body{
+ background:
+  radial-gradient(ellipse at 50% 2%,rgba(185,162,255,.13),transparent 34%),
+  radial-gradient(ellipse at 4% 38%,rgba(116,229,255,.055),transparent 28%),
+  linear-gradient(180deg,#11102b 0%,#0d0c20 58%,#0a0919 100%);
+}
+.app-header{
+ padding-top:calc(12px + env(safe-area-inset-top));
+}
+.header-brand{gap:11px}
+.brand-mark{
+ position:relative;isolation:isolate;
+ box-shadow:0 0 0 5px rgba(255,207,90,.055),0 8px 24px rgba(255,114,182,.22);
+}
+.brand-mark:after{
+ content:"";position:absolute;inset:-4px;border:1px solid rgba(255,230,154,.22);
+ border-radius:18px;transform:rotate(9deg);z-index:-1;
+}
+.header-strip{
+ min-height:34px;padding:8px 11px;
+ background:linear-gradient(100deg,rgba(103,230,166,.075),rgba(255,255,255,.035));
+ border-color:rgba(103,230,166,.14);
+}
+.activity-count{font-size:13px;letter-spacing:.2px}
+.tab-spin>.card:first-child{
+ background:
+  radial-gradient(ellipse at 100% 0%,rgba(255,207,90,.12),transparent 48%),
+  linear-gradient(145deg,rgba(40,35,83,.98),rgba(20,19,49,.98));
+ border-color:rgba(255,207,90,.2);
+}
+.tab-spin>.card:first-child .section-tag{color:#ffe69a}
+.tab-spin>.card:nth-child(2){
+ background:
+  radial-gradient(ellipse at 50% 0%,rgba(255,114,182,.105),transparent 45%),
+  linear-gradient(150deg,rgba(35,31,78,.99),rgba(18,17,45,.99));
+ border-color:rgba(185,162,255,.25);
+ box-shadow:0 18px 42px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035);
+}
+.tab-spin>.card:nth-child(2) h2{
+ font-size:23px;letter-spacing:-.55px;margin-bottom:7px;
+}
+.wheel-legend{
+ background:rgba(8,7,25,.42);
+ border-color:rgba(185,162,255,.16);
+ padding:14px 15px;
+}
+.wheel-legend-item{min-height:25px}
+.wheel-legend-item b{font-size:12px}
+#spinButton{
+ min-height:53px;font-size:12px;letter-spacing:.8px;
+ background:linear-gradient(105deg,#ffcf5a 0%,#ffab79 48%,#ff72b6 100%);
+ box-shadow:0 9px 25px rgba(255,114,182,.2),inset 0 1px rgba(255,255,255,.35);
+}
+#spinButton:not(:disabled):active{transform:translateY(1px) scale(.99)}
+.notice{
+ background:linear-gradient(110deg,rgba(116,229,255,.065),rgba(185,162,255,.055));
+ border-color:rgba(116,229,255,.14);
+}
+.odds{
+ padding:14px 2px;
+}
+.odds span{color:var(--text-soft)}
+.odds b{font-variant-numeric:tabular-nums}
+.page-intro{
+ position:relative;margin:0 0 4px;padding:18px 5px 21px;
+}
+.page-intro h1{letter-spacing:-1px}
+.card,.prize-card,.gift-product,.order-card,.request{
+ transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.prize-card{
+ background:linear-gradient(115deg,rgba(116,229,255,.085),rgba(185,162,255,.075));
+}
+.prize-card strong{font-variant-numeric:tabular-nums}
+.gift-art{
+ background:radial-gradient(circle at 50% 38%,rgba(255,207,90,.17),rgba(185,162,255,.07) 55%,rgba(10,9,29,.45));
+ border:1px solid rgba(255,255,255,.055);
+}
+.gift-product:active{transform:scale(.99)}
+input::placeholder{color:#77749d}
+button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-visible{
+ outline:2px solid #74e5ff;outline-offset:3px;
+}
+.nav-button.active{
+ background:linear-gradient(180deg,rgba(255,207,90,.12),rgba(255,207,90,.055));
+}
+.footer{padding-bottom:18px}
+@media(max-width:390px){
+ body{padding-left:12px;padding-right:12px}
+ .app-header{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
+ .tab-spin>.card:nth-child(2){padding:16px}
+ .wheel-legend{padding:11px}
+ .wheel-legend-item{font-size:11px}
+ .bottom-nav{padding-left:4px;padding-right:4px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+
 </style>
 </head>
 <body>
