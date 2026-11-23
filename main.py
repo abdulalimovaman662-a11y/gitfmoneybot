@@ -269,6 +269,20 @@ async def validate_gift_order(order):
         return False
 
 
+async def notify_admin(text, context):
+    if not ADMIN_ID:
+        print(f"ADMIN NOTIFICATION SKIPPED [{context}]: ADMIN_ID is not configured")
+        return False
+
+    try:
+        await bot.send_message(ADMIN_ID, text)
+        print(f"ADMIN NOTIFICATION SENT [{context}]")
+        return True
+    except Exception as error:
+        print(f"ADMIN NOTIFICATION FAILED [{context}]: {type(error).__name__}: {error}")
+        return False
+
+
 async def sync_gift_payment(payment, user_id, order):
     if not STORE_API_URL:
         return False, "Не задан STORE_API_URL"
@@ -526,19 +540,15 @@ async def successful_payment(message: Message):
                 "Подарок будет отправлен вручную."
             )
 
-            if ADMIN_ID:
-                try:
-                    await bot.send_message(
-                        ADMIN_ID,
-                        "🎁 НОВЫЙ ОПЛАЧЕННЫЙ ЗАКАЗ!\n\n"
-                        f"Заказ: #{order['order_id']}\n"
-                        f"Покупатель: {message.from_user.id}\n"
-                        f"Username: @{message.from_user.username or 'нет'}\n"
-                        f"Оплата: {payment.total_amount} ⭐\n"
-                        "Статус: ожидает отправки."
-                    )
-                except Exception:
-                    pass
+            await notify_admin(
+                "🎁 НОВЫЙ ОПЛАЧЕННЫЙ ЗАКАЗ!\n\n"
+                f"Заказ: #{order['order_id']}\n"
+                f"Покупатель: {message.from_user.id}\n"
+                f"Username: @{message.from_user.username or 'нет'}\n"
+                f"Оплата: {payment.total_amount} ⭐\n"
+                "Статус: ожидает отправки.",
+                f"gift-order-{order['order_id']}"
+            )
         else:
             await message.answer(
                 "✅ Telegram подтвердил оплату.\n"
@@ -546,19 +556,15 @@ async def successful_payment(message: Message):
                 "Не оплачивай его повторно."
             )
 
-            if ADMIN_ID:
-                try:
-                    await bot.send_message(
-                        ADMIN_ID,
-                        "⚠️ НУЖНА ПРОВЕРКА ОПЛАТЫ ПОДАРКА!\n\n"
-                        f"Заказ: #{order['order_id']}\n"
-                        f"Покупатель: {message.from_user.id}\n"
-                        f"Сумма: {payment.total_amount} ⭐\n"
-                        f"Charge ID: {payment.telegram_payment_charge_id}\n"
-                        f"Ошибка синхронизации: {result}"
-                    )
-                except Exception:
-                    pass
+            await notify_admin(
+                "⚠️ НУЖНА ПРОВЕРКА ОПЛАТЫ ПОДАРКА!\n\n"
+                f"Заказ: #{order['order_id']}\n"
+                f"Покупатель: {message.from_user.id}\n"
+                f"Сумма: {payment.total_amount} ⭐\n"
+                f"Charge ID: {payment.telegram_payment_charge_id}\n"
+                f"Ошибка синхронизации: {result}",
+                f"gift-payment-review-{order['order_id']}"
+            )
 
         return
 
