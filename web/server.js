@@ -995,7 +995,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { claims: result.rows });
     }
 
-    const prizeDone = url.pathname.match(new RegExp('^/api/admin/prizes/(\\d+)/done
+    const prizeDone = url.pathname.match(/^\/api\/admin\/prizes\/(\d+)\/done$/);
     if (prizeDone && req.method === 'POST') {
       const admin = await requireAdmin(req);
       if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
