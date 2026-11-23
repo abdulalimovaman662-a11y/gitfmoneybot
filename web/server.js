@@ -163,11 +163,15 @@ async function initDatabase() {
       id BIGSERIAL PRIMARY KEY,
       spin_history_id BIGINT NOT NULL UNIQUE REFERENCES spin_history(id),
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
-      prize_type TEXT NOT NULL CHECK (prize_type IN ('ordinary', 'rare')),
+      prize_type TEXT NOT NULL CHECK (prize_type IN ('ordinary', 'unusual', 'rare')),
       status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       processed_at TIMESTAMPTZ
     );
+
+    ALTER TABLE prize_claims DROP CONSTRAINT IF EXISTS prize_claims_prize_type_check;
+    ALTER TABLE prize_claims ADD CONSTRAINT prize_claims_prize_type_check
+      CHECK (prize_type IN ('ordinary', 'unusual', 'rare'));
 
     CREATE TABLE IF NOT EXISTS bot_payments (
       charge_id TEXT PRIMARY KEY,
@@ -191,7 +195,7 @@ async function initDatabase() {
     INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type)
     SELECT id, telegram_id, prize_type
     FROM spin_history
-    WHERE prize_type IN ('ordinary', 'rare')
+    WHERE prize_type IN ('ordinary', 'unusual', 'rare')
     ON CONFLICT (spin_history_id) DO NOTHING;
 
     CREATE TABLE IF NOT EXISTS topup_requests (
@@ -725,7 +729,7 @@ const server = http.createServer(async (req, res) => {
           await client.query('UPDATE users SET silver = silver - 20 WHERE telegram_id = $1', [telegramId]);
         }
         const roll = crypto.randomInt(100000);
-        const prize = roll >= 99990 ? 'rare' : (roll >= 90000 ? 'ordinary' : 'nothing');
+        const prize = roll >= 99999 ? 'rare' : (roll >= 94999 ? 'unusual' : (roll >= 79999 ? 'ordinary' : 'nothing'));
         const history = await client.query(
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
           [telegramId, prize]
@@ -1149,9 +1153,11 @@ const server = http.createServer(async (req, res) => {
         const chance = crypto.randomInt(100000);
         let prize = 'nothing';
 
-        if (chance >= 99990) {
+        if (chance >= 99999) {
           prize = 'rare';
-        } else if (chance >= 90000) {
+        } else if (chance >= 94999) {
+          prize = 'unusual';
+        } else if (chance >= 79999) {
           prize = 'ordinary';
         }
 
