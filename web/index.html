@@ -802,7 +802,7 @@ async function buildRoulette(result) {
   const type=i===targetIndex?result:(Math.random()<.34?'none':Math.random()<.58?'ordinary':Math.random()<.78?'unusual':'rare');
   const gift=type==='none'?null:randomGift(type);
   const card=document.createElement('div');
-  card.className='roulette-item'+(i===targetIndex?' roulette-item-winner '+(result==='rare'?'is-rare':result==='unusual'?'is-unusual':result==='ordinary'?'is-ordinary':'is-empty'):'');
+  card.className='roulette-item';
   const art=document.createElement('div');
   art.className='roulette-item-art';
   if(gift&&gift.image_url) {
@@ -829,7 +829,7 @@ async function buildRoulette(result) {
   track.style.transition='transform 5.2s cubic-bezier(.10,.72,.08,1)';
   track.style.transform='translateX('+(center-cardCenter)+'px)';
  }));
- return new Promise(resolve=>setTimeout(resolve,5400));
+ return new Promise(resolve=>setTimeout(()=>{ targetCard.classList.add('roulette-item-winner',result==='rare'?'is-rare':result==='unusual'?'is-unusual':result==='ordinary'?'is-ordinary':'is-empty'); resolve(); },5400));
 }
 
 
