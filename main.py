@@ -28,9 +28,9 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+# SQLite is kept only to preserve legacy spin balances during the first shared-DB login.
 db = sqlite3.connect(DB_PATH)
 db.row_factory = sqlite3.Row
-
 db.execute("""
 CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY,
@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS users (
     invited_by INTEGER
 )
 """)
-
 db.execute("""
 CREATE TABLE IF NOT EXISTS wins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +46,6 @@ CREATE TABLE IF NOT EXISTS wins (
     status TEXT NOT NULL DEFAULT 'pending'
 )
 """)
-
 db.execute("""
 CREATE TABLE IF NOT EXISTS payments (
     charge_id TEXT PRIMARY KEY,
@@ -56,49 +54,52 @@ CREATE TABLE IF NOT EXISTS payments (
     spins INTEGER NOT NULL
 )
 """)
-
 db.commit()
 
 
-def get_user(user_id):
-    return db.execute(
-        "SELECT * FROM users WHERE user_id = ?",
-        (user_id,)
+def legacy_spins(user_id):
+    row = db.execute(
+        "SELECT spins FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
+    return max(0, int(row["spins"])) if row else None
+
+
+async def internal_api(path, method="GET", payload=None):
+    if not STORE_API_URL:
+        raise RuntimeError("Не задан STORE_API_URL — адрес сайта GiftsDrop")
+    timeout = aiohttp.ClientTimeout(total=12)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.request(
+            method,
+            STORE_API_URL + path,
+            json=payload,
+            headers={"x-bot-token": TOKEN}
+        ) as response:
+            result = await response.json(content_type=None)
+            if response.status >= 400:
+                raise RuntimeError(result.get("error", "Ошибка общего сервера"))
+            return result
+
+
+async def shared_user(tg_user, referral_id=None):
+    return await internal_api("/api/internal/bot/user", "POST", {
+        "telegram_id": str(tg_user.id),
+        "username": tg_user.username,
+        "first_name": tg_user.first_name,
+        "referral_id": str(referral_id) if referral_id else None,
+        "legacy_spins": legacy_spins(tg_user.id)
+    })
 
 
 def main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🎰 Крутить рулетку",
-            callback_data="spin"
-        )],
-        [InlineKeyboardButton(
-            text="⭐ 1 прокрутка — 5 Stars",
-            callback_data="buy_1"
-        )],
-        [InlineKeyboardButton(
-            text="⭐ 3 прокрутки — 15 Stars",
-            callback_data="buy_3"
-        )],
+        [InlineKeyboardButton(text="🎰 Крутить рулетку", callback_data="spin")],
         [
-            InlineKeyboardButton(
-                text="👤 Мой баланс",
-                callback_data="balance"
-            ),
-            InlineKeyboardButton(
-                text="🎁 Призы",
-                callback_data="prizes"
-            )
+            InlineKeyboardButton(text="👤 Мой баланс", callback_data="balance"),
+            InlineKeyboardButton(text="🎁 Призы", callback_data="prizes")
         ],
-        [InlineKeyboardButton(
-            text="🔗 Пригласить друзей",
-            callback_data="referral"
-        )],
-        [InlineKeyboardButton(
-            text="📜 Правила",
-            callback_data="rules"
-        )]
+        [InlineKeyboardButton(text="🔗 Пригласить друзей", callback_data="referral")],
+        [InlineKeyboardButton(text="📜 Правила", callback_data="rules")]
     ])
 
 
@@ -148,47 +149,20 @@ async def register_user(user_id, referral_id=None):
 
 
 async def show_balance(message_or_callback, user_id):
-    user = get_user(user_id)
-
-    text = (
-        f"🎰 Твои прокрутки: {user['spins']}\n"
-        f"👥 Приглашено друзей: {user['referrals']}\n"
-        f"🎁 До следующих 3 бесплатных прокруток: "
-        f"{10 - user['referrals'] % 10}"
+    data = await internal_api(
+        "/api/internal/bot/user", "POST", {"telegram_id": str(user_id)}
     )
-
+    text = (
+        f"🪙 Серебро: {data['silver']}\n"
+        f"🎰 Бесплатные прокрутки: {data['free_spins']}\n"
+        f"👥 Приглашено друзей: {data['referral_count']}\n"
+        f"🎁 До следующих 3 бесплатных прокруток: {data['remaining_referrals']}"
+    )
     if isinstance(message_or_callback, CallbackQuery):
-        await message_or_callback.message.answer(
-            text, reply_markup=main_keyboard()
-        )
+        await message_or_callback.message.answer(text, reply_markup=main_keyboard())
         await message_or_callback.answer()
     else:
-        await message_or_callback.answer(
-            text, reply_markup=main_keyboard()
-        )
-
-
-async def send_spin_invoice(user_id, count):
-    if count == 1:
-        price = 5
-        title = "1 прокрутка"
-        description = "Одна прокрутка NFT Roulette"
-    else:
-        price = 15
-        title = "3 прокрутки"
-        description = "Пакет из трёх прокруток NFT Roulette"
-
-    await bot.send_invoice(
-        chat_id=user_id,
-        title=title,
-        description=description,
-        payload=f"spinpack:{count}:{user_id}",
-        provider_token="",
-        currency="XTR",
-        prices=[
-            LabeledPrice(label=title, amount=price)
-        ]
-    )
+        await message_or_callback.answer(text, reply_markup=main_keyboard())
 
 
 def parse_gift_payload(payload):
@@ -309,11 +283,13 @@ async def start(message: Message):
         except ValueError:
             pass
 
-    is_new = await register_user(
-        message.from_user.id, referral_id
-    )
+    try:
+        result = await shared_user(message.from_user, referral_id)
+    except Exception as error:
+        await message.answer(f"Сервис временно недоступен: {error}")
+        return
 
-    if is_new:
+    if result.get("created"):
         text = (
             "🎉 Добро пожаловать в GiftsDrop!\n\n"
             "Тебе начислено 3 бесплатные прокрутки.\n"
@@ -335,17 +311,11 @@ async def roulette_command(message: Message):
 
 @dp.message(Command("balance"))
 async def balance_command(message: Message):
-    if not get_user(message.from_user.id):
-        await register_user(message.from_user.id)
-
     await show_balance(message, message.from_user.id)
 
 
 @dp.message(Command("referral"))
 async def referral_command(message: Message):
-    if not get_user(message.from_user.id):
-        await register_user(message.from_user.id)
-
     me = await bot.get_me()
     link = (
         f"https://t.me/{me.username}"
@@ -376,8 +346,8 @@ async def rules_command(message: Message):
         "1. При первом запуске даются 3 бесплатные прокрутки.\n"
         "2. За каждые 10 новых приглашённых друзей "
         "начисляются ещё 3 прокрутки.\n"
-        "3. Одна прокрутка стоит 5 Stars.\n"
-        "4. Три прокрутки стоят 15 Stars.\n"
+        "3. 1 Telegram Star = 1 серебро при пополнении.\n"
+        "4. Одна прокрутка стоит 20 серебра.\n"
         "5. Вероятность главного приза — 0,01%.\n"
         "6. Выдача призов и подарков производится вручную.\n"
         "7. Повторная регистрация не засчитывается."
@@ -397,29 +367,12 @@ async def support_command(message: Message):
 async def terms_command(message: Message):
     await message.answer(
         "Условия использования GiftsDrop:\n\n"
-        "Прокрутки и подарки приобретаются за Telegram Stars.\n"
+        "Серебро начисляется из Telegram Stars по курсу 1 к 1.\n"
+        "Одна прокрутка стоит 20 серебра.\n"
         "Подарки отправляются администратором вручную "
         "после подтверждения оплаты.\n"
         "По вопросам платежей используй /paysupport."
     )
-
-
-@dp.callback_query(F.data == "buy_1")
-async def buy_one(callback: CallbackQuery):
-    if not get_user(callback.from_user.id):
-        await register_user(callback.from_user.id)
-
-    await send_spin_invoice(callback.from_user.id, 1)
-    await callback.answer()
-
-
-@dp.callback_query(F.data == "buy_3")
-async def buy_three(callback: CallbackQuery):
-    if not get_user(callback.from_user.id):
-        await register_user(callback.from_user.id)
-
-    await send_spin_invoice(callback.from_user.id, 3)
-    await callback.answer()
 
 
 @dp.pre_checkout_query()
@@ -540,77 +493,43 @@ async def successful_payment(message: Message):
 
         return
 
-    # Старая оплата прокруток
+    # Compatibility for invoices created before the shared silver balance rollout.
     try:
         parts = payload.split(":")
         count = int(parts[1])
         user_id = int(parts[2])
     except (ValueError, IndexError):
-        await message.answer(
-            "Ошибка заказа. Обратись в поддержку."
-        )
+        await message.answer("Платёж получен, но данные заказа некорректны. Обратись в поддержку.")
         return
 
     expected_price = 5 if count == 1 else 15
-
-    if (
-        parts[0] != "spinpack"
-        or count not in (1, 3)
-        or user_id != message.from_user.id
-        or payment.currency != "XTR"
-        or payment.total_amount != expected_price
-    ):
-        await message.answer(
-            "Платёж получен, но данные заказа не совпали. "
-            "Напиши в поддержку."
-        )
+    if (parts[0] != "spinpack" or count not in (1, 3)
+            or user_id != message.from_user.id
+            or payment.currency != "XTR"
+            or payment.total_amount != expected_price):
+        await message.answer("Данные старого платежа не совпали. Обратись в поддержку.")
         return
 
     try:
-        db.execute(
-            "INSERT INTO payments "
-            "(charge_id, user_id, stars, spins) "
-            "VALUES (?, ?, ?, ?)",
-            (
-                payment.telegram_payment_charge_id,
-                user_id,
-                payment.total_amount,
-                count
-            )
-        )
-
-        db.execute(
-            "UPDATE users SET spins = spins + ? "
-            "WHERE user_id = ?",
-            (count, user_id)
-        )
-
-        db.commit()
-
-    except sqlite3.IntegrityError:
+        result = await internal_api("/api/internal/bot/legacy-payment", "POST", {
+            "telegram_id": str(user_id),
+            "count": count,
+            "stars": payment.total_amount,
+            "charge_id": payment.telegram_payment_charge_id
+        })
         await message.answer(
-            "Этот платёж уже был обработан."
+            "✅ Старый платёж подтверждён.\n"
+            f"Добавлено прокруток: {result['credited_spins']}.\n"
+            "Текущий баланс обновлён в GiftsDrop.",
+            reply_markup=main_keyboard()
         )
-        return
-
-    await message.answer(
-        f"✅ Оплата прошла успешно!\n"
-        f"Начислено прокруток: {count}.\n"
-        f"Твой баланс: {get_user(user_id)['spins']}",
-        reply_markup=main_keyboard()
-    )
-
-    if ADMIN_ID:
-        try:
-            await bot.send_message(
-                ADMIN_ID,
-                "💰 Новая оплата прокруток!\n"
-                f"Пользователь: {user_id}\n"
-                f"Stars: {payment.total_amount}\n"
-                f"Прокруток: {count}"
-            )
-        except Exception:
-            pass
+    except Exception as error:
+        await message.answer(
+            "Telegram подтвердил платёж, но синхронизация задерживается. "
+            "Не оплачивай повторно; поддержка проверит операцию."
+        )
+        if ADMIN_ID:
+            await bot.send_message(ADMIN_ID, f"⚠️ Ошибка синхронизации старого платежа: {error}")
 
 
 @dp.callback_query(F.data == "balance")
@@ -648,65 +567,50 @@ async def referral_button(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "spin")
 async def spin(callback: CallbackQuery):
-    user_id = callback.from_user.id
-    user = get_user(user_id)
-
-    if not user:
-        await register_user(user_id)
-        user = get_user(user_id)
-
-    if user["spins"] <= 0:
-        await callback.message.answer(
-            "😔 Прокрутки закончились!\n\n"
-            "Пригласи 10 друзей или выбери покупку:",
-            reply_markup=main_keyboard()
-        )
+    user = callback.from_user
+    try:
+        await shared_user(user)
+        result = await internal_api("/api/internal/bot/spin", "POST", {
+            "telegram_id": str(user.id),
+            "username": user.username,
+            "first_name": user.first_name
+        })
+    except Exception as error:
+        await callback.message.answer(f"Не удалось выполнить прокрутку: {error}")
         await callback.answer()
         return
 
-    db.execute(
-        "UPDATE users SET spins = spins - 1 "
-        "WHERE user_id = ?",
-        (user_id,)
-    )
-    db.commit()
-
-    jackpot = random.randrange(10000) == 0
-
-    if jackpot:
-        db.execute(
-            "INSERT INTO wins (user_id) VALUES (?)",
-            (user_id,)
-        )
-        db.commit()
-
+    prize = result.get("prize")
+    if prize == "rare":
         await callback.message.answer(
-            "🎉🎉🎉 ДЖЕКПОТ!!!\n\n"
-            "Ты выиграл редкий NFT-подарок!\n"
-            "Администратор скоро свяжется с тобой."
+            "🎉🎉🎉 ДЖЕКПОТ!\n\nТы выиграл редкий NFT-подарок! "
+            "Администратор свяжется с тобой после проверки."
         )
-
         if ADMIN_ID:
-            try:
-                await bot.send_message(
-                    ADMIN_ID,
-                    "🏆 НОВЫЙ ПОБЕДИТЕЛЬ!\n"
-                    f"ID: {user_id}\n"
-                    f"Username: @{callback.from_user.username or 'нет'}\n"
-                    "Приз ожидает выдачи."
-                )
-            except Exception:
-                pass
-    else:
+            await bot.send_message(
+                ADMIN_ID,
+                "🏆 НОВЫЙ РЕДКИЙ ПОБЕДИТЕЛЬ!\n"
+                f"ID: {user.id}\nUsername: @{user.username or 'нет'}\n"
+                f"Заявка: #{result.get('claim_id')}"
+            )
+    elif prize == "ordinary":
         await callback.message.answer(
-            "😔 В этот раз без выигрыша.\n"
-            "Попробуй ещё раз!"
+            "🎉 Поздравляем! Ты выиграл обычный NFT-подарок! "
+            "Администратор свяжется с тобой для выдачи."
         )
-
-    remaining = get_user(user_id)["spins"]
+        if ADMIN_ID:
+            await bot.send_message(
+                ADMIN_ID,
+                "🎁 НОВЫЙ ПОБЕДИТЕЛЬ!\n"
+                f"ID: {user.id}\nUsername: @{user.username or 'нет'}\n"
+                f"Заявка: #{result.get('claim_id')}"
+            )
+    else:
+        await callback.message.answer("😔 В этот раз без выигрыша. Попробуй ещё раз!")
 
     await callback.message.answer(
-        f"Осталось прокруток: {remaining}",
+        f"🪙 Серебро: {result['silver']}\n"
+        f"🎰 Бесплатные прокрутки: {result['free_spins']}",
         reply_markup=main_keyboard()
     )
     await callback.answer()
@@ -716,26 +620,18 @@ async def spin(callback: CallbackQuery):
 async def pending_command(message: Message):
     if message.from_user.id != ADMIN_ID or not ADMIN_ID:
         return
-
-    wins = db.execute(
-        "SELECT id, user_id FROM wins "
-        "WHERE status = 'pending'"
-    ).fetchall()
-
-    if not wins:
-        await message.answer(
-            "Ожидающих выдачи призов нет."
-        )
+    try:
+        result = await internal_api("/api/internal/bot/prizes", "GET")
+    except Exception as error:
+        await message.answer(f"Не удалось загрузить заявки: {error}")
         return
-
+    claims = result.get("claims", [])
+    if not claims:
+        await message.answer("Ожидающих выдачи призов нет.")
+        return
     text = "🎁 Ожидают выдачи:\n\n"
-
-    for win in wins:
-        text += (
-            f"Заявка #{win['id']} — "
-            f"пользователь {win['user_id']}\n"
-        )
-
+    for claim in claims:
+        text += f"Заявка #{claim['id']} — {claim['prize_type']} — пользователь {claim['telegram_id']}\n"
     text += "\nОтметить выдачу: /done ID_ЗАЯВКИ"
     await message.answer(text)
 
@@ -744,32 +640,17 @@ async def pending_command(message: Message):
 async def done_command(message: Message):
     if message.from_user.id != ADMIN_ID or not ADMIN_ID:
         return
-
     args = message.text.split()
-
     if len(args) != 2 or not args[1].isdigit():
-        await message.answer(
-            "Используй: /done ID_ЗАЯВКИ"
-        )
+        await message.answer("Используй: /done ID_ЗАЯВКИ")
         return
-
-    win_id = int(args[1])
-
-    cursor = db.execute(
-        "UPDATE wins SET status = 'done' "
-        "WHERE id = ? AND status = 'pending'",
-        (win_id,)
-    )
-    db.commit()
-
-    if cursor.rowcount:
-        await message.answer(
-            f"✅ Заявка #{win_id} отмечена как выданная."
-        )
-    else:
-        await message.answer(
-            "Заявка не найдена или уже выдана."
-        )
+    try:
+        await internal_api(f"/api/internal/bot/prizes/{args[1]}/done", "POST", {
+            "admin_id": str(message.from_user.id)
+        })
+        await message.answer(f"✅ Заявка #{args[1]} отмечена как выданная.")
+    except Exception as error:
+        await message.answer(f"Не удалось обновить заявку: {error}")
 
 
 async def main():
