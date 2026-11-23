@@ -160,6 +160,24 @@ async function initDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS prize_claims (
+      id BIGSERIAL PRIMARY KEY,
+      spin_history_id BIGINT NOT NULL UNIQUE REFERENCES spin_history(id),
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      prize_type TEXT NOT NULL CHECK (prize_type IN ('ordinary', 'rare')),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      processed_at TIMESTAMPTZ
+    );
+
+    CREATE TABLE IF NOT EXISTS bot_payments (
+      charge_id TEXT PRIMARY KEY,
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      stars INTEGER NOT NULL,
+      spins INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS topup_requests (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -577,6 +595,173 @@ const server = http.createServer(async (req, res) => {
       } finally {
         client.release();
       }
+    }
+
+    // Shared account API for the Telegram bot. Protected by the bot token.
+    if (url.pathname === '/api/internal/bot/user' && req.method === 'POST') {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
+      const body = await readBody(req);
+      const telegramId = String(body.telegram_id || '');
+      const legacySpins = body.legacy_spins;
+      if (!/^\d+$/.test(telegramId) ||
+          (legacySpins !== null && legacySpins !== undefined &&
+           (!Number.isSafeInteger(Number(legacySpins)) || Number(legacySpins) < 0))) {
+        return send(res, 400, { error: 'Некорректный Telegram ID или старый баланс' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const inserted = await client.query(
+          `INSERT INTO users (telegram_id, username, first_name, free_spins)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (telegram_id) DO NOTHING RETURNING telegram_id`,
+          [telegramId, body.username || null, body.first_name || null,
+           legacySpins === null || legacySpins === undefined ? 3 : Number(legacySpins)]
+        );
+        await client.query(
+          'UPDATE users SET username = $1, first_name = $2 WHERE telegram_id = $3',
+          [body.username || null, body.first_name || null, telegramId]
+        );
+        const referralId = String(body.referral_id || '');
+        if (inserted.rowCount === 1 && /^\d+$/.test(referralId) && referralId !== telegramId) {
+          const referrer = await client.query(
+            'UPDATE users SET referral_count = referral_count + 1 WHERE telegram_id = $1 RETURNING referral_count',
+            [referralId]
+          );
+          if (referrer.rowCount === 1) {
+            await client.query('UPDATE users SET referred_by = $1 WHERE telegram_id = $2', [referralId, telegramId]);
+            if (Number(referrer.rows[0].referral_count) % 10 === 0) {
+              await client.query('UPDATE users SET free_spins = free_spins + 3 WHERE telegram_id = $1', [referralId]);
+            }
+          }
+        }
+        const account = await client.query(
+          'SELECT silver, free_spins, referral_count FROM users WHERE telegram_id = $1', [telegramId]
+        );
+        await client.query('COMMIT');
+        const row = account.rows[0];
+        return send(res, 200, {
+          created: inserted.rowCount === 1,
+          silver: Number(row.silver),
+          free_spins: Number(row.free_spins),
+          referral_count: Number(row.referral_count),
+          remaining_referrals: 10 - (Number(row.referral_count) % 10)
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/internal/bot/spin' && req.method === 'POST') {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
+      const body = await readBody(req);
+      const telegramId = String(body.telegram_id || '');
+      if (!/^\d+$/.test(telegramId)) return send(res, 400, { error: 'Некорректный Telegram ID' });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const locked = await client.query('SELECT * FROM users WHERE telegram_id = $1 FOR UPDATE', [telegramId]);
+        if (!locked.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 404, { error: 'Пользователь не найден' });
+        }
+        const account = locked.rows[0];
+        if (Number(account.free_spins) <= 0 && Number(account.silver) < 20) {
+          await client.query('ROLLBACK');
+          return send(res, 400, { error: 'Недостаточно серебра. Одна прокрутка стоит 20 серебра.' });
+        }
+        if (Number(account.free_spins) > 0) {
+          await client.query('UPDATE users SET free_spins = free_spins - 1 WHERE telegram_id = $1', [telegramId]);
+        } else {
+          await client.query('UPDATE users SET silver = silver - 20 WHERE telegram_id = $1', [telegramId]);
+        }
+        const roll = crypto.randomInt(100000);
+        const prize = roll >= 99990 ? 'rare' : (roll >= 90000 ? 'ordinary' : 'nothing');
+        const history = await client.query(
+          'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
+          [telegramId, prize]
+        );
+        let claimId = null;
+        if (prize !== 'nothing') {
+          const claim = await client.query(
+            'INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type) VALUES ($1, $2, $3) RETURNING id',
+            [history.rows[0].id, telegramId, prize]
+          );
+          claimId = claim.rows[0].id;
+        }
+        const updated = await client.query('SELECT silver, free_spins FROM users WHERE telegram_id = $1', [telegramId]);
+        await client.query('COMMIT');
+        return send(res, 200, {
+          prize,
+          silver: Number(updated.rows[0].silver),
+          free_spins: Number(updated.rows[0].free_spins),
+          claim_id: claimId
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/internal/bot/legacy-payment' && req.method === 'POST') {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
+      const body = await readBody(req);
+      const telegramId = String(body.telegram_id || '');
+      const count = Number(body.count);
+      const stars = Number(body.stars);
+      const chargeId = String(body.charge_id || '');
+      const expectedStars = count === 1 ? 5 : 15;
+      if (!/^\d+$/.test(telegramId) || ![1, 3].includes(count) || stars !== expectedStars || !chargeId) {
+        return send(res, 400, { error: 'Некорректные данные старого платежа' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING', [telegramId]);
+        const payment = await client.query(
+          `INSERT INTO bot_payments (charge_id, telegram_id, stars, spins)
+           VALUES ($1, $2, $3, $4) ON CONFLICT (charge_id) DO NOTHING RETURNING charge_id`,
+          [chargeId, telegramId, stars, count]
+        );
+        if (payment.rowCount === 1) {
+          await client.query('UPDATE users SET free_spins = free_spins + $1 WHERE telegram_id = $2', [count, telegramId]);
+        }
+        const account = await client.query('SELECT free_spins FROM users WHERE telegram_id = $1', [telegramId]);
+        await client.query('COMMIT');
+        return send(res, 200, {
+          success: true,
+          already_processed: payment.rowCount === 0,
+          credited_spins: payment.rowCount === 1 ? count : 0,
+          free_spins: Number(account.rows[0].free_spins)
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/internal/bot/prizes' && req.method === 'GET') {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
+      const result = await pool.query(
+        "SELECT id, telegram_id, prize_type, created_at FROM prize_claims WHERE status = 'pending' ORDER BY created_at ASC LIMIT 100"
+      );
+      return send(res, 200, { claims: result.rows });
+    }
+
+    if (url.pathname.startsWith('/api/internal/bot/prizes/') &&
+        url.pathname.endsWith('/done') && req.method === 'POST') {
+      if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
+      const body = await readBody(req);
+      if (String(body.admin_id || '') !== String(ADMIN_ID)) return send(res, 403, { error: 'Доступ запрещён' });
+      const claimId = url.pathname.split('/').slice(-2, -1)[0];
+      if (!/^\d+$/.test(claimId)) return send(res, 400, { error: 'Некорректный номер заявки' });
+      const result = await pool.query(
+        "UPDATE prize_claims SET status = 'done', processed_at = NOW() WHERE id = $1 AND status = 'pending' RETURNING id",
+        [claimId]
+      );
+      if (!result.rowCount) return send(res, 404, { error: 'Заявка не найдена или уже обработана' });
+      return send(res, 200, { success: true });
     }
 
     // Каталог магазина
