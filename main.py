@@ -102,6 +102,10 @@ def main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🎰 Крутить рулетку", callback_data="spin")],
         [
+            InlineKeyboardButton(text="🪙 20 серебра — 20 Stars", callback_data="buy_20_silver"),
+            InlineKeyboardButton(text="🪙 60 серебра — 60 Stars", callback_data="buy_60_silver")
+        ],
+        [
             InlineKeyboardButton(text="👤 Мой баланс", callback_data="balance"),
             InlineKeyboardButton(text="🎁 Призы", callback_data="prizes")
         ],
@@ -125,6 +129,43 @@ async def show_balance(message_or_callback, user_id):
         await message_or_callback.answer()
     else:
         await message_or_callback.answer(text, reply_markup=main_keyboard())
+
+
+async def send_silver_invoice(user_id, amount):
+    if amount not in (20, 60):
+        raise ValueError("Недопустимая сумма пополнения")
+    title = f"{amount} серебра"
+    await bot.send_invoice(
+        chat_id=user_id,
+        title=title,
+        description=f"Пополнение баланса GiftsDrop на {amount} серебра",
+        payload=f"silverpack:{amount}:{user_id}",
+        provider_token="",
+        currency="XTR",
+        prices=[LabeledPrice(label=title, amount=amount)]
+    )
+
+
+@dp.callback_query(F.data == "buy_20_silver")
+async def buy_20_silver(callback: CallbackQuery):
+    try:
+        await shared_user(callback.from_user)
+        await send_silver_invoice(callback.from_user.id, 20)
+        await callback.answer()
+    except Exception as error:
+        await callback.message.answer(f"Не удалось создать счёт: {error}")
+        await callback.answer()
+
+
+@dp.callback_query(F.data == "buy_60_silver")
+async def buy_60_silver(callback: CallbackQuery):
+    try:
+        await shared_user(callback.from_user)
+        await send_silver_invoice(callback.from_user.id, 60)
+        await callback.answer()
+    except Exception as error:
+        await callback.message.answer(f"Не удалось создать счёт: {error}")
+        await callback.answer()
 
 
 def parse_gift_payload(payload):
@@ -353,7 +394,21 @@ async def pre_checkout(query: PreCheckoutQuery):
     payload = query.invoice_payload
     valid = False
 
-    if payload.startswith("spinpack:"):
+    if payload.startswith("silverpack:"):
+        try:
+            parts = payload.split(":")
+            amount = int(parts[1])
+            user_id = int(parts[2])
+            valid = (
+                amount in (20, 60)
+                and user_id == query.from_user.id
+                and query.currency == "XTR"
+                and query.total_amount == amount
+            )
+        except (ValueError, IndexError):
+            valid = False
+
+    elif payload.startswith("spinpack:"):
         try:
             parts = payload.split(":")
             count = int(parts[1])
@@ -464,6 +519,41 @@ async def successful_payment(message: Message):
                 except Exception:
                     pass
 
+        return
+
+    # New silver top-ups: one Telegram Star credits one silver.
+    if payload.startswith("silverpack:"):
+        try:
+            parts = payload.split(":")
+            amount = int(parts[1])
+            user_id = int(parts[2])
+        except (ValueError, IndexError):
+            await message.answer("Платёж получен, но данные пополнения некорректны.")
+            return
+        if (amount not in (20, 60) or user_id != message.from_user.id
+                or payment.currency != "XTR" or payment.total_amount != amount):
+            await message.answer("Данные пополнения не совпали. Обратись в поддержку.")
+            return
+        try:
+            result = await internal_api("/api/internal/bot/silver-payment", "POST", {
+                "telegram_id": str(user_id),
+                "amount": amount,
+                "stars": payment.total_amount,
+                "charge_id": payment.telegram_payment_charge_id
+            })
+            await message.answer(
+                "✅ Серебро успешно начислено!\n"
+                f"Начислено: {result['credited_silver']} 🪙\n"
+                f"Баланс: {result['silver']} 🪙",
+                reply_markup=main_keyboard()
+            )
+        except Exception as error:
+            await message.answer(
+                "Telegram подтвердил оплату, но начисление задерживается. "
+                "Не оплачивай повторно; поддержка проверит платёж."
+            )
+            if ADMIN_ID:
+                await bot.send_message(ADMIN_ID, f"⚠️ Ошибка начисления серебра: {error}")
         return
 
     # Compatibility for invoices created before the shared silver balance rollout.
