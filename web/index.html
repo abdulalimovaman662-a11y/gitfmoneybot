@@ -6,142 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#11102a">
 <title>GIFTSDROP MARKET</title>
-<script src="https://telegram.org/js/telegram-web-app.js">
-// Interactive Rocket and Upgrade presentation. All results below use temporary test credits only.
-let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketCrashAt=2.48,rocketStake=0,rocketBetKind='silver',rocketRound=1,rocketDemoBalance=1000,rocketPlayerNames=['NeonFox','LunaByte','PixelWolf','StarNinja','MangoCat','CyberBee','Frosty','RubyFox'];
-let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
-const rocketHistoryValues=[2.48,1.37,5.62,1.08,3.14,8.21,1.91];
-function setRocketMode(mode){
- rocketMode=mode;
- document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
- document.getElementById('rocketNftMode').classList.toggle('active',mode==='nft');
- document.getElementById('rocketSilverControls').hidden=mode!=='silver';
- document.getElementById('rocketNftControls').hidden=mode!=='nft';
- document.getElementById('rocketResult').textContent=mode==='silver'?'Тестовая ставка списывается только с виртуального баланса.':'Выбери предмет из инвентаря. Реальный NFT останется на месте.';
-}
-function setRocketStake(value){document.getElementById('rocketStake').value=value;}
-function renderRocketPlayers(){
- const host=document.getElementById('rocketPlayerList');if(!host)return;host.replaceChildren();
- const rows=rocketPlayerNames.slice(0,5).map((name,i)=>({name,bet:[25,50,100,75,150][i],state:['ЗАБРАЛ 1.42x','В ИГРЕ','ЗАБРАЛ 2.16x','В ИГРЕ','ЗАБРАЛ 1.18x'][i]}));
- rows.forEach(row=>{const el=document.createElement('div');el.className='rocket-player-row';const avatar=document.createElement('span');avatar.className='rocket-player-avatar';avatar.textContent=row.name.slice(0,2).toUpperCase();const name=document.createElement('span');name.className='rocket-player-name';name.textContent=row.name;const bet=document.createElement('span');bet.className='rocket-player-bet';bet.textContent=row.bet+' 🪙';const state=document.createElement('span');state.className='rocket-player-state';state.textContent=row.state;el.append(avatar,name,bet,state);host.appendChild(el);});
-}
-function renderRocketHistory(){
- const host=document.getElementById('rocketHistory');if(!host)return;host.replaceChildren();
- rocketHistoryValues.slice(0,7).forEach((value,i)=>{const row=document.createElement('div');row.className='rocket-history-row'+(value<1.5?' crash-low':'');const left=document.createElement('span');left.textContent='РАУНД #'+String(rocketRound-i-1).padStart(3,'0');const right=document.createElement('b');right.textContent=value.toFixed(2)+'x';row.append(left,right);host.appendChild(row);});
-}
-async function loadRocketInventory(){
- const select=document.getElementById('rocketNftSelect');if(!select)return;
- select.innerHTML='<option value="">Загрузка инвентаря…</option>';
- try{const data=await api('/api/me/wins');const wins=Array.isArray(data.wins)?data.wins:[];select.replaceChildren();wins.forEach((win,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=String(win.prize_name||'NFT')+' · '+(Number(win.prize_stars)||0)+' ⭐';select.appendChild(option);});if(!wins.length){const option=document.createElement('option');option.value='';option.textContent='В инвентаре пока нет NFT';select.appendChild(option);}select.dataset.items=JSON.stringify(wins);}catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
-}
-function launchRocket(){
- if(rocketRunning)return;
- if(rocketMode==='silver'){
-  const amount=Number(document.getElementById('rocketStake').value);
-  if(!Number.isInteger(amount)||amount<1||amount>rocketDemoBalance){document.getElementById('rocketResult').textContent='Укажи ставку от 1 до '+rocketDemoBalance+' тестовых монет.';return;}
-  rocketStake=amount;rocketDemoBalance-=amount;rocketBetKind='silver';
- }else{
-  const select=document.getElementById('rocketNftSelect');
-  if(!select||select.value===''){document.getElementById('rocketResult').textContent='Сначала выбери NFT из инвентаря.';return;}
-  const items=JSON.parse(select.dataset.items||'[]');const picked=items[Number(select.value)];
-  if(!picked){document.getElementById('rocketResult').textContent='Не удалось прочитать выбранный предмет.';return;}
-  rocketStake=Number(picked.prize_stars)||100;rocketBetKind='nft';
- }
- rocketRunning=true;rocketMultiplier=1;rocketCrashAt=Number((1.01+Math.random()*8.99).toFixed(2));
- document.getElementById('rocketStage').classList.remove('is-crashed');document.getElementById('rocketStage').classList.add('is-flying');
- document.getElementById('rocketShip').style.left='17%';document.getElementById('rocketShip').style.top='47%';
- document.getElementById('rocketStatus').textContent='РАКЕТА ВЗЛЕТЕЛА!';document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';
- document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketCashoutButton').disabled=false;
- document.getElementById('rocketResult').textContent='Ты в раунде! Забирай до '+rocketCrashAt.toFixed(2)+'x — краш может произойти в любой момент.';
- document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
- const started=Date.now();
- rocketInterval=setInterval(()=>{
-  const elapsed=(Date.now()-started)/1000;rocketMultiplier=Number(Math.min(10,Math.pow(1.18,elapsed)).toFixed(2));
-  document.getElementById('rocketMultiplier').innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
-  const progress=Math.min(1,(rocketMultiplier-1)/9);document.getElementById('rocketShip').style.left=(17+progress*58)+'%';document.getElementById('rocketShip').style.top=(47-progress*29)+'%';
-  if(rocketMultiplier>=rocketCrashAt){crashRocket();}
- },70);
-}
-function cashoutRocket(){
- if(!rocketRunning)return;
- const winnings=Math.floor(rocketStake*rocketMultiplier);
- rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
- if(rocketBetKind==='silver')rocketDemoBalance+=winnings;
- document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
- document.getElementById('rocketResult').textContent='🎉 Забрано на '+rocketMultiplier.toFixed(2)+'x! '+(rocketBetKind==='silver'?'Тестовый выигрыш: '+winnings+' 🪙.':'NFT-ставка успешно возвращена в тестовом раунде.');
- document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
-}
-function crashRocket(){
- if(!rocketRunning)return;
- rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
- document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStage').classList.add('is-crashed');document.getElementById('rocketStatus').textContent='💥 РАКЕТА УПАЛА';document.getElementById('rocketMultiplier').innerHTML=rocketCrashAt.toFixed(2)+'<span>x</span>';
- document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
- document.getElementById('rocketResult').textContent='💥 Краш на '+rocketCrashAt.toFixed(2)+'x. Тестовая ставка сгорела. Настоящий баланс и инвентарь не затронуты.';
- rocketHistoryValues.unshift(rocketCrashAt);rocketHistoryValues.length=Math.min(rocketHistoryValues.length,12);rocketRound++;document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(rocketRound).padStart(3,'0');document.getElementById('rocketLastCrash').textContent=rocketCrashAt.toFixed(2)+'x';document.getElementById('rocketPlayers').textContent=String(10+Math.floor(Math.random()*12));renderRocketHistory();
-}
-function loadUpgradeData(){
- const host=document.getElementById('upgradeSourceList');if(!host)return;
- host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
- Promise.all([api('/api/me/wins'),api('/api/store/catalog')]).then(([winsData,catalogData])=>{
-  upgradeInventory=Array.isArray(winsData.wins)?winsData.wins:[];upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
-  if(!upgradeInventory.length)upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];
-  renderUpgradeSources();
- }).catch(()=>{upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];upgradeCatalog=[];renderUpgradeSources();});
-}
-function renderUpgradeSources(){
- const host=document.getElementById('upgradeSourceList');host.replaceChildren();
- upgradeInventory.forEach((item,index)=>{
-  const button=document.createElement('button');button.type='button';button.className='upgrade-source-item'+(upgradeSource===index?' selected':'');button.onclick=()=>selectUpgradeSource(index);
-  const art=document.createElement('div');art.className='upgrade-source-art';art.textContent=item.prize_type==='rare'?'💎':item.prize_type==='unusual'?'💜':'🎁';
-  const name=document.createElement('b');name.textContent=String(item.prize_name||'NFT-подарок');
-  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐'+(item.preview?' · ПРИМЕР':'');
-  button.append(art,name,value);host.appendChild(button);
- });
- if(upgradeSource===null)document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Выбери предмет выше, чтобы увидеть доступные цели.</div>';
-}
-function selectUpgradeSource(index){
- upgradeSource=index;upgradeTarget=null;renderUpgradeSources();
- const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||100;
- const targets=upgradeCatalog.filter(item=>Number(item.stars)>sourceValue).sort((a,b)=>Number(a.stars)-Number(b.stars)).slice(0,8);
- if(!targets.length){upgradeTarget=null;document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Нет подарков дороже этого предмета в каталоге. Попробуй другой NFT.</div>';updateUpgradeChance();return;}
- const host=document.getElementById('upgradeTargetList');host.replaceChildren();
- targets.forEach((item,index)=>{
-  const button=document.createElement('button');button.type='button';button.className='upgrade-target-item';button.onclick=()=>selectUpgradeTarget(index,targets);
-  const art=document.createElement('div');art.className='upgrade-target-art';art.textContent=item.emoji||'🎁';
-  if(item.image_url){const img=document.createElement('img');img.src=item.image_url;img.alt=item.name||'Подарок';img.onerror=()=>{img.remove();art.textContent=item.emoji||'🎁';};art.replaceChildren(img);}
-  const name=document.createElement('b');name.textContent=String(item.name||'NFT-подарок');
-  const value=document.createElement('small');value.textContent=(Number(item.stars)||0)+' ⭐';
-  button.append(art,name,value);button.dataset.target=String(index);host.appendChild(button);
- });
- host.dataset.items=JSON.stringify(targets);updateUpgradeChance();
-}
-function selectUpgradeTarget(index,targets){
- upgradeTarget=targets[index];document.querySelectorAll('.upgrade-target-item').forEach((el,i)=>el.classList.toggle('selected',i===index));updateUpgradeChance();
-}
-function getUpgradeChance(){
- if(upgradeSource===null||!upgradeTarget)return 0;
- const sourceValue=Number(upgradeInventory[upgradeSource].prize_stars)||100,targetValue=Number(upgradeTarget.stars)||0;
- return Math.max(3,Math.min(85,Math.floor(sourceValue/targetValue*75)));
-}
-function updateUpgradeChance(){
- const chance=getUpgradeChance();document.getElementById('upgradeChance').textContent=chance?chance+'%':'—%';document.getElementById('upgradeChanceFill').style.width=chance+'%';
- document.getElementById('upgradeChanceCaption').textContent=chance?'Чем ценнее цель относительно твоего NFT, тем ниже шанс.':'Выбери предмет и цель, чтобы увидеть шанс.';
- document.getElementById('upgradeTryButton').disabled=!chance||upgradeBusy;
-}
-function runUpgrade(){
- if(upgradeBusy||!upgradeTarget||upgradeSource===null)return;
- upgradeBusy=true;const button=document.getElementById('upgradeTryButton'),result=document.getElementById('upgradeResult');button.disabled=true;result.className='upgrade-result';result.textContent='⚡ ЭНЕРГИЯ НАКАПЛИВАЕТСЯ…';
- const chance=getUpgradeChance(),won=Math.random()*100<chance;button.textContent='ИДЁТ АПГРЕЙД…';
- const orb=document.querySelector('.upgrade-orb');if(orb)orb.classList.add('is-upgrading');
- setTimeout(()=>{
-  upgradeBusy=false;button.textContent='⚡ ПОПРОБОВАТЬ ЕЩЁ РАЗ';if(orb)orb.classList.remove('is-upgrading');
-  if(won){result.className='upgrade-result is-win';result.textContent='✨ УСПЕХ! В тестовом раунде цель «'+String(upgradeTarget.name)+'» получена. Реальный инвентарь не изменён.';}
-  else{result.className='upgrade-result is-lose';result.textContent='💥 НЕ ПОВЕЗЛО! Тестовая попытка не удалась. Настоящий NFT остался в инвентаре.';}
-  button.disabled=false;
- },1900);
-}
-
-</script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
 
@@ -2031,6 +1896,141 @@ async function completeGiftOrder(id,button) {
 
 loadAccount();
 loadGiftCatalog();
+
+// Interactive Rocket and Upgrade presentation. All results below use temporary test credits only.
+let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketCrashAt=2.48,rocketStake=0,rocketBetKind='silver',rocketRound=1,rocketDemoBalance=1000,rocketPlayerNames=['NeonFox','LunaByte','PixelWolf','StarNinja','MangoCat','CyberBee','Frosty','RubyFox'];
+let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
+const rocketHistoryValues=[2.48,1.37,5.62,1.08,3.14,8.21,1.91];
+function setRocketMode(mode){
+ rocketMode=mode;
+ document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
+ document.getElementById('rocketNftMode').classList.toggle('active',mode==='nft');
+ document.getElementById('rocketSilverControls').hidden=mode!=='silver';
+ document.getElementById('rocketNftControls').hidden=mode!=='nft';
+ document.getElementById('rocketResult').textContent=mode==='silver'?'Тестовая ставка списывается только с виртуального баланса.':'Выбери предмет из инвентаря. Реальный NFT останется на месте.';
+}
+function setRocketStake(value){document.getElementById('rocketStake').value=value;}
+function renderRocketPlayers(){
+ const host=document.getElementById('rocketPlayerList');if(!host)return;host.replaceChildren();
+ const rows=rocketPlayerNames.slice(0,5).map((name,i)=>({name,bet:[25,50,100,75,150][i],state:['ЗАБРАЛ 1.42x','В ИГРЕ','ЗАБРАЛ 2.16x','В ИГРЕ','ЗАБРАЛ 1.18x'][i]}));
+ rows.forEach(row=>{const el=document.createElement('div');el.className='rocket-player-row';const avatar=document.createElement('span');avatar.className='rocket-player-avatar';avatar.textContent=row.name.slice(0,2).toUpperCase();const name=document.createElement('span');name.className='rocket-player-name';name.textContent=row.name;const bet=document.createElement('span');bet.className='rocket-player-bet';bet.textContent=row.bet+' 🪙';const state=document.createElement('span');state.className='rocket-player-state';state.textContent=row.state;el.append(avatar,name,bet,state);host.appendChild(el);});
+}
+function renderRocketHistory(){
+ const host=document.getElementById('rocketHistory');if(!host)return;host.replaceChildren();
+ rocketHistoryValues.slice(0,7).forEach((value,i)=>{const row=document.createElement('div');row.className='rocket-history-row'+(value<1.5?' crash-low':'');const left=document.createElement('span');left.textContent='РАУНД #'+String(rocketRound-i-1).padStart(3,'0');const right=document.createElement('b');right.textContent=value.toFixed(2)+'x';row.append(left,right);host.appendChild(row);});
+}
+async function loadRocketInventory(){
+ const select=document.getElementById('rocketNftSelect');if(!select)return;
+ select.innerHTML='<option value="">Загрузка инвентаря…</option>';
+ try{const data=await api('/api/me/wins');const wins=Array.isArray(data.wins)?data.wins:[];select.replaceChildren();wins.forEach((win,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=String(win.prize_name||'NFT')+' · '+(Number(win.prize_stars)||0)+' ⭐';select.appendChild(option);});if(!wins.length){const option=document.createElement('option');option.value='';option.textContent='В инвентаре пока нет NFT';select.appendChild(option);}select.dataset.items=JSON.stringify(wins);}catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
+}
+function launchRocket(){
+ if(rocketRunning)return;
+ if(rocketMode==='silver'){
+  const amount=Number(document.getElementById('rocketStake').value);
+  if(!Number.isInteger(amount)||amount<1||amount>rocketDemoBalance){document.getElementById('rocketResult').textContent='Укажи ставку от 1 до '+rocketDemoBalance+' тестовых монет.';return;}
+  rocketStake=amount;rocketDemoBalance-=amount;rocketBetKind='silver';
+ }else{
+  const select=document.getElementById('rocketNftSelect');
+  if(!select||select.value===''){document.getElementById('rocketResult').textContent='Сначала выбери NFT из инвентаря.';return;}
+  const items=JSON.parse(select.dataset.items||'[]');const picked=items[Number(select.value)];
+  if(!picked){document.getElementById('rocketResult').textContent='Не удалось прочитать выбранный предмет.';return;}
+  rocketStake=Number(picked.prize_stars)||100;rocketBetKind='nft';
+ }
+ rocketRunning=true;rocketMultiplier=1;rocketCrashAt=Number((1.01+Math.random()*8.99).toFixed(2));
+ document.getElementById('rocketStage').classList.remove('is-crashed');document.getElementById('rocketStage').classList.add('is-flying');
+ document.getElementById('rocketShip').style.left='17%';document.getElementById('rocketShip').style.top='47%';
+ document.getElementById('rocketStatus').textContent='РАКЕТА ВЗЛЕТЕЛА!';document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';
+ document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketCashoutButton').disabled=false;
+ document.getElementById('rocketResult').textContent='Ты в раунде! Забирай до '+rocketCrashAt.toFixed(2)+'x — краш может произойти в любой момент.';
+ document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
+ const started=Date.now();
+ rocketInterval=setInterval(()=>{
+  const elapsed=(Date.now()-started)/1000;rocketMultiplier=Number(Math.min(10,Math.pow(1.18,elapsed)).toFixed(2));
+  document.getElementById('rocketMultiplier').innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
+  const progress=Math.min(1,(rocketMultiplier-1)/9);document.getElementById('rocketShip').style.left=(17+progress*58)+'%';document.getElementById('rocketShip').style.top=(47-progress*29)+'%';
+  if(rocketMultiplier>=rocketCrashAt){crashRocket();}
+ },70);
+}
+function cashoutRocket(){
+ if(!rocketRunning)return;
+ const winnings=Math.floor(rocketStake*rocketMultiplier);
+ rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
+ if(rocketBetKind==='silver')rocketDemoBalance+=winnings;
+ document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
+ document.getElementById('rocketResult').textContent='🎉 Забрано на '+rocketMultiplier.toFixed(2)+'x! '+(rocketBetKind==='silver'?'Тестовый выигрыш: '+winnings+' 🪙.':'NFT-ставка успешно возвращена в тестовом раунде.');
+ document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
+}
+function crashRocket(){
+ if(!rocketRunning)return;
+ rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
+ document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStage').classList.add('is-crashed');document.getElementById('rocketStatus').textContent='💥 РАКЕТА УПАЛА';document.getElementById('rocketMultiplier').innerHTML=rocketCrashAt.toFixed(2)+'<span>x</span>';
+ document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
+ document.getElementById('rocketResult').textContent='💥 Краш на '+rocketCrashAt.toFixed(2)+'x. Тестовая ставка сгорела. Настоящий баланс и инвентарь не затронуты.';
+ rocketHistoryValues.unshift(rocketCrashAt);rocketHistoryValues.length=Math.min(rocketHistoryValues.length,12);rocketRound++;document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(rocketRound).padStart(3,'0');document.getElementById('rocketLastCrash').textContent=rocketCrashAt.toFixed(2)+'x';document.getElementById('rocketPlayers').textContent=String(10+Math.floor(Math.random()*12));renderRocketHistory();
+}
+function loadUpgradeData(){
+ const host=document.getElementById('upgradeSourceList');if(!host)return;
+ host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
+ Promise.all([api('/api/me/wins'),api('/api/store/catalog')]).then(([winsData,catalogData])=>{
+  upgradeInventory=Array.isArray(winsData.wins)?winsData.wins:[];upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
+  if(!upgradeInventory.length)upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];
+  renderUpgradeSources();
+ }).catch(()=>{upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];upgradeCatalog=[];renderUpgradeSources();});
+}
+function renderUpgradeSources(){
+ const host=document.getElementById('upgradeSourceList');host.replaceChildren();
+ upgradeInventory.forEach((item,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upgrade-source-item'+(upgradeSource===index?' selected':'');button.onclick=()=>selectUpgradeSource(index);
+  const art=document.createElement('div');art.className='upgrade-source-art';art.textContent=item.prize_type==='rare'?'💎':item.prize_type==='unusual'?'💜':'🎁';
+  const name=document.createElement('b');name.textContent=String(item.prize_name||'NFT-подарок');
+  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐'+(item.preview?' · ПРИМЕР':'');
+  button.append(art,name,value);host.appendChild(button);
+ });
+ if(upgradeSource===null)document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Выбери предмет выше, чтобы увидеть доступные цели.</div>';
+}
+function selectUpgradeSource(index){
+ upgradeSource=index;upgradeTarget=null;renderUpgradeSources();
+ const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||100;
+ const targets=upgradeCatalog.filter(item=>Number(item.stars)>sourceValue).sort((a,b)=>Number(a.stars)-Number(b.stars)).slice(0,8);
+ if(!targets.length){upgradeTarget=null;document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Нет подарков дороже этого предмета в каталоге. Попробуй другой NFT.</div>';updateUpgradeChance();return;}
+ const host=document.getElementById('upgradeTargetList');host.replaceChildren();
+ targets.forEach((item,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upgrade-target-item';button.onclick=()=>selectUpgradeTarget(index,targets);
+  const art=document.createElement('div');art.className='upgrade-target-art';art.textContent=item.emoji||'🎁';
+  if(item.image_url){const img=document.createElement('img');img.src=item.image_url;img.alt=item.name||'Подарок';img.onerror=()=>{img.remove();art.textContent=item.emoji||'🎁';};art.replaceChildren(img);}
+  const name=document.createElement('b');name.textContent=String(item.name||'NFT-подарок');
+  const value=document.createElement('small');value.textContent=(Number(item.stars)||0)+' ⭐';
+  button.append(art,name,value);button.dataset.target=String(index);host.appendChild(button);
+ });
+ host.dataset.items=JSON.stringify(targets);updateUpgradeChance();
+}
+function selectUpgradeTarget(index,targets){
+ upgradeTarget=targets[index];document.querySelectorAll('.upgrade-target-item').forEach((el,i)=>el.classList.toggle('selected',i===index));updateUpgradeChance();
+}
+function getUpgradeChance(){
+ if(upgradeSource===null||!upgradeTarget)return 0;
+ const sourceValue=Number(upgradeInventory[upgradeSource].prize_stars)||100,targetValue=Number(upgradeTarget.stars)||0;
+ return Math.max(3,Math.min(85,Math.floor(sourceValue/targetValue*75)));
+}
+function updateUpgradeChance(){
+ const chance=getUpgradeChance();document.getElementById('upgradeChance').textContent=chance?chance+'%':'—%';document.getElementById('upgradeChanceFill').style.width=chance+'%';
+ document.getElementById('upgradeChanceCaption').textContent=chance?'Чем ценнее цель относительно твоего NFT, тем ниже шанс.':'Выбери предмет и цель, чтобы увидеть шанс.';
+ document.getElementById('upgradeTryButton').disabled=!chance||upgradeBusy;
+}
+function runUpgrade(){
+ if(upgradeBusy||!upgradeTarget||upgradeSource===null)return;
+ upgradeBusy=true;const button=document.getElementById('upgradeTryButton'),result=document.getElementById('upgradeResult');button.disabled=true;result.className='upgrade-result';result.textContent='⚡ ЭНЕРГИЯ НАКАПЛИВАЕТСЯ…';
+ const chance=getUpgradeChance(),won=Math.random()*100<chance;button.textContent='ИДЁТ АПГРЕЙД…';
+ const orb=document.querySelector('.upgrade-orb');if(orb)orb.classList.add('is-upgrading');
+ setTimeout(()=>{
+  upgradeBusy=false;button.textContent='⚡ ПОПРОБОВАТЬ ЕЩЁ РАЗ';if(orb)orb.classList.remove('is-upgrading');
+  if(won){result.className='upgrade-result is-win';result.textContent='✨ УСПЕХ! В тестовом раунде цель «'+String(upgradeTarget.name)+'» получена. Реальный инвентарь не изменён.';}
+  else{result.className='upgrade-result is-lose';result.textContent='💥 НЕ ПОВЕЗЛО! Тестовая попытка не удалась. Настоящий NFT остался в инвентаре.';}
+  button.disabled=false;
+ },1900);
+}
+
 </script>
 </body>
 </html>
