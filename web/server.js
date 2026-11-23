@@ -874,7 +874,7 @@ const server = http.createServer(async (req, res) => {
          FROM prize_claims
          WHERE prize_name IS NOT NULL AND prize_name <> ''
          ORDER BY created_at DESC
-         LIMIT 12`
+         LIMIT 24`
       );
       return send(res, 200, {
         wins: result.rows.map(row => ({
