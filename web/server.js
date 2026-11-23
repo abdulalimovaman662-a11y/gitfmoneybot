@@ -227,25 +227,12 @@ async function initDatabase() {
       completed_at TIMESTAMPTZ
     );
 
-    DO $
-    BEGIN
-      IF EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname = 'gift_orders_stars_check'
-          AND conrelid = 'gift_orders'::regclass
-      ) THEN
-        ALTER TABLE gift_orders DROP CONSTRAINT gift_orders_stars_check;
-      END IF;
-      IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname = 'gift_orders_stars_range_check'
-          AND conrelid = 'gift_orders'::regclass
-      ) THEN
-        ALTER TABLE gift_orders
-          ADD CONSTRAINT gift_orders_stars_range_check
-          CHECK (stars BETWEEN 1 AND 5000);
-      END IF;
-    END $;
+    ALTER TABLE gift_orders
+      DROP CONSTRAINT IF EXISTS gift_orders_stars_check,
+      DROP CONSTRAINT IF EXISTS gift_orders_stars_range_check;
+    ALTER TABLE gift_orders
+      ADD CONSTRAINT gift_orders_stars_range_check
+      CHECK (stars BETWEEN 1 AND 5000);
 
     CREATE INDEX IF NOT EXISTS gift_orders_user_idx
       ON gift_orders(telegram_id, created_at DESC);
