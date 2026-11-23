@@ -549,7 +549,14 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 
 
 /* Player NFT win history */
-.profile-win-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.profile-win-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(185,162,255,.14);border-radius:14px;background:linear-gradient(135deg,rgba(185,162,255,.07),rgba(255,255,255,.025));min-width:0}
+.profile-win-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.profile-win-art{width:62px;height:62px;flex:0 0 62px;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:linear-gradient(145deg,rgba(255,207,90,.14),rgba(185,162,255,.14));font-size:26px}
+.profile-win-art img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-win-details{gap:5px}
+.profile-win-status{display:block;max-width:none;text-align:left;font-size:8px;padding:4px 6px;border-radius:6px;background:rgba(255,215,138,.08);width:max-content}
+.profile-win-status.is-done{background:rgba(117,230,173,.09)}
+@media(max-width:390px){.profile-win-gallery{grid-template-columns:1fr}.profile-win-art{width:56px;height:56px;flex-basis:56px}}
 .profile-win-item:last-child{border-bottom:0;padding-bottom:0}
 .profile-win-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:rgba(185,162,255,.1);font-size:22px}
 .profile-win-details{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
@@ -704,8 +711,8 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
   <div class="profile-stats"><div><b id="profileSilver">0</b><span>Серебро 🪙</span></div><div><b id="profileSpins">0</b><span>Бесплатные</span></div><div><b id="profileRefs">0</b><span>Друзья</span></div></div>
  </div>
   <div class="card" id="profileWinHistoryCard">
-   <div class="section-tag">YOUR NFT HISTORY</div>
-   <h2>История выигрышей</h2>
+   <div class="section-tag">YOUR NFT COLLECTION</div>
+   <h2>Моя коллекция</h2>
    <div id="profileWinHistory"><p class="muted">Загружаем историю…</p></div>
   </div>
   <div class="card"><div class="section-tag">БЫСТРЫЕ ДЕЙСТВИЯ</div><button onclick="showTab('balance')">ПОПОЛНИТЬ СЕРЕБРО</button><button class="secondary" onclick="showTab('friends')">ПРИГЛАСИТЬ ДРУЗЕЙ</button><button class="secondary" onclick="openHelp()">СВЯЗАТЬСЯ С ПОДДЕРЖКОЙ</button></div>
@@ -977,16 +984,33 @@ async function loadProfileWinHistory() {
   if(!wins.length) {
    const empty=document.createElement('p');
    empty.className='muted';
-   empty.textContent='Пока выигрышей нет. Возможно, следующий подарок будет твоим!';
+   empty.textContent='Коллекция пока пуста. Попробуй удачу в рулетке!';
    container.appendChild(empty);
    return;
   }
+  const gallery=document.createElement('div');
+  gallery.className='profile-win-gallery';
   wins.forEach(win=>{
    const item=document.createElement('div');
    item.className='profile-win-item';
-   const icon=document.createElement('span');
-   icon.className='profile-win-icon';
-   icon.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';
+   const art=document.createElement('div');
+   art.className='profile-win-art';
+   const imageUrl=typeof win.prize_image_url==='string'?win.prize_image_url:'';
+   let safeImageUrl='';
+   try {
+    const parsed=new URL(imageUrl,window.location.origin);
+    if(parsed.protocol==='https:'||parsed.protocol==='http:')safeImageUrl=parsed.href;
+   } catch {}
+   if(safeImageUrl) {
+    const img=document.createElement('img');
+    img.src=safeImageUrl;
+    img.alt=String(win.prize_name||'NFT-подарок');
+    img.loading='lazy';
+    img.onerror=()=>{img.remove();art.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';};
+    art.appendChild(img);
+   } else {
+    art.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';
+   }
    const details=document.createElement('div');
    details.className='profile-win-details';
    const name=document.createElement('b');
@@ -998,11 +1022,13 @@ async function loadProfileWinHistory() {
    const status=document.createElement('strong');
    status.className=win.status==='done'?'profile-win-status is-done':'profile-win-status';
    status.textContent=win.status==='done'?'Выдан':'Ожидает выдачи';
-   item.append(icon,details,status);
-   container.appendChild(item);
+   details.appendChild(status);
+   item.append(art,details);
+   gallery.appendChild(item);
   });
+  container.appendChild(gallery);
  } catch(error) {
-  container.textContent='Не удалось загрузить историю выигрышей.';
+  container.textContent='Не удалось загрузить коллекцию.';
  }
 }
 
