@@ -395,7 +395,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
 .roulette-window:after{right:0;background:linear-gradient(270deg,#171536,transparent)}
 .roulette-track{display:flex;align-items:stretch;gap:9px;width:max-content;padding:0 12px;will-change:transform}
 .roulette-item,.roulette-placeholder{width:88px;min-width:88px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(184,169,255,.18);border-radius:14px;background:linear-gradient(150deg,rgba(75,63,127,.68),rgba(28,24,66,.95));color:#fff;box-shadow:0 5px 14px rgba(0,0,0,.22)}
-.roulette-item-art,.roulette-placeholder span{font-size:32px;line-height:1.2;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+.roulette-item-art,.roulette-placeholder span{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1.2;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}.roulette-item-art img{width:100%;height:100%;object-fit:contain;display:block;}
 .roulette-item b,.roulette-placeholder small{font-size:10px;letter-spacing:.5px}
 .roulette-item small{font-size:8px;letter-spacing:1px;color:#aaa8c7}
 .roulette-placeholder{opacity:.72}
@@ -463,17 +463,19 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
  <div class="card">
   <div class="section-tag">WINNING PROBABILITIES</div>
   <h2>Шансы выпадения</h2>
-  <div class="odds"><span>🫧 Без выигрыша</span><b>90%</b></div>
-  <div class="odds"><span>🎁 Обычный NFT</span><b>9,99%</b></div>
-  <div class="odds"><span>💎 Редкий NFT</span><b>0,01%</b></div>
+  <div class="odds"><span>🫧 Без выигрыша</span><b>79,999%</b></div>
+  <div class="odds"><span>🎁 Обычный NFT · 15–100 ⭐</span><b>15%</b></div>
+  <div class="odds"><span>💜 Необычный NFT · 300–1000 ⭐</span><b>5%</b></div>
+  <div class="odds"><span>💎 Редкий NFT · 1000–10000 ⭐</span><b>0,001%</b></div>
  </div>
 </section>
 
 <section class="tab-page" id="tab-prizes">
  <div class="page-intro"><span class="eyebrow">GIFTSDROP • ПРАВИЛА</span><h1>Призы и шансы</h1><p>Все результаты определяются сервером. Здесь указаны действующие вероятности выпадения.</p></div>
- <div class="prize-card prize-empty"><div class="prize-emoji">🫧</div><div><b>Без выигрыша</b><span>Попробуй удачу ещё раз</span></div><strong>90%</strong></div>
- <div class="prize-card"><div class="prize-emoji">🎁</div><div><b>Обычный NFT</b><span>Выдача после проверки администратором</span></div><strong>9,99%</strong></div>
- <div class="prize-card rare-prize"><div class="prize-emoji">💎</div><div><b>Редкий NFT</b><span>Самый редкий приз рулетки</span></div><strong>0,01%</strong></div>
+ <div class="prize-card prize-empty"><div class="prize-emoji">🫧</div><div><b>Без выигрыша</b><span>Попробуй удачу ещё раз</span></div><strong>79,999%</strong></div>
+ <div class="prize-card"><div class="prize-emoji">🎁</div><div><b>Обычный NFT</b><span>Коллекционные подарки стоимостью 15–100 ⭐</span></div><strong>15%</strong></div>
+ <div class="prize-card"><div class="prize-emoji">💜</div><div><b>Необычный NFT</b><span>Коллекционные подарки стоимостью 300–1000 ⭐</span></div><strong>5%</strong></div>
+ <div class="prize-card rare-prize"><div class="prize-emoji">💎</div><div><b>Редкий NFT</b><span>Коллекционные подарки стоимостью 1000–10000 ⭐</span></div><strong>0,001%</strong></div>
  <div class="card"><div class="section-tag">КАК ЭТО РАБОТАЕТ</div><h2>Просто и прозрачно</h2><div class="rule-row"><span>🎟️</span><p><b>3 бесплатные попытки</b><br>Доступны при первом запуске.</p></div><div class="rule-row"><span>🪙</span><p><b>20 серебра за прокрутку</b><br>После использования бесплатных попыток.</p></div><div class="rule-row"><span>🛡️</span><p><b>Серверный результат</b><br>Анимация колеса не влияет на шанс выигрыша.</p></div></div>
 </section>
 
@@ -724,28 +726,84 @@ function shareReferral() {
  );
 }
 
-function buildRoulette(result) {
+const ORDINARY_NFT_GIFTS = [
+ {name:'Love Heart',stars:15,slug:'loveheart'},
+ {name:'Teddy Bear',stars:15,slug:'toybear'},
+ {name:'Gift Box',stars:25,slug:'giftbox'},
+ {name:'Red Rose',stars:25,slug:'redrose'},
+ {name:'Birthday Cake',stars:50,slug:'birthdaycake'},
+ {name:'Bouquet of Flowers',stars:50,slug:'bouquetofflowers'},
+ {name:'Rocket',stars:50,slug:'rocket'},
+ {name:'Champagne Bottle',stars:50,slug:'champagnebottle'},
+ {name:'Trophy',stars:100,slug:'trophy'},
+ {name:'Diamond Ring',stars:100,slug:'diamondring'},
+ {name:'Gem',stars:100,slug:'gem'}
+].map(g=>({...g,image_url:'https://fragment.com/file/gifts/'+g.slug+'/thumb.webp'}));
+
+let rouletteCatalog = null;
+async function getRouletteCatalog() {
+ if(rouletteCatalog)return rouletteCatalog;
+ try {
+  const data=await api('/api/store/catalog');
+  rouletteCatalog=data.products||[];
+ } catch(error) {
+  rouletteCatalog=[];
+ }
+ return rouletteCatalog;
+}
+
+function rouletteGiftCard(product) {
+ return {
+  name:product.name,
+  stars:Number(product.stars)||0,
+  image_url:product.image_url||'',
+  emoji:product.emoji||'🎁'
+ };
+}
+
+async function buildRoulette(result) {
  const track=document.getElementById('rouletteTrack');
  const viewport=track.parentElement;
- const icons={none:'🫧',ordinary:'🎁',unusual:'✨',rare:'💎'};
- const labels={none:'Пусто',ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'};
- const targetIndex=24;
- const types=['none','none','none','ordinary','none','none','rare','none','ordinary'];
+ const catalog=await getRouletteCatalog();
+ const unusual=catalog.filter(p=>Number(p.stars)>=300&&Number(p.stars)<=1000).map(rouletteGiftCard);
+ const rare=catalog.filter(p=>Number(p.stars)>=1000&&Number(p.stars)<=10000).map(rouletteGiftCard);
+ const pools={
+  ordinary:ORDINARY_NFT_GIFTS,
+  unusual:unusual.length?unusual:catalog.slice(0,8).map(rouletteGiftCard),
+  rare:rare.length?rare:catalog.slice(-8).map(rouletteGiftCard)
+ };
+ const labels={none:'Без выигрыша',ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'};
+ const targetIndex=25;
+ const allGifts=[...pools.ordinary,...pools.unusual,...pools.rare];
+ const randomGift=type=>{
+  const pool=pools[type]||[];
+  return pool.length?pool[Math.floor(Math.random()*pool.length)]:{name:labels[type]||'Подарок',emoji:'🎁'};
+ };
  track.innerHTML='';
  track.style.transition='none';
  track.style.transform='translateX(0px)';
  let targetCard=null;
- for(let i=0;i<31;i++) {
-  const type=i===targetIndex?result:types[Math.floor(Math.random()*types.length)];
+ for(let i=0;i<33;i++) {
+  const type=i===targetIndex?result:(Math.random()<.34?'none':Math.random()<.58?'ordinary':Math.random()<.78?'unusual':'rare');
+  const gift=type==='none'?null:randomGift(type);
   const card=document.createElement('div');
   card.className='roulette-item'+(i===targetIndex?' roulette-item-winner '+(result==='rare'?'is-rare':result==='unusual'?'is-unusual':result==='ordinary'?'is-ordinary':'is-empty'):'');
-  const art=document.createElement('span');
+  const art=document.createElement('div');
   art.className='roulette-item-art';
-  art.textContent=icons[type]||'🎁';
+  if(gift&&gift.image_url) {
+   const img=document.createElement('img');
+   img.src=gift.image_url;
+   img.alt=gift.name;
+   img.loading='eager';
+   img.onerror=()=>{img.remove();art.textContent=gift.emoji||'🎁';};
+   art.appendChild(img);
+  } else {
+   art.textContent=gift?gift.emoji:'🫧';
+  }
   const name=document.createElement('b');
-  name.textContent=labels[type]||'Подарок';
+  name.textContent=gift?gift.name:'Без выигрыша';
   const sub=document.createElement('small');
-  sub.textContent=type==='rare'?'LEGENDARY':type==='unusual'?'UNUSUAL NFT':type==='ordinary'?'NFT GIFT':'TRY AGAIN';
+  sub.textContent=gift?(gift.stars?gift.stars+' ⭐':'NFT GIFT'):'TRY AGAIN';
   card.append(art,name,sub);
   track.appendChild(card);
   if(i===targetIndex)targetCard=card;
