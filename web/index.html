@@ -579,6 +579,18 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 #tab-friends .progress{height:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.04)}
 #tab-friends .progress-fill{background:linear-gradient(90deg,#74e5ff,#b99aff,#ff72b6);box-shadow:0 0 12px rgba(185,162,255,.3)}
 #tab-friends .ref-link{padding:15px;border-radius:14px;font-size:12px}
+#tab-balance .currency-input-label{display:block;margin:16px 0 7px;color:#ffe69a;font-size:9px;font-weight:900;letter-spacing:1px}
+#tab-balance .currency-input-wrap{display:flex;align-items:center;gap:9px;padding:0 12px;border:1px solid rgba(255,207,90,.28);border-radius:13px;background:linear-gradient(110deg,rgba(255,207,90,.09),rgba(255,255,255,.025))}
+#tab-balance .currency-input-wrap>span{font-size:20px}
+#tab-balance .currency-input-wrap input{flex:1;min-width:0;margin:0;border:0;background:transparent;box-shadow:none}
+#tab-balance .currency-input-wrap input:focus{outline:none;box-shadow:none}
+#tab-balance .balance-stats{gap:10px}
+#tab-balance .balance-stats .stat{min-width:0;padding:14px 10px;border-radius:14px}
+#tab-balance .silver-stat{border:1px solid rgba(116,229,255,.25);background:linear-gradient(145deg,rgba(116,229,255,.1),rgba(27,32,67,.45))}
+#tab-balance .spins-stat{border:1px solid rgba(185,162,255,.25);background:linear-gradient(145deg,rgba(185,162,255,.1),rgba(27,32,67,.45))}
+#tab-balance .balance-stats .stat small{font-size:8px;letter-spacing:.55px}
+#tab-balance .balance-stats .stat strong{display:block;margin:7px 0 3px;font-size:25px;font-variant-numeric:tabular-nums}
+#tab-balance .balance-stats .stat span{display:block;color:#aaa8c7;font-size:8px;line-height:1.4}
 #tab-balance input,#tab-balance select{margin:7px 0 10px}
 #tab-balance .notice{margin-top:15px}
 #tab-balance .stats .stat strong{font-size:25px}
@@ -729,7 +741,8 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
    <option value="@RichGues">@RichGues</option>
   </select>
   <button class="secondary" onclick="openRecipient()">ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
-  <input id="stars" type="number" min="1" max="100000" placeholder="Количество Stars">
+  <label class="currency-input-label" for="stars">⭐ TELEGRAM STARS — СУММА ПОПОЛНЕНИЯ</label>
+   <div class="currency-input-wrap"><span>⭐</span><input id="stars" type="number" min="1" max="100000" placeholder="Например, 100 Stars"></div>
   <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ ✦</button>
   <div id="topupMessage"></div>
   <div class="notice">Переход в профиль не отправляет подарок автоматически. После отправки создай заявку и дождись проверки.</div>
@@ -737,9 +750,9 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
  <div class="card">
   <div class="section-tag">YOUR ACCOUNT</div>
   <h2>Твой баланс</h2>
-  <div class="stats">
-   <div class="stat"><small>Серебро</small><strong id="silverBalance">0</strong></div>
-   <div class="stat"><small>Бесплатные прокрутки</small><strong id="spinsBalance">0</strong></div>
+  <div class="stats balance-stats">
+   <div class="stat silver-stat"><small>🪙 ИГРОВОЕ СЕРЕБРО</small><strong id="silverBalance">0</strong><span>Внутренний баланс GiftsDrop</span></div>
+   <div class="stat spins-stat"><small>🎟 БЕСПЛАТНЫЕ ПРОКРУТКИ</small><strong id="spinsBalance">0</strong><span>Доступно сейчас</span></div>
   </div>
   <div class="notice">1 Telegram Star соответствует 1 единице внутреннего серебра по правилам GiftsDrop.</div>
  </div>
