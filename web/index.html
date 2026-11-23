@@ -551,6 +551,10 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
  </div>
  <div class="card" id="adminPanel">
   <div class="section-tag">CONTROL CENTER</div>
+  <h2>Выигранные NFT</h2>
+  <button class="secondary" onclick="loadPrizeClaims()">ОБНОВИТЬ ВЫИГРЫШИ</button>
+  <div id="prizeAdminMessage"></div><div id="prizeAdminClaims"></div>
+  <hr style="border-color:rgba(255,255,255,.08);margin:18px 0">
   <h2>Заявки на пополнение</h2>
   <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
   <div id="adminMessage"></div><div id="requests"></div>
@@ -776,7 +780,7 @@ function rouletteGiftCard(product) {
  };
 }
 
-async function buildRoulette(result) {
+async function buildRoulette(result,winningGift=null) {
  const track=document.getElementById('rouletteTrack');
  const viewport=track.parentElement;
  const catalog=await getRouletteCatalog();
@@ -800,7 +804,7 @@ async function buildRoulette(result) {
  let targetCard=null;
  for(let i=0;i<33;i++) {
   const type=i===targetIndex?result:(Math.random()<.34?'none':Math.random()<.58?'ordinary':Math.random()<.78?'unusual':'rare');
-  const gift=type==='none'?null:randomGift(type);
+  const gift=type==='none'?null:(i===targetIndex&&winningGift?winningGift:randomGift(type));
   const card=document.createElement('div');
   card.className='roulette-item';
   const art=document.createElement('div');
@@ -884,7 +888,7 @@ async function spin() {
   if(!['none','ordinary','unusual','rare'].includes(data.result)) {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
-  await buildRoulette(data.result);
+  await buildRoulette(data.result,data.gift||null);
   if(data.result!=='none') triggerWinCelebration(data.result);
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
   else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
@@ -929,11 +933,67 @@ async function checkAdmin() {
   document.getElementById('adminPanel').style.display='block';
   document.getElementById('giftAdminPanel').style.display='block';
   await loadRequests();
+  await loadPrizeClaims();
   await loadGiftAdminOrders();
  } catch(error) {
   document.getElementById('adminPanel').style.display='none';
   document.getElementById('giftAdminPanel').style.display='none';
  }
+}
+
+async function loadPrizeClaims() {
+ const output=document.getElementById('prizeAdminClaims');
+ const message=document.getElementById('prizeAdminMessage');
+ if(!output||!message)return;
+ output.innerHTML='';
+ message.textContent='Загружаем выигрыши...';
+ try {
+  const data=await api('/api/admin/prizes');
+  const claims=data.claims||[];
+  const pending=claims.filter(claim=>claim.status==='pending').length;
+  message.textContent='Всего заявок: '+claims.length+' · Ожидают выдачи: '+pending;
+  if(!claims.length){output.textContent='Выигрышей пока нет.';return;}
+  claims.forEach(claim=>{
+   const item=document.createElement('div');
+   item.className='request';
+   const title=document.createElement('b');
+   title.textContent='Заявка на NFT №'+claim.id;
+   const info=document.createElement('div');
+   const category={ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'}[claim.prize_type]||claim.prize_type;
+   info.textContent='Игрок: '+(claim.first_name||'Без имени')+
+    (claim.username?' (@'+claim.username+')':'')+
+    '\nTelegram ID: '+claim.telegram_id+
+    '\nПодарок: '+(claim.prize_name||category)+
+    '\nКатегория: '+category+
+    '\nСтоимость: '+(claim.prize_stars||'—')+' ⭐'+
+    '\nСтатус: '+(claim.status==='pending'?'ОЖИДАЕТ ВЫДАЧИ':'ВЫДАН');
+   item.append(title,info);
+   if(claim.prize_image_url){
+    const image=document.createElement('img');
+    image.src=claim.prize_image_url;image.alt=claim.prize_name||'NFT';
+    image.style.cssText='width:76px;height:76px;object-fit:contain;display:block;margin:8px 0';
+    item.append(image);
+   }
+   if(claim.status==='pending'){
+    const done=document.createElement('button');
+    done.textContent='ОТМЕТИТЬ КАК ВЫДАННЫЙ';
+    done.onclick=()=>completePrizeClaim(claim.id,done);
+    item.append(done);
+   }
+   output.append(item);
+  });
+ } catch(error){message.textContent=error.message;}
+}
+
+async function completePrizeClaim(id,button) {
+ if(!confirm('Ты уже отправил этот NFT игроку?'))return;
+ button.disabled=true;
+ const message=document.getElementById('prizeAdminMessage');
+ try{
+  await api('/api/admin/prizes/'+id+'/done',{method:'POST',body:JSON.stringify({})});
+  message.textContent='Заявка №'+id+' отмечена как выполненная.';
+  await loadPrizeClaims();
+ }catch(error){message.textContent=error.message;button.disabled=false;}
 }
 
 async function loadRequests() {
