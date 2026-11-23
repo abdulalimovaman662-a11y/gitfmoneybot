@@ -446,11 +446,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(185,162,255,.7);box-sh
   <div class="brand-copy"><div class="logo">GIFTS<span>DROP</span></div><div class="subtitle">ИГРАЙ • ПОЛУЧАЙ • ПОБЕЖДАЙ</div></div>
  </div>
  <button class="help-button" onclick="openHelp()" aria-label="Помощь"><span>?</span> Помощь</button>
- <div class="header-strip"><span class="live-dot"></span><span>АКТИВНОСТЬ · ДЕМО</span><strong class="activity-count" id="activityCount">123</strong><span class="activity-demo">не реальный онлайн</span></div>
- <div class="wins-ticker" aria-label="Демонстрационные примеры выигрышей">
-  <div class="wins-ticker-label">ДЕМО-ЛЕНТА · ПРИМЕРЫ ВЫИГРЫШЕЙ</div>
-  <div class="wins-ticker-track" id="winsTickerTrack"></div>
- </div>
+ <div class="header-strip"><span class="live-dot"></span><span>Онлайн</span></div>
 </header>
 
 <section class="tab-page active" id="tab-spin">
@@ -1255,38 +1251,6 @@ async function completeGiftOrder(id,button) {
  }
 }
 
-
-const demoWinSamples = [
- ['Maks_07','🎁','15 ⭐'],['LunaDrop','💎','75 ⭐'],['Player_241','🎀','40 ⭐'],
- ['ShadowX','🧸','300 ⭐'],['Nika_Star','🌹','55 ⭐'],['FoxPlay','🎁','25 ⭐'],
- ['Neo_777','💠','500 ⭐'],['MiraGift','🪄','90 ⭐']
-];
-function renderDemoWins() {
- const track=document.getElementById('winsTickerTrack');
- if(!track)return;
- const chips=demoWinSamples.concat(demoWinSamples).map(([name,emoji,value])=>{
-  const item=document.createElement('span');
-  item.className='win-chip';
-  item.textContent=name+' · '+emoji+' ';
-  const prize=document.createElement('b');
-  prize.textContent=value;
-  item.appendChild(prize);
-  return item;
- });
- track.replaceChildren(...chips);
-}
-function startDemoActivity() {
- const counter=document.getElementById('activityCount');
- if(!counter)return;
- let value=123;
- window.setInterval(()=>{
-  const change=Math.floor(Math.random()*11)-5;
-  value=Math.max(100,Math.min(149,value+change));
-  counter.textContent=String(value);
- },1000);
-}
-renderDemoWins();
-startDemoActivity();
 
 loadAccount();
 loadGiftCatalog();
