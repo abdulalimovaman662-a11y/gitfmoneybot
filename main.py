@@ -57,11 +57,16 @@ CREATE TABLE IF NOT EXISTS payments (
 db.commit()
 
 
-def legacy_spins(user_id):
+def legacy_account(user_id):
     row = db.execute(
-        "SELECT spins FROM users WHERE user_id = ?", (user_id,)
+        "SELECT spins, referrals FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
-    return max(0, int(row["spins"])) if row else None
+    if not row:
+        return None
+    return {
+        "spins": max(0, int(row["spins"])),
+        "referrals": max(0, int(row["referrals"]))
+    }
 
 
 async def internal_api(path, method="GET", payload=None):
@@ -82,12 +87,14 @@ async def internal_api(path, method="GET", payload=None):
 
 
 async def shared_user(tg_user, referral_id=None):
+    legacy = legacy_account(tg_user.id)
     return await internal_api("/api/internal/bot/user", "POST", {
         "telegram_id": str(tg_user.id),
         "username": tg_user.username,
         "first_name": tg_user.first_name,
         "referral_id": str(referral_id) if referral_id else None,
-        "legacy_spins": legacy_spins(tg_user.id)
+        "legacy_spins": legacy["spins"] if legacy else None,
+        "legacy_referrals": legacy["referrals"] if legacy else None
     })
 
 
@@ -297,8 +304,10 @@ async def referral_command(message: Message):
 @dp.message(Command("prizes"))
 async def prizes_command(message: Message):
     await message.answer(
-        "🎁 Главный приз — редкий Telegram NFT-подарок!\n"
-        "Вероятность главного приза — 0,01% за прокрутку.\n\n"
+        "🎁 Призы GiftsDrop:\n"
+        "Обычный NFT — 9,99%.\n"
+        "Редкий NFT — 0,01%.\n"
+        "Без выигрыша — 90%.\n\n"
         "Выдача производится администратором вручную."
     )
 
