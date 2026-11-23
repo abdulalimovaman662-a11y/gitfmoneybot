@@ -543,6 +543,17 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 }
 
 
+/* Player NFT win history */
+.profile-win-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.profile-win-item:last-child{border-bottom:0;padding-bottom:0}
+.profile-win-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:rgba(185,162,255,.1);font-size:22px}
+.profile-win-details{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.profile-win-details b{color:#fff;font-size:12px;overflow-wrap:anywhere}
+.profile-win-details span{color:#aaa8c7;font-size:9px}
+.profile-win-status{max-width:94px;text-align:right;color:#ffd78a;font-size:9px;line-height:1.35}
+.profile-win-status.is-done{color:#75e6ad}
+@media(max-width:360px){.profile-win-item{gap:7px}.profile-win-icon{width:36px;height:36px;flex-basis:36px}.profile-win-status{max-width:78px;font-size:8px}}
+
 /* Consistent finish for every tab */
 .tab-page{min-height:42vh}
 .tab-page>.card,.tab-page>.prize-card{animation:tabCardIn .32s ease both}
@@ -675,7 +686,12 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
   <div class="profile-username" id="profileUsername">Открыто через Telegram</div>
   <div class="profile-stats"><div><b id="profileSilver">0</b><span>Серебро 🪙</span></div><div><b id="profileSpins">0</b><span>Бесплатные</span></div><div><b id="profileRefs">0</b><span>Друзья</span></div></div>
  </div>
- <div class="card"><div class="section-tag">БЫСТРЫЕ ДЕЙСТВИЯ</div><button onclick="showTab('balance')">ПОПОЛНИТЬ СЕРЕБРО</button><button class="secondary" onclick="showTab('friends')">ПРИГЛАСИТЬ ДРУЗЕЙ</button><button class="secondary" onclick="openHelp()">СВЯЗАТЬСЯ С ПОДДЕРЖКОЙ</button></div>
+ <div <div class="card" id="profileWinHistoryCard">
+   <div class="section-tag">YOUR NFT HISTORY</div>
+   <h2>История выигрышей</h2>
+   <div id="profileWinHistory"><p class="muted">Загружаем историю…</p></div>
+  </div>
+  class="card"><div class="section-tag">БЫСТРЫЕ ДЕЙСТВИЯ</div><button onclick="showTab('balance')">ПОПОЛНИТЬ СЕРЕБРО</button><button class="secondary" onclick="showTab('friends')">ПРИГЛАСИТЬ ДРУЗЕЙ</button><button class="secondary" onclick="openHelp()">СВЯЗАТЬСЯ С ПОДДЕРЖКОЙ</button></div>
 </section>
 
 <section class="tab-page" id="tab-friends">
@@ -896,8 +912,48 @@ async function loadProfile() {
   document.getElementById('profileSpins').textContent=data.free_spins ?? 0;
   const refs=await api('/api/referrals');
   document.getElementById('profileRefs').textContent=refs.referral_count ?? 0;
+  await loadProfileWinHistory();
  } catch(error) {
   document.getElementById('profileUsername').textContent='Не удалось загрузить статистику';
+ }
+}
+
+async function loadProfileWinHistory() {
+ const container=document.getElementById('profileWinHistory');
+ if(!container)return;
+ try {
+  const data=await api('/api/me/wins');
+  const wins=Array.isArray(data.wins)?data.wins:[];
+  container.replaceChildren();
+  if(!wins.length) {
+   const empty=document.createElement('p');
+   empty.className='muted';
+   empty.textContent='Пока выигрышей нет. Возможно, следующий подарок будет твоим!';
+   container.appendChild(empty);
+   return;
+  }
+  wins.forEach(win=>{
+   const item=document.createElement('div');
+   item.className='profile-win-item';
+   const icon=document.createElement('span');
+   icon.className='profile-win-icon';
+   icon.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';
+   const details=document.createElement('div');
+   details.className='profile-win-details';
+   const name=document.createElement('b');
+   name.textContent=String(win.prize_name||'NFT-подарок');
+   const meta=document.createElement('span');
+   const date=win.created_at?new Date(win.created_at).toLocaleDateString('ru-RU'):'Дата неизвестна';
+   meta.textContent=(Number(win.prize_stars)>0?Number(win.prize_stars)+' ⭐ · ':'')+date;
+   details.append(name,meta);
+   const status=document.createElement('strong');
+   status.className=win.status==='done'?'profile-win-status is-done':'profile-win-status';
+   status.textContent=win.status==='done'?'Выдан':'Ожидает выдачи';
+   item.append(icon,details,status);
+   container.appendChild(item);
+  });
+ } catch(error) {
+  container.textContent='Не удалось загрузить историю выигрышей.';
  }
 }
 
