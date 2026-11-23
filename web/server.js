@@ -185,6 +185,12 @@ async function initDatabase() {
       migrated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type)
+    SELECT id, telegram_id, prize_type
+    FROM spin_history
+    WHERE prize_type IN ('ordinary', 'rare')
+    ON CONFLICT (spin_history_id) DO NOTHING;
+
     CREATE TABLE IF NOT EXISTS topup_requests (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
