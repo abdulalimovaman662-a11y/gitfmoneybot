@@ -498,7 +498,12 @@ async def successful_payment(message: Message):
 
 @dp.callback_query(F.data == "balance")
 async def balance_button(callback: CallbackQuery):
-    await show_balance(callback, callback.from_user.id)
+    try:
+        await shared_user(callback.from_user)
+        await show_balance(callback, callback.from_user.id)
+    except Exception as error:
+        await callback.message.answer(f"Не удалось загрузить баланс: {error}")
+        await callback.answer()
 
 
 @dp.callback_query(F.data == "prizes")
