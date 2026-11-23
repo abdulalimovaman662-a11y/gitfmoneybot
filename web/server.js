@@ -1129,7 +1129,7 @@ const server = http.createServer(async (req, res) => {
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
       const result = await pool.query(
-        `SELECT prize_type, prize_name, prize_stars, status, created_at
+        `SELECT prize_type, prize_name, prize_stars, prize_image_url, status, created_at
          FROM prize_claims
          WHERE telegram_id = $1 AND prize_name IS NOT NULL AND prize_name <> ''
          ORDER BY created_at DESC
@@ -1140,6 +1140,7 @@ const server = http.createServer(async (req, res) => {
         prize_type: row.prize_type,
         prize_name: row.prize_name,
         prize_stars: Number(row.prize_stars) || 0,
+        prize_image_url: row.prize_image_url || null,
         status: row.status,
         created_at: row.created_at
       })) });
