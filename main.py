@@ -14,7 +14,8 @@ from aiogram.types import (
     InlineKeyboardButton,
     BotCommand,
     LabeledPrice,
-    PreCheckoutQuery
+    PreCheckoutQuery,
+    WebAppInfo
 )
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -102,6 +103,7 @@ async def shared_user(tg_user, referral_id=None):
 def main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🎰 Крутить рулетку", callback_data="spin")],
+        [InlineKeyboardButton(text="🌐 Открыть сайт GiftsDrop", web_app=WebAppInfo(url="https://gitfmoneybot-production.up.railway.app"))],
         [
             InlineKeyboardButton(text="🪙 20 серебра — 20 Stars", callback_data="buy_20_silver"),
             InlineKeyboardButton(text="🪙 60 серебра — 60 Stars", callback_data="buy_60_silver")
