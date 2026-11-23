@@ -27,6 +27,7 @@ if not TOKEN:
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+pending_silver_amounts = set()
 
 # SQLite is kept only to preserve legacy spin balances during the first shared-DB login.
 db = sqlite3.connect(DB_PATH)
@@ -105,6 +106,7 @@ def main_keyboard():
             InlineKeyboardButton(text="🪙 20 серебра — 20 Stars", callback_data="buy_20_silver"),
             InlineKeyboardButton(text="🪙 60 серебра — 60 Stars", callback_data="buy_60_silver")
         ],
+        [InlineKeyboardButton(text="➕ Своя сумма (до 1000 ⭐)", callback_data="custom_silver")],
         [
             InlineKeyboardButton(text="👤 Мой баланс", callback_data="balance"),
             InlineKeyboardButton(text="🎁 Призы", callback_data="prizes")
@@ -132,8 +134,8 @@ async def show_balance(message_or_callback, user_id):
 
 
 async def send_silver_invoice(user_id, amount):
-    if amount not in (20, 60):
-        raise ValueError("Недопустимая сумма пополнения")
+    if not isinstance(amount, int) or not 1 <= amount <= 1000:
+        raise ValueError("Сумма пополнения должна быть от 1 до 1000 Stars")
     title = f"{amount} серебра"
     await bot.send_invoice(
         chat_id=user_id,
@@ -166,6 +168,43 @@ async def buy_60_silver(callback: CallbackQuery):
     except Exception as error:
         await callback.message.answer(f"Не удалось создать счёт: {error}")
         await callback.answer()
+
+
+@dp.callback_query(F.data == "custom_silver")
+async def custom_silver(callback: CallbackQuery):
+    pending_silver_amounts.add(callback.from_user.id)
+    await callback.message.answer(
+        "Введи количество Stars для пополнения (от 1 до 1000).\n"
+        "1 ⭐ = 1 🪙 серебра. Для отмены отправь /cancel."
+    )
+    await callback.answer()
+
+
+@dp.message(Command("cancel"))
+async def cancel_custom_silver(message: Message):
+    if message.from_user:
+        pending_silver_amounts.discard(message.from_user.id)
+    await message.answer("Ввод суммы отменён.", reply_markup=main_keyboard())
+
+
+@dp.message(F.text, lambda message: message.from_user and message.from_user.id in pending_silver_amounts and not message.text.startswith("/"))
+async def receive_custom_silver_amount(message: Message):
+    raw_amount = (message.text or "").strip().replace(" ", "")
+    if not raw_amount.isdigit():
+        await message.answer("Введи целое число от 1 до 1000. Например: 250")
+        return
+
+    amount = int(raw_amount)
+    if not 1 <= amount <= 1000:
+        await message.answer("Можно пополнить от 1 до 1000 Stars. Попробуй ещё раз.")
+        return
+
+    pending_silver_amounts.discard(message.from_user.id)
+    try:
+        await shared_user(message.from_user)
+        await send_silver_invoice(message.from_user.id, amount)
+    except Exception as error:
+        await message.answer(f"Не удалось создать счёт: {error}", reply_markup=main_keyboard())
 
 
 def parse_gift_payload(payload):
@@ -400,7 +439,7 @@ async def pre_checkout(query: PreCheckoutQuery):
             amount = int(parts[1])
             user_id = int(parts[2])
             valid = (
-                amount in (20, 60)
+                1 <= amount <= 1000
                 and user_id == query.from_user.id
                 and query.currency == "XTR"
                 and query.total_amount == amount
@@ -530,7 +569,7 @@ async def successful_payment(message: Message):
         except (ValueError, IndexError):
             await message.answer("Платёж получен, но данные пополнения некорректны.")
             return
-        if (amount not in (20, 60) or user_id != message.from_user.id
+        if (not 1 <= amount <= 1000 or user_id != message.from_user.id
                 or payment.currency != "XTR" or payment.total_amount != amount):
             await message.answer("Данные пополнения не совпали. Обратись в поддержку.")
             return
