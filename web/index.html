@@ -6,7 +6,142 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#11102a">
 <title>GIFTSDROP MARKET</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js">
+// Interactive Rocket and Upgrade presentation. All results below use temporary test credits only.
+let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketCrashAt=2.48,rocketStake=0,rocketBetKind='silver',rocketRound=1,rocketDemoBalance=1000,rocketPlayerNames=['NeonFox','LunaByte','PixelWolf','StarNinja','MangoCat','CyberBee','Frosty','RubyFox'];
+let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
+const rocketHistoryValues=[2.48,1.37,5.62,1.08,3.14,8.21,1.91];
+function setRocketMode(mode){
+ rocketMode=mode;
+ document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
+ document.getElementById('rocketNftMode').classList.toggle('active',mode==='nft');
+ document.getElementById('rocketSilverControls').hidden=mode!=='silver';
+ document.getElementById('rocketNftControls').hidden=mode!=='nft';
+ document.getElementById('rocketResult').textContent=mode==='silver'?'Тестовая ставка списывается только с виртуального баланса.':'Выбери предмет из инвентаря. Реальный NFT останется на месте.';
+}
+function setRocketStake(value){document.getElementById('rocketStake').value=value;}
+function renderRocketPlayers(){
+ const host=document.getElementById('rocketPlayerList');if(!host)return;host.replaceChildren();
+ const rows=rocketPlayerNames.slice(0,5).map((name,i)=>({name,bet:[25,50,100,75,150][i],state:['ЗАБРАЛ 1.42x','В ИГРЕ','ЗАБРАЛ 2.16x','В ИГРЕ','ЗАБРАЛ 1.18x'][i]}));
+ rows.forEach(row=>{const el=document.createElement('div');el.className='rocket-player-row';const avatar=document.createElement('span');avatar.className='rocket-player-avatar';avatar.textContent=row.name.slice(0,2).toUpperCase();const name=document.createElement('span');name.className='rocket-player-name';name.textContent=row.name;const bet=document.createElement('span');bet.className='rocket-player-bet';bet.textContent=row.bet+' 🪙';const state=document.createElement('span');state.className='rocket-player-state';state.textContent=row.state;el.append(avatar,name,bet,state);host.appendChild(el);});
+}
+function renderRocketHistory(){
+ const host=document.getElementById('rocketHistory');if(!host)return;host.replaceChildren();
+ rocketHistoryValues.slice(0,7).forEach((value,i)=>{const row=document.createElement('div');row.className='rocket-history-row'+(value<1.5?' crash-low':'');const left=document.createElement('span');left.textContent='РАУНД #'+String(rocketRound-i-1).padStart(3,'0');const right=document.createElement('b');right.textContent=value.toFixed(2)+'x';row.append(left,right);host.appendChild(row);});
+}
+async function loadRocketInventory(){
+ const select=document.getElementById('rocketNftSelect');if(!select)return;
+ select.innerHTML='<option value="">Загрузка инвентаря…</option>';
+ try{const data=await api('/api/me/wins');const wins=Array.isArray(data.wins)?data.wins:[];select.replaceChildren();wins.forEach((win,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=String(win.prize_name||'NFT')+' · '+(Number(win.prize_stars)||0)+' ⭐';select.appendChild(option);});if(!wins.length){const option=document.createElement('option');option.value='';option.textContent='В инвентаре пока нет NFT';select.appendChild(option);}select.dataset.items=JSON.stringify(wins);}catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
+}
+function launchRocket(){
+ if(rocketRunning)return;
+ if(rocketMode==='silver'){
+  const amount=Number(document.getElementById('rocketStake').value);
+  if(!Number.isInteger(amount)||amount<1||amount>rocketDemoBalance){document.getElementById('rocketResult').textContent='Укажи ставку от 1 до '+rocketDemoBalance+' тестовых монет.';return;}
+  rocketStake=amount;rocketDemoBalance-=amount;rocketBetKind='silver';
+ }else{
+  const select=document.getElementById('rocketNftSelect');
+  if(!select||select.value===''){document.getElementById('rocketResult').textContent='Сначала выбери NFT из инвентаря.';return;}
+  const items=JSON.parse(select.dataset.items||'[]');const picked=items[Number(select.value)];
+  if(!picked){document.getElementById('rocketResult').textContent='Не удалось прочитать выбранный предмет.';return;}
+  rocketStake=Number(picked.prize_stars)||100;rocketBetKind='nft';
+ }
+ rocketRunning=true;rocketMultiplier=1;rocketCrashAt=Number((1.01+Math.random()*8.99).toFixed(2));
+ document.getElementById('rocketStage').classList.remove('is-crashed');document.getElementById('rocketStage').classList.add('is-flying');
+ document.getElementById('rocketShip').style.left='17%';document.getElementById('rocketShip').style.top='47%';
+ document.getElementById('rocketStatus').textContent='РАКЕТА ВЗЛЕТЕЛА!';document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';
+ document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketCashoutButton').disabled=false;
+ document.getElementById('rocketResult').textContent='Ты в раунде! Забирай до '+rocketCrashAt.toFixed(2)+'x — краш может произойти в любой момент.';
+ document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
+ const started=Date.now();
+ rocketInterval=setInterval(()=>{
+  const elapsed=(Date.now()-started)/1000;rocketMultiplier=Number(Math.min(10,Math.pow(1.18,elapsed)).toFixed(2));
+  document.getElementById('rocketMultiplier').innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
+  const progress=Math.min(1,(rocketMultiplier-1)/9);document.getElementById('rocketShip').style.left=(17+progress*58)+'%';document.getElementById('rocketShip').style.top=(47-progress*29)+'%';
+  if(rocketMultiplier>=rocketCrashAt){crashRocket();}
+ },70);
+}
+function cashoutRocket(){
+ if(!rocketRunning)return;
+ const winnings=Math.floor(rocketStake*rocketMultiplier);
+ rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
+ if(rocketBetKind==='silver')rocketDemoBalance+=winnings;
+ document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
+ document.getElementById('rocketResult').textContent='🎉 Забрано на '+rocketMultiplier.toFixed(2)+'x! '+(rocketBetKind==='silver'?'Тестовый выигрыш: '+winnings+' 🪙.':'NFT-ставка успешно возвращена в тестовом раунде.');
+ document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
+}
+function crashRocket(){
+ if(!rocketRunning)return;
+ rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
+ document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStage').classList.add('is-crashed');document.getElementById('rocketStatus').textContent='💥 РАКЕТА УПАЛА';document.getElementById('rocketMultiplier').innerHTML=rocketCrashAt.toFixed(2)+'<span>x</span>';
+ document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
+ document.getElementById('rocketResult').textContent='💥 Краш на '+rocketCrashAt.toFixed(2)+'x. Тестовая ставка сгорела. Настоящий баланс и инвентарь не затронуты.';
+ rocketHistoryValues.unshift(rocketCrashAt);rocketHistoryValues.length=Math.min(rocketHistoryValues.length,12);rocketRound++;document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(rocketRound).padStart(3,'0');document.getElementById('rocketLastCrash').textContent=rocketCrashAt.toFixed(2)+'x';document.getElementById('rocketPlayers').textContent=String(10+Math.floor(Math.random()*12));renderRocketHistory();
+}
+function loadUpgradeData(){
+ const host=document.getElementById('upgradeSourceList');if(!host)return;
+ host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
+ Promise.all([api('/api/me/wins'),api('/api/store/catalog')]).then(([winsData,catalogData])=>{
+  upgradeInventory=Array.isArray(winsData.wins)?winsData.wins:[];upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
+  if(!upgradeInventory.length)upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];
+  renderUpgradeSources();
+ }).catch(()=>{upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];upgradeCatalog=[];renderUpgradeSources();});
+}
+function renderUpgradeSources(){
+ const host=document.getElementById('upgradeSourceList');host.replaceChildren();
+ upgradeInventory.forEach((item,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upgrade-source-item'+(upgradeSource===index?' selected':'');button.onclick=()=>selectUpgradeSource(index);
+  const art=document.createElement('div');art.className='upgrade-source-art';art.textContent=item.prize_type==='rare'?'💎':item.prize_type==='unusual'?'💜':'🎁';
+  const name=document.createElement('b');name.textContent=String(item.prize_name||'NFT-подарок');
+  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐'+(item.preview?' · ПРИМЕР':'');
+  button.append(art,name,value);host.appendChild(button);
+ });
+ if(upgradeSource===null)document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Выбери предмет выше, чтобы увидеть доступные цели.</div>';
+}
+function selectUpgradeSource(index){
+ upgradeSource=index;upgradeTarget=null;renderUpgradeSources();
+ const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||100;
+ const targets=upgradeCatalog.filter(item=>Number(item.stars)>sourceValue).sort((a,b)=>Number(a.stars)-Number(b.stars)).slice(0,8);
+ if(!targets.length){upgradeTarget=null;document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Нет подарков дороже этого предмета в каталоге. Попробуй другой NFT.</div>';updateUpgradeChance();return;}
+ const host=document.getElementById('upgradeTargetList');host.replaceChildren();
+ targets.forEach((item,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upgrade-target-item';button.onclick=()=>selectUpgradeTarget(index,targets);
+  const art=document.createElement('div');art.className='upgrade-target-art';art.textContent=item.emoji||'🎁';
+  if(item.image_url){const img=document.createElement('img');img.src=item.image_url;img.alt=item.name||'Подарок';img.onerror=()=>{img.remove();art.textContent=item.emoji||'🎁';};art.replaceChildren(img);}
+  const name=document.createElement('b');name.textContent=String(item.name||'NFT-подарок');
+  const value=document.createElement('small');value.textContent=(Number(item.stars)||0)+' ⭐';
+  button.append(art,name,value);button.dataset.target=String(index);host.appendChild(button);
+ });
+ host.dataset.items=JSON.stringify(targets);updateUpgradeChance();
+}
+function selectUpgradeTarget(index,targets){
+ upgradeTarget=targets[index];document.querySelectorAll('.upgrade-target-item').forEach((el,i)=>el.classList.toggle('selected',i===index));updateUpgradeChance();
+}
+function getUpgradeChance(){
+ if(upgradeSource===null||!upgradeTarget)return 0;
+ const sourceValue=Number(upgradeInventory[upgradeSource].prize_stars)||100,targetValue=Number(upgradeTarget.stars)||0;
+ return Math.max(3,Math.min(85,Math.floor(sourceValue/targetValue*75)));
+}
+function updateUpgradeChance(){
+ const chance=getUpgradeChance();document.getElementById('upgradeChance').textContent=chance?chance+'%':'—%';document.getElementById('upgradeChanceFill').style.width=chance+'%';
+ document.getElementById('upgradeChanceCaption').textContent=chance?'Чем ценнее цель относительно твоего NFT, тем ниже шанс.':'Выбери предмет и цель, чтобы увидеть шанс.';
+ document.getElementById('upgradeTryButton').disabled=!chance||upgradeBusy;
+}
+function runUpgrade(){
+ if(upgradeBusy||!upgradeTarget||upgradeSource===null)return;
+ upgradeBusy=true;const button=document.getElementById('upgradeTryButton'),result=document.getElementById('upgradeResult');button.disabled=true;result.className='upgrade-result';result.textContent='⚡ ЭНЕРГИЯ НАКАПЛИВАЕТСЯ…';
+ const chance=getUpgradeChance(),won=Math.random()*100<chance;button.textContent='ИДЁТ АПГРЕЙД…';
+ const orb=document.querySelector('.upgrade-orb');if(orb)orb.classList.add('is-upgrading');
+ setTimeout(()=>{
+  upgradeBusy=false;button.textContent='⚡ ПОПРОБОВАТЬ ЕЩЁ РАЗ';if(orb)orb.classList.remove('is-upgrading');
+  if(won){result.className='upgrade-result is-win';result.textContent='✨ УСПЕХ! В тестовом раунде цель «'+String(upgradeTarget.name)+'» получена. Реальный инвентарь не изменён.';}
+  else{result.className='upgrade-result is-lose';result.textContent='💥 НЕ ПОВЕЗЛО! Тестовая попытка не удалась. Настоящий NFT остался в инвентаре.';}
+  button.disabled=false;
+ },1900);
+}
+
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
 
@@ -770,6 +905,18 @@ button:disabled{opacity:.55;filter:saturate(.65)}
 @media(max-width:360px){.home-grid{gap:9px}.home-tile{padding:12px 10px}.home-tile-icon{width:48px;height:48px;font-size:26px}.home-tile-title{font-size:13px}.rocket-multiplier{font-size:50px}.upgrade-slot{width:92px;height:92px}}
 @media(prefers-reduced-motion:no-preference){.rocket-emoji{animation:rocketFloat 2.8s ease-in-out infinite}.upgrade-symbol{animation:upgradePulse 2.3s ease-in-out infinite}@keyframes rocketFloat{50%{transform:translateY(-7px) rotate(-28deg)}}@keyframes upgradePulse{50%{box-shadow:0 0 43px rgba(75,225,255,.65);transform:translateY(-2px)}}}
 
+
+/* Rocket + Upgrade full interactive visual pass */
+.rocket-topline{display:flex;align-items:center;gap:7px;margin:3px 2px 11px;color:#b9b0d4;font-size:9px;font-weight:900;letter-spacing:1px}.rocket-topline b{margin-left:auto;color:#ffd1b3}.rocket-live-dot{width:7px;height:7px;border-radius:50%;background:#70f3a8;box-shadow:0 0 12px #70f3a8}.rocket-test-label{padding:5px 7px;border-radius:7px;background:rgba(255,207,90,.1);color:#ffdb83;font-size:7px}
+.rocket-stage{height:310px;position:relative;overflow:hidden;border:1px solid rgba(255,133,91,.35);border-radius:26px;background:radial-gradient(ellipse at 72% 28%,rgba(255,104,75,.28),transparent 35%),radial-gradient(ellipse at 20% 90%,rgba(102,72,255,.25),transparent 42%),linear-gradient(155deg,#241b50 0%,#171432 50%,#11152f 100%);box-shadow:0 18px 42px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.1)}
+.rocket-stars{position:absolute;inset:0;background-image:radial-gradient(2px 2px at 12% 19%,#fff 45%,transparent 60%),radial-gradient(1px 1px at 27% 43%,#ffcf8a 45%,transparent 60%),radial-gradient(2px 2px at 81% 17%,#fff 45%,transparent 60%),radial-gradient(1px 1px at 68% 55%,#fff 45%,transparent 60%),radial-gradient(2px 2px at 91% 71%,#ff9a7a 45%,transparent 60%),radial-gradient(1px 1px at 43% 12%,#fff 45%,transparent 60%);opacity:.85}.rocket-planet{position:absolute;width:230px;height:230px;right:-110px;bottom:-145px;border-radius:50%;background:linear-gradient(145deg,#ff946a,#9c3c81 58%,#3b347e);box-shadow:0 0 55px rgba(255,112,91,.28)}.rocket-cloud{position:absolute;width:130px;height:26px;border-radius:50%;background:rgba(120,112,190,.12);filter:blur(8px)}.cloud-one{left:-25px;top:110px}.cloud-two{right:15px;top:155px;width:90px}.rocket-flight-path{position:absolute;left:15%;bottom:20%;width:66%;height:130px;border-top:2px dashed rgba(255,173,129,.22);border-radius:50%;transform:rotate(-23deg)}
+.rocket-ship{position:absolute;left:17%;top:47%;z-index:3;font-size:62px;filter:drop-shadow(0 0 18px rgba(255,139,94,.75));transform:rotate(-34deg);transition:left .12s linear,top .12s linear}.rocket-flame{position:absolute;left:16%;top:66%;z-index:2;font-size:22px;opacity:0;filter:drop-shadow(0 0 12px #ff754a)}.rocket-stage.is-flying .rocket-ship{animation:rocketBob .3s ease-in-out infinite alternate}.rocket-stage.is-flying .rocket-flame{opacity:1;animation:flameFlicker .12s infinite alternate}.rocket-stage.is-crashed .rocket-ship{animation:rocketCrash .65s ease-in forwards}.rocket-stage.is-crashed .rocket-flame{opacity:1}@keyframes rocketBob{to{transform:translate(3px,-5px) rotate(-34deg)}}@keyframes flameFlicker{to{transform:scale(1.3) rotate(-12deg)}}@keyframes rocketCrash{to{transform:translate(90px,170px) rotate(55deg) scale(.5);opacity:0}}
+.rocket-status{position:absolute;left:0;right:0;top:20px;text-align:center;color:#ffbd9c;font-size:9px;font-weight:900;letter-spacing:2.5px}.rocket-multiplier{position:absolute;left:0;right:0;top:41%;margin:0;text-align:center;font-size:65px;font-weight:1000;line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,122,86,.85);font-variant-numeric:tabular-nums}.rocket-multiplier span{font-size:28px;color:#ffb38f}.rocket-stage-bottom{position:absolute;left:18px;right:18px;bottom:14px;display:flex;justify-content:space-between;color:#a9a3c8;font-size:8px;font-weight:900;letter-spacing:1px}.rocket-live-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:11px 0}.rocket-live-stats>div{min-width:0;padding:12px 8px;border:1px solid rgba(255,139,103,.17);border-radius:14px;background:linear-gradient(145deg,rgba(255,120,81,.1),rgba(255,255,255,.025));text-align:center}.rocket-live-stats small,.rocket-live-stats b{display:block}.rocket-live-stats small{min-height:22px;color:#a99dbd;font-size:7px;line-height:1.4;letter-spacing:.6px}.rocket-live-stats b{margin-top:4px;color:#ffe0c6;font-size:14px;white-space:nowrap}.rocket-live-stats b span{font-size:14px}
+.rocket-bet-card{border-color:rgba(255,133,91,.3);background:radial-gradient(ellipse at 100% 0%,rgba(255,111,73,.1),transparent 42%),linear-gradient(145deg,rgba(43,29,67,.98),rgba(19,18,45,.99))}.rocket-card-heading,.rocket-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rocket-card-heading h2{margin:0}.rocket-round-pill{padding:7px 9px;border-radius:9px;background:rgba(255,111,73,.13);color:#ffb38f;font-size:8px;font-weight:900}.rocket-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:17px 0 14px}.rocket-mode-btn{margin:0;min-height:45px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:rgba(255,255,255,.035);color:#a9a1c5;box-shadow:none}.rocket-mode-btn.active{border-color:rgba(255,150,106,.55);background:linear-gradient(110deg,rgba(255,121,75,.22),rgba(255,195,105,.1));color:#ffe0c8;box-shadow:inset 0 1px rgba(255,255,255,.08)}.rocket-input-wrap{position:relative}.rocket-input-wrap input{padding-right:55px}.rocket-input-wrap>span{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#ffd58a}.rocket-quick-bets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0 13px}.rocket-quick-bets button{margin:0;padding:8px;min-height:34px;border-radius:10px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);color:#e5d8ed;box-shadow:none;font-size:10px}.rocket-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rocket-actions button{margin:0;min-height:49px;padding:10px 7px;font-size:9px}.rocket-actions #rocketLaunchButton{background:linear-gradient(105deg,#ff8a4f,#ffd05c);color:#2a1830;box-shadow:0 8px 20px rgba(255,126,75,.2)}.rocket-actions #rocketCashoutButton{background:linear-gradient(105deg,#43dca0,#a5f17a);color:#092b25;box-shadow:0 8px 20px rgba(67,220,160,.18)}.rocket-actions button:disabled{opacity:.38;filter:grayscale(.5)}.rocket-result{min-height:34px;margin-top:12px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.045);color:#d7cde6;font-size:10px;line-height:1.5;text-align:center}.rocket-hint,.rocket-test-note{margin:8px 0 0;color:#9e96b7;font-size:9px;line-height:1.5}.rocket-test-note{padding:10px;border:1px solid rgba(255,207,90,.13);border-radius:10px;background:rgba(255,207,90,.045);color:#c8b98f;text-align:center}.rocket-players-card{margin-top:12px;border-color:rgba(255,133,91,.2)}.rocket-list-head{margin-bottom:12px}.rocket-list-head h2{margin:0;font-size:13px;letter-spacing:.5px}.rocket-list-head>span{color:#ffb18f;font-size:8px;font-weight:900;letter-spacing:1px}.rocket-player-row{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}.rocket-player-row:last-child{border:0}.rocket-player-avatar{width:31px;height:31px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,#ff986b,#b36bdb);color:#251636;font-size:11px;font-weight:900}.rocket-player-name{flex:1;color:#eee7fa;font-size:10px;font-weight:800}.rocket-player-bet{color:#b6abc9;font-size:9px}.rocket-player-state{padding:5px 7px;border-radius:7px;background:rgba(103,230,166,.1);color:#80edb4;font-size:8px;font-weight:900}.rocket-history{padding:14px 3px}.rocket-history-row{display:flex;justify-content:space-between;gap:8px;padding:9px 11px;margin:6px 0;border-radius:10px;background:rgba(255,255,255,.04);color:#c8bfdc;font-size:10px}.rocket-history-row b{color:#8af0b7}.rocket-history-row.crash-low b{color:#ff8d9c}
+.upgrade-hero-pro{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,rgba(69,229,255,.28),transparent 52%),radial-gradient(ellipse at 100% 100%,rgba(155,108,255,.2),transparent 45%),linear-gradient(150deg,#12496c,#202052 78%);border-color:rgba(91,238,255,.42)}.upgrade-orb{position:relative;width:94px;height:94px;margin:0 auto 14px;display:grid;place-items:center;border:1px solid rgba(119,242,255,.42);border-radius:50%;background:radial-gradient(circle,rgba(78,229,255,.3),rgba(91,94,255,.08) 65%,transparent 68%);box-shadow:0 0 35px rgba(75,225,255,.23)}.upgrade-orb>span{font-size:49px;color:#b9faff;text-shadow:0 0 20px #4ce8ff}.upgrade-orb i{position:absolute;width:7px;height:7px;border-radius:50%;background:#ffdc76;box-shadow:0 0 12px #ffdc76}.upgrade-orb i:nth-of-type(1){top:7px;right:13px}.upgrade-orb i:nth-of-type(2){bottom:13px;left:6px;background:#ff78b5}.upgrade-orb i:nth-of-type(3){right:1px;bottom:29px;background:#70efff}.upgrade-mini-stats{display:flex;align-items:center;justify-content:center;gap:11px;margin:20px auto 0}.upgrade-mini-stats span{padding:8px 10px;border:1px solid rgba(133,231,255,.2);border-radius:9px;background:rgba(255,255,255,.06);color:#c8f6ff;font-size:8px;font-weight:900}.upgrade-mini-stats b{color:#8af4ff}.upgrade-selector-card{margin-top:13px;border-color:rgba(91,238,255,.26);background:radial-gradient(ellipse at 100% 0%,rgba(72,220,255,.09),transparent 42%),linear-gradient(145deg,rgba(26,39,76,.98),rgba(17,18,45,.99))}.upgrade-subtext{margin:-5px 0 13px;color:#aaa8c7;font-size:10px}.upgrade-source-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.upgrade-source-item,.upgrade-target-item{min-width:0;padding:10px;border:1px solid rgba(133,231,255,.16);border-radius:15px;background:rgba(255,255,255,.04);color:#eee;text-align:left;cursor:pointer}.upgrade-source-item.selected,.upgrade-target-item.selected{border-color:#72efff;background:linear-gradient(145deg,rgba(72,220,255,.18),rgba(125,102,255,.12));box-shadow:0 0 18px rgba(72,220,255,.12)}.upgrade-source-art,.upgrade-target-art{height:76px;display:grid;place-items:center;margin-bottom:8px;border-radius:11px;background:radial-gradient(circle,rgba(84,227,255,.17),rgba(25,31,67,.5));font-size:31px;overflow:hidden}.upgrade-source-art img,.upgrade-target-art img{width:100%;height:100%;object-fit:contain;padding:5px}.upgrade-source-item b,.upgrade-target-item b{display:block;color:#fff;font-size:10px;overflow-wrap:anywhere}.upgrade-source-item small,.upgrade-target-item small{display:block;margin-top:5px;color:#9fbed0;font-size:8px}.upgrade-step-two{margin-top:23px}.upgrade-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.upgrade-empty{grid-column:1/-1;padding:17px;border:1px dashed rgba(133,231,255,.2);border-radius:13px;color:#9eacc2;font-size:10px;text-align:center}.upgrade-chance-panel{margin:17px 0 12px;padding:15px;border:1px solid rgba(113,230,255,.18);border-radius:15px;background:linear-gradient(100deg,rgba(52,185,214,.1),rgba(145,103,255,.08))}.upgrade-chance-panel>div:first-child{display:flex;align-items:center;justify-content:space-between}.upgrade-chance-panel small{color:#a7b9d0;font-size:8px;font-weight:900;letter-spacing:1px}.upgrade-chance-panel b{color:#8af4ff;font-size:25px}.upgrade-chance-track{height:9px;margin:10px 0 8px;border-radius:20px;background:rgba(0,0,0,.28);overflow:hidden}.upgrade-chance-track span{display:block;width:0;height:100%;border-radius:20px;background:linear-gradient(90deg,#41d7d0,#8bf2ff,#b99aff);box-shadow:0 0 14px rgba(72,220,255,.45);transition:width .35s}.upgrade-chance-panel p{margin:0;color:#aeb4cf;font-size:9px}.upgrade-card #upgradeTryButton{width:100%;background:linear-gradient(105deg,#38d8e5,#8b9cff 55%,#b58aff);color:#101e3c;box-shadow:0 8px 23px rgba(72,220,255,.2)}.upgrade-card #upgradeTryButton:disabled{opacity:.35;filter:grayscale(.7)}.upgrade-result{min-height:37px;margin-top:10px;padding:11px;border-radius:11px;background:rgba(255,255,255,.045);color:#c8d7e5;font-size:10px;line-height:1.5;text-align:center}.upgrade-result.is-win{background:rgba(103,230,166,.1);color:#8df0ba}.upgrade-result.is-lose{background:rgba(255,114,145,.1);color:#ff9eb0}.upgrade-how{display:grid;gap:8px;margin:13px 0}.upgrade-how>div{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:linear-gradient(100deg,rgba(65,215,230,.1),rgba(151,113,255,.06));border:1px solid rgba(111,225,255,.12)}.upgrade-how b{color:#7cecff;font-size:12px}.upgrade-how span{color:#c0bfd9;font-size:10px}.upgrade-test-note{padding:11px;border:1px solid rgba(113,230,255,.15);border-radius:12px;background:rgba(65,215,230,.045);color:#9ecbd3;font-size:9px;text-align:center;line-height:1.5}
+@media(max-width:370px){.rocket-stage{height:285px}.rocket-multiplier{font-size:55px}.rocket-live-stats small{font-size:6px}.upgrade-mini-stats{gap:5px}.upgrade-mini-stats span{padding:7px 6px;font-size:7px}}
+@media(prefers-reduced-motion:reduce){.rocket-stage.is-flying .rocket-ship,.rocket-stage.is-flying .rocket-flame{animation:none}}
+
 </style>
 </head>
 <body>
@@ -1013,30 +1160,50 @@ button:disabled{opacity:.55;filter:saturate(.65)}
 </section>
 
 <section class="tab-page" id="tab-rocket">
- <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ROCKET GAME</span></div>
- <div class="rocket-hero">
-  <div class="rocket-orbit"><span class="rocket-emoji">🚀</span><i></i><i></i><i></i></div>
-  <div class="rocket-eyebrow">RISK IT • CASH OUT</div><h1>ПОЙМАЙ МОМЕНТ</h1>
-  <p>Забери выигрыш до того, как ракета улетит. Максимальный множитель — 10.00x.</p>
-  <div class="rocket-multiplier">1.00<span>x</span></div>
-  <div class="rocket-track"><div class="rocket-track-fill"></div><span>СТАРТ</span><b>10.00x</b></div>
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ROCKET • LIVE GAME</span></div>
+ <div class="rocket-topline"><span class="rocket-live-dot"></span> ИГРА ИДЁТ <b id="rocketRoundLabel">РАУНД #001</b><span class="rocket-test-label">ТЕСТОВЫЙ РЕЖИМ</span></div>
+ <div class="rocket-stage" id="rocketStage">
+  <div class="rocket-stars"></div><div class="rocket-planet"></div>
+  <div class="rocket-cloud cloud-one"></div><div class="rocket-cloud cloud-two"></div>
+  <div class="rocket-flight-path"></div>
+  <div class="rocket-flame" id="rocketFlame">🔥</div>
+  <div class="rocket-ship" id="rocketShip">🚀</div>
+  <div class="rocket-status" id="rocketStatus">ГОТОВ К ЗАПУСКУ</div>
+  <div class="rocket-multiplier" id="rocketMultiplier">1.00<span>x</span></div>
+  <div class="rocket-stage-bottom"><span>1.01x</span><span>МАКС. 10.00x</span></div>
  </div>
- <div class="card rocket-bet-card"><div class="section-tag">ТВОЯ СТАВКА</div><h2>Выбери актив</h2>
-  <div class="rocket-mode"><span class="active">🪙 СЕРЕБРО</span><span>🎁 NFT</span></div>
-  <label class="currency-input-label" for="rocketStake">СУММА СТАВКИ В СЕРЕБРЕ</label><input id="rocketStake" type="number" min="1" placeholder="Например, 100" disabled>
-  <button disabled>🚀 ЗАПУСТИТЬ РАКЕТУ</button>
-  <p class="muted rocket-coming">Игровой раунд и ставки подключим отдельным серверным этапом. Пока это дизайн будущей мини-игры.</p>
+ <div class="rocket-live-stats">
+  <div><small>ИГРОКОВ В РАУНДЕ</small><b id="rocketPlayers">12</b></div>
+  <div><small>ПОСЛЕДНИЙ КРАШ</small><b id="rocketLastCrash">2.48x</b></div>
+  <div><small>ТЕСТОВЫЙ БАЛАНС</small><b><span id="rocketDemoBalance">1 000</span> 🪙</b></div>
  </div>
- <div class="rocket-rules"><div><b>1.01x–10.00x</b><span>Случайная точка остановки</span></div><div><b>ЗАБРАТЬ</b><span>Успей нажать до вылета</span></div><div><b>NFT ИЛИ СЕРЕБРО</b><span>Можно ставить оба типа активов</span></div></div>
+ <div class="card rocket-bet-card">
+  <div class="rocket-card-heading"><div><div class="section-tag">ТВОЯ СТАВКА</div><h2>Врывайся в раунд</h2></div><span class="rocket-round-pill">ROUND LIVE</span></div>
+  <div class="rocket-mode"><button type="button" class="rocket-mode-btn active" id="rocketSilverMode" onclick="setRocketMode('silver')">🪙 СЕРЕБРО</button><button type="button" class="rocket-mode-btn" id="rocketNftMode" onclick="setRocketMode('nft')">🎁 NFT</button></div>
+  <div id="rocketSilverControls"><label class="currency-input-label" for="rocketStake">РАЗМЕР СТАВКИ</label><div class="rocket-input-wrap"><input id="rocketStake" type="number" min="1" max="1000" value="50"><span>🪙</span></div><div class="rocket-quick-bets"><button type="button" onclick="setRocketStake(25)">25</button><button type="button" onclick="setRocketStake(50)">50</button><button type="button" onclick="setRocketStake(100)">100</button><button type="button" onclick="setRocketStake(250)">250</button></div></div>
+  <div id="rocketNftControls" hidden><label class="currency-input-label" for="rocketNftSelect">ВЫБЕРИ NFT ДЛЯ СТАВКИ</label><select id="rocketNftSelect"><option value="">Загрузка инвентаря…</option></select><p class="rocket-hint">В тестовом режиме NFT не списывается и остаётся в инвентаре.</p></div>
+  <div class="rocket-actions"><button type="button" id="rocketLaunchButton" onclick="launchRocket()">🚀 ПОСТАВИТЬ И ВОЙТИ</button><button type="button" id="rocketCashoutButton" onclick="cashoutRocket()" disabled>ЗАБРАТЬ ВЫИГРЫШ</button></div>
+  <div class="rocket-result" id="rocketResult">Выбери ставку и заходи в следующий раунд.</div>
+  <div class="rocket-test-note">Тестовый игровой баланс — не реальные серебро или NFT. Ничего не списывается и не выводится.</div>
+ </div>
+ <div class="card rocket-players-card"><div class="rocket-list-head"><h2>УЧАСТНИКИ РАУНДА</h2><span>LIVE</span></div><div id="rocketPlayerList"></div></div>
+ <div class="rocket-history"><div class="rocket-list-head"><h2>ПОСЛЕДНИЕ РАУНДЫ</h2><span>HISTORY</span></div><div id="rocketHistory"></div></div>
 </section>
 
 <section class="tab-page" id="tab-upgrade">
- <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>UPGRADE</span></div>
- <div class="upgrade-hero"><div class="upgrade-symbol">⚡</div><div class="rocket-eyebrow">LEVEL UP YOUR DROP</div><h1>АПГРЕЙД ПОДАРКОВ</h1>
-  <p>Выбирай предмет и пробуй улучшить его до более ценного NFT.</p>
-  <div class="upgrade-visual"><div class="upgrade-slot">🎁<small>ТВОЙ ПРЕДМЕТ</small></div><div class="upgrade-arrow">➜</div><div class="upgrade-slot upgrade-slot-target">💎<small>НОВЫЙ ПРИЗ</small></div></div>
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>UPGRADE • WORKSHOP</span></div>
+ <div class="upgrade-hero upgrade-hero-pro"><div class="upgrade-orb"><span>⚡</span><i></i><i></i><i></i></div><div class="rocket-eyebrow">GIFT EVOLUTION SYSTEM</div><h1>ПОДНИМИ УРОВЕНЬ</h1><p>Выбери свой подарок, цель и испытай удачу. Чем дороже цель — тем ниже шанс успеха.</p><div class="upgrade-mini-stats"><span>🎁 ТВОЙ NFT</span><b>➜</b><span>💎 НОВЫЙ УРОВЕНЬ</span></div></div>
+ <div class="card upgrade-card upgrade-selector-card">
+  <div class="section-tag">ШАГ 01 • ИСХОДНЫЙ ПРЕДМЕТ</div><h2>Что улучшаем?</h2><p class="upgrade-subtext">Выбери NFT из своего инвентаря.</p>
+  <div id="upgradeSourceList" class="upgrade-source-list"><div class="upgrade-empty">Загружаем твой инвентарь…</div></div>
+  <div class="section-tag upgrade-step-two">ШАГ 02 • ЖЕЛАЕМЫЙ ПРИЗ</div><h2>На что меняем?</h2>
+  <div id="upgradeTargetList" class="upgrade-target-grid"><div class="upgrade-empty">Сначала выбери исходный предмет.</div></div>
+  <div class="upgrade-chance-panel"><div><small>ТВОЙ ШАНС УСПЕХА</small><b id="upgradeChance">—%</b></div><div class="upgrade-chance-track"><span id="upgradeChanceFill"></span></div><p id="upgradeChanceCaption">Выбери предмет и цель, чтобы увидеть шанс.</p></div>
+  <button type="button" id="upgradeTryButton" onclick="runUpgrade()" disabled>⚡ ПОПРОБОВАТЬ АПГРЕЙД</button>
+  <div class="upgrade-result" id="upgradeResult">При успехе увидишь новый подарок. В тестовом режиме реальные предметы не меняются.</div>
  </div>
- <div class="card upgrade-card"><div class="section-tag">ТВОЙ ШАНС</div><h2>Собери свой апгрейд</h2><p class="muted">Здесь появится выбор NFT, цель улучшения и шанс успеха. Правила и проценты определим до запуска механики.</p><button disabled>⚡ УЛУЧШИТЬ ПРЕДМЕТ</button><p class="muted">Функция пока в разработке — предметы и баланс не списываются.</p></div>
+ <div class="upgrade-how"><div><b>01</b><span>Выбери NFT из инвентаря</span></div><div><b>02</b><span>Выбери цель подороже</span></div><div><b>03</b><span>Запусти анимацию и узнай результат</span></div></div>
+ <div class="upgrade-test-note">Тестовый режим: результат не списывает и не добавляет реальные NFT или серебро.</div>
 </section>
 
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
@@ -1155,6 +1322,9 @@ function showTab(name) {
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
  if(name==='profile') loadProfile();
+ if(name==='inventory') loadInventory();
+ if(name==='rocket') {loadRocketInventory();renderRocketPlayers();renderRocketHistory();}
+ if(name==='upgrade') loadUpgradeData();
  if(name==='gifts') {
   loadGiftCatalog();
   loadGiftOrders();
