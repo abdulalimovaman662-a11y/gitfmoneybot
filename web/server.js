@@ -211,7 +211,7 @@ async function initDatabase() {
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
       product_id TEXT NOT NULL,
       product_name TEXT NOT NULL,
-      stars INTEGER NOT NULL CHECK (stars BETWEEN 300 AND 5000),
+      stars INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5000),
       discount INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'pending_payment'
         CHECK (status IN (
@@ -226,6 +226,26 @@ async function initDatabase() {
       paid_at TIMESTAMPTZ,
       completed_at TIMESTAMPTZ
     );
+
+    DO $
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'gift_orders_stars_check'
+          AND conrelid = 'gift_orders'::regclass
+      ) THEN
+        ALTER TABLE gift_orders DROP CONSTRAINT gift_orders_stars_check;
+      END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'gift_orders_stars_range_check'
+          AND conrelid = 'gift_orders'::regclass
+      ) THEN
+        ALTER TABLE gift_orders
+          ADD CONSTRAINT gift_orders_stars_range_check
+          CHECK (stars BETWEEN 1 AND 5000);
+      END IF;
+    END $;
 
     CREATE INDEX IF NOT EXISTS gift_orders_user_idx
       ON gift_orders(telegram_id, created_at DESC);
@@ -473,7 +493,7 @@ const server = http.createServer(async (req, res) => {
         !/^\d+$/.test(orderId) ||
         !/^\d+$/.test(telegramId) ||
         !Number.isSafeInteger(stars) ||
-        stars < 300 ||
+        stars < 1 ||
         stars > 5000 ||
         body.currency !== 'XTR'
       ) {
@@ -530,7 +550,7 @@ const server = http.createServer(async (req, res) => {
         !/^\d+$/.test(orderId) ||
         !/^\d+$/.test(telegramId) ||
         !Number.isSafeInteger(stars) ||
-        stars < 300 ||
+        stars < 1 ||
         stars > 5000 ||
         body.currency !== 'XTR' ||
         !chargeId
