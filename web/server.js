@@ -995,7 +995,471 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { claims: result.rows });
     }
 
-    const prizeDone = url.pathname.match(/^\\/api\\/admin\\/prizes\\/(\\d+)\\/done$/);
+    const prizeDone = url.pathname.match(new RegExp('^/api/admin/prizes/(\\d+)/done
+    if (prizeDone && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+      const result = await pool.query(`
+        UPDATE prize_claims
+        SET status = 'done', processed_at = NOW()
+        WHERE id = $1 AND status = 'pending'
+        RETURNING id
+      `, [prizeDone[1]]);
+      if (!result.rowCount) return send(res, 409, { error: 'Заявка уже выполнена или не найдена' });
+      return send(res, 200, { success: true });
+    }
+
+    // Админ-панель: заказы магазина
+    if (
+      url.pathname === '/api/admin/store/orders' &&
+      req.method === 'GET'
+    ) {
+      const admin = await requireAdmin(req);
+
+      if (!admin) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const result = await pool.query(`
+        SELECT
+          o.id,
+          o.telegram_id,
+          u.username,
+          u.first_name,
+          o.product_name,
+          o.stars,
+          o.discount,
+          o.status,
+          o.created_at,
+          o.paid_at
+        FROM gift_orders o
+        JOIN users u ON u.telegram_id = o.telegram_id
+        WHERE o.status IN ('paid', 'completed')
+        ORDER BY
+          CASE WHEN o.status = 'paid' THEN 0 ELSE 1 END,
+          o.created_at DESC
+        LIMIT 100
+      `);
+
+      return send(res, 200, {
+        orders: result.rows
+      });
+    }
+
+    // Отметить подарок как отправленный
+    const giftDone = url.pathname.match(
+      /^\/api\/admin\/store\/orders\/(\d+)\/done$/
+    );
+
+    if (giftDone && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+
+      if (!admin) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const result = await pool.query(`
+        UPDATE gift_orders
+        SET status = 'completed',
+            completed_at = NOW()
+        WHERE id = $1
+          AND status = 'paid'
+        RETURNING id
+      `, [giftDone[1]]);
+
+      if (!result.rowCount) {
+        return send(res, 409, {
+          error: 'Заказ не найден или уже выполнен'
+        });
+      }
+
+      return send(res, 200, {
+        success: true,
+        message: 'Заказ отмечен как выполненный'
+      });
+    }
+
+    // Аккаунт
+    if (url.pathname === '/api/me' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      await ensureUser(user, req);
+
+      const result = await pool.query(`
+        SELECT silver, free_spins, referral_count
+        FROM users
+        WHERE telegram_id = $1
+      `, [String(user.id)]);
+
+      return send(res, 200, result.rows[0]);
+    }
+
+    // Рефералы
+    if (url.pathname === '/api/referrals' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      await ensureUser(user, req);
+
+      const result = await pool.query(`
+        SELECT referral_count
+        FROM users
+        WHERE telegram_id = $1
+      `, [String(user.id)]);
+
+      const count = Number(result.rows[0].referral_count);
+
+      return send(res, 200, {
+        referral_count: count,
+        progress: count % 10,
+        total_rewards: Math.floor(count / 10) * 3,
+        remaining: 10 - (count % 10),
+        referral_link:
+          `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
+      });
+    }
+
+    // Рулетка
+    if (url.pathname === '/api/spin' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      await ensureUser(user, req);
+
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        const result = await client.query(
+          'SELECT * FROM users WHERE telegram_id = $1 FOR UPDATE',
+          [String(user.id)]
+        );
+
+        if (!result.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 404, {
+            error: 'Пользователь не найден'
+          });
+        }
+
+        const account = result.rows[0];
+
+        if (account.free_spins <= 0 && account.silver < 20) {
+          await client.query('ROLLBACK');
+          return send(res, 400, {
+            error: 'Недостаточно серебра'
+          });
+        }
+
+        if (account.free_spins > 0) {
+          await client.query(`
+            UPDATE users
+            SET free_spins = free_spins - 1
+            WHERE telegram_id = $1
+          `, [String(user.id)]);
+        } else {
+          await client.query(`
+            UPDATE users
+            SET silver = silver - 20
+            WHERE telegram_id = $1
+          `, [String(user.id)]);
+        }
+
+        const chance = crypto.randomInt(100000);
+        let prize = 'nothing';
+
+        if (chance >= 99999) {
+          prize = 'rare';
+        } else if (chance >= 94999) {
+          prize = 'unusual';
+        } else if (chance >= 79999) {
+          prize = 'ordinary';
+        }
+
+        const history = await client.query(`
+          INSERT INTO spin_history (telegram_id, prize_type)
+          VALUES ($1, $2)
+          RETURNING id
+        `, [String(user.id), prize]);
+
+        let claimId = null;
+        let winningGift = null;
+        if (prize !== 'nothing') {
+          const ordinaryGifts = [
+            { id:'love_heart', name:'Love Heart', stars:15, emoji:'❤️', image_url:giftImage('loveheart') },
+            { id:'teddy_bear', name:'Teddy Bear', stars:15, emoji:'🧸', image_url:giftImage('toybear') },
+            { id:'gift_box', name:'Gift Box', stars:25, emoji:'🎁', image_url:giftImage('giftbox') },
+            { id:'red_rose', name:'Red Rose', stars:25, emoji:'🌹', image_url:giftImage('redrose') },
+            { id:'birthday_cake', name:'Birthday Cake', stars:50, emoji:'🎂', image_url:giftImage('birthdaycake') },
+            { id:'bouquet', name:'Bouquet of Flowers', stars:50, emoji:'💐', image_url:giftImage('bouquetofflowers') },
+            { id:'rocket', name:'Rocket', stars:50, emoji:'🚀', image_url:giftImage('rocket') },
+            { id:'champagne', name:'Champagne Bottle', stars:50, emoji:'🍾', image_url:giftImage('champagne') },
+            { id:'trophy', name:'Trophy', stars:100, emoji:'🏆', image_url:giftImage('trophy') },
+            { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
+            { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
+          ];
+          const giftPool = prize === 'ordinary'
+            ? ordinaryGifts
+            : PRODUCTS.filter(product => prize === 'unusual'
+              ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
+              : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+          if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
+          const selected = giftPool[crypto.randomInt(giftPool.length)];
+          winningGift = {
+            id: selected.id,
+            name: selected.name,
+            stars: Number(selected.stars),
+            emoji: selected.emoji || '🎁',
+            image_url: selected.image_url || ''
+          };
+          const claim = await client.query(`
+            INSERT INTO prize_claims
+              (spin_history_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+          `, [history.rows[0].id, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
+          claimId = claim.rows[0].id;
+        }
+
+        const updated = await client.query(`
+          SELECT silver, free_spins
+          FROM users
+          WHERE telegram_id = $1
+        `, [String(user.id)]);
+
+        await client.query('COMMIT');
+
+        return send(res, 200, {
+          result: prize === 'nothing' ? 'none' : prize,
+          prize,
+          silver: updated.rows[0].silver,
+          free_spins: updated.rows[0].free_spins,
+          claim_id: claimId,
+          gift: winningGift
+        });
+
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    // Пополнение серебра
+    if (url.pathname === '/api/topup' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+
+      if (!user) {
+        return send(res, 401, {
+          error: 'Ошибка авторизации Telegram'
+        });
+      }
+
+      const body = await readBody(req);
+      const stars = Number(body.stars);
+      const recipient = body.recipient;
+
+      if (
+        !Number.isSafeInteger(stars) ||
+        stars < 1 ||
+        stars > 100000
+      ) {
+        return send(res, 400, {
+          error: 'Укажи корректное количество звёзд'
+        });
+      }
+
+      if (!['@traptrap4', '@RichGues'].includes(recipient)) {
+        return send(res, 400, {
+          error: 'Некорректный получатель'
+        });
+      }
+
+      await ensureUser(user, req);
+
+      const result = await pool.query(`
+        INSERT INTO topup_requests (telegram_id, stars, recipient)
+        VALUES ($1, $2, $3)
+        RETURNING id, stars, recipient, status
+      `, [String(user.id), stars, recipient]);
+
+      return send(res, 201, {
+        message: 'Заявка создана',
+        id: result.rows[0].id,
+        request: result.rows[0]
+      });
+    }
+
+    // Заявки на пополнение для администратора
+    if (url.pathname === '/api/admin/topups' && req.method === 'GET') {
+      const admin = await requireAdmin(req);
+
+      if (!admin) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const result = await pool.query(`
+        SELECT
+          r.id,
+          r.telegram_id,
+          u.username,
+          u.first_name,
+          r.stars,
+          r.recipient,
+          r.status,
+          r.created_at
+        FROM topup_requests r
+        JOIN users u ON u.telegram_id = r.telegram_id
+        WHERE r.status = 'pending'
+        ORDER BY r.created_at ASC
+        LIMIT 100
+      `);
+
+      return send(res, 200, {
+        requests: result.rows
+      });
+    }
+
+    // Подтверждение / отклонение пополнения
+    const decision = url.pathname.match(
+      /^\/api\/admin\/topups\/(\d+)\/(approve|reject)$/
+    );
+
+    if (decision && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+
+      if (!admin) {
+        return send(res, 403, {
+          error: 'Доступ запрещён'
+        });
+      }
+
+      const requestId = decision[1];
+      const action = decision[2];
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        const result = await client.query(
+          'SELECT * FROM topup_requests WHERE id = $1 FOR UPDATE',
+          [requestId]
+        );
+
+        if (
+          !result.rowCount ||
+          result.rows[0].status !== 'pending'
+        ) {
+          await client.query('ROLLBACK');
+          return send(res, 409, {
+            error: 'Заявка уже обработана или не найдена'
+          });
+        }
+
+        const request = result.rows[0];
+
+        if (action === 'approve') {
+          await client.query(`
+            UPDATE users
+            SET silver = silver + $1
+            WHERE telegram_id = $2
+          `, [request.stars, request.telegram_id]);
+        }
+
+        await client.query(`
+          UPDATE topup_requests
+          SET status = $1, processed_at = NOW()
+          WHERE id = $2
+        `, [
+          action === 'approve' ? 'approved' : 'rejected',
+          requestId
+        ]);
+
+        await client.query('COMMIT');
+
+        return send(res, 200, {
+          success: true,
+          message: action === 'approve'
+            ? 'Серебро начислено'
+            : 'Заявка отклонена'
+        });
+
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    // Главная страница
+    if (url.pathname === '/' && req.method === 'GET') {
+      return fs.readFile(
+        path.join(__dirname, 'index.html'),
+        (err, content) => {
+          if (err) {
+            res.writeHead(500);
+            return res.end('Ошибка загрузки сайта');
+          }
+
+          res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8'
+          });
+
+          res.end(content);
+        }
+      );
+    }
+
+    return send(res, 404, {
+      error: 'Страница не найдена'
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    if (!res.headersSent) {
+      send(res, 500, {
+        error: 'Внутренняя ошибка сервера'
+      });
+    }
+  }
+});
+
+initDatabase()
+  .then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`GiftsDrop server started on port ${PORT}`);
+    });
+  })
+  .catch(error => {
+    console.error('Ошибка запуска базы данных:', error);
+    process.exit(1);
+  });));
     if (prizeDone && req.method === 'POST') {
       const admin = await requireAdmin(req);
       if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
