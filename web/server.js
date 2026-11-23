@@ -178,6 +178,13 @@ async function initDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS bot_legacy_migrations (
+      telegram_id BIGINT PRIMARY KEY REFERENCES users(telegram_id),
+      legacy_spins INTEGER NOT NULL,
+      legacy_referrals INTEGER NOT NULL,
+      migrated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS topup_requests (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -626,6 +633,27 @@ const server = http.createServer(async (req, res) => {
           'UPDATE users SET username = $1, first_name = $2 WHERE telegram_id = $3',
           [body.username || null, body.first_name || null, telegramId]
         );
+        if (legacySpins !== null && legacySpins !== undefined) {
+          const migration = await client.query(
+            `INSERT INTO bot_legacy_migrations (telegram_id, legacy_spins, legacy_referrals)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (telegram_id) DO NOTHING
+             RETURNING telegram_id`,
+            [telegramId, Number(legacySpins),
+             legacyReferrals === null || legacyReferrals === undefined ? 0 : Number(legacyReferrals)]
+          );
+          if (migration.rowCount === 1 && inserted.rowCount === 0) {
+            await client.query(
+              `UPDATE users
+               SET free_spins = GREATEST(free_spins, $1),
+                   referral_count = GREATEST(referral_count, $2)
+               WHERE telegram_id = $3`,
+              [Number(legacySpins),
+               legacyReferrals === null || legacyReferrals === undefined ? 0 : Number(legacyReferrals),
+               telegramId]
+            );
+          }
+        }
         const referralId = String(body.referral_id || '');
         if (inserted.rowCount === 1 && /^\d+$/.test(referralId) && referralId !== telegramId) {
           const referrer = await client.query(
