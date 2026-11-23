@@ -173,6 +173,11 @@ async function initDatabase() {
     ALTER TABLE prize_claims ADD CONSTRAINT prize_claims_prize_type_check
       CHECK (prize_type IN ('ordinary', 'unusual', 'rare'));
 
+    ALTER TABLE prize_claims
+      ADD COLUMN IF NOT EXISTS prize_name TEXT,
+      ADD COLUMN IF NOT EXISTS prize_stars INTEGER,
+      ADD COLUMN IF NOT EXISTS prize_image_url TEXT;
+
     CREATE TABLE IF NOT EXISTS bot_payments (
       charge_id TEXT PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -973,6 +978,37 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // Выигранные NFT: заявки администратору
+    if (url.pathname === '/api/admin/prizes' && req.method === 'GET') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+      const result = await pool.query(`
+        SELECT c.id, c.telegram_id, u.username, u.first_name,
+               c.prize_type, c.prize_name, c.prize_stars, c.prize_image_url,
+               c.status, c.created_at, c.processed_at
+        FROM prize_claims c
+        JOIN users u ON u.telegram_id = c.telegram_id
+        ORDER BY CASE WHEN c.status = 'pending' THEN 0 ELSE 1 END,
+                 c.created_at DESC
+        LIMIT 100
+      `);
+      return send(res, 200, { claims: result.rows });
+    }
+
+    const prizeDone = url.pathname.match(/^\\/api\\/admin\\/prizes\\/(\\d+)\\/done$/);
+    if (prizeDone && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+      const result = await pool.query(`
+        UPDATE prize_claims
+        SET status = 'done', processed_at = NOW()
+        WHERE id = $1 AND status = 'pending'
+        RETURNING id
+      `, [prizeDone[1]]);
+      if (!result.rowCount) return send(res, 409, { error: 'Заявка уже выполнена или не найдена' });
+      return send(res, 200, { success: true });
+    }
+
     // Админ-панель: заказы магазина
     if (
       url.pathname === '/api/admin/store/orders' &&
@@ -1168,12 +1204,41 @@ const server = http.createServer(async (req, res) => {
         `, [String(user.id), prize]);
 
         let claimId = null;
+        let winningGift = null;
         if (prize !== 'nothing') {
+          const ordinaryGifts = [
+            { id:'love_heart', name:'Love Heart', stars:15, emoji:'❤️', image_url:giftImage('loveheart') },
+            { id:'teddy_bear', name:'Teddy Bear', stars:15, emoji:'🧸', image_url:giftImage('toybear') },
+            { id:'gift_box', name:'Gift Box', stars:25, emoji:'🎁', image_url:giftImage('giftbox') },
+            { id:'red_rose', name:'Red Rose', stars:25, emoji:'🌹', image_url:giftImage('redrose') },
+            { id:'birthday_cake', name:'Birthday Cake', stars:50, emoji:'🎂', image_url:giftImage('birthdaycake') },
+            { id:'bouquet', name:'Bouquet of Flowers', stars:50, emoji:'💐', image_url:giftImage('bouquetofflowers') },
+            { id:'rocket', name:'Rocket', stars:50, emoji:'🚀', image_url:giftImage('rocket') },
+            { id:'champagne', name:'Champagne Bottle', stars:50, emoji:'🍾', image_url:giftImage('champagne') },
+            { id:'trophy', name:'Trophy', stars:100, emoji:'🏆', image_url:giftImage('trophy') },
+            { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
+            { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
+          ];
+          const giftPool = prize === 'ordinary'
+            ? ordinaryGifts
+            : PRODUCTS.filter(product => prize === 'unusual'
+              ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
+              : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+          if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
+          const selected = giftPool[crypto.randomInt(giftPool.length)];
+          winningGift = {
+            id: selected.id,
+            name: selected.name,
+            stars: Number(selected.stars),
+            emoji: selected.emoji || '🎁',
+            image_url: selected.image_url || ''
+          };
           const claim = await client.query(`
-            INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type)
-            VALUES ($1, $2, $3)
+            INSERT INTO prize_claims
+              (spin_history_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id
-          `, [history.rows[0].id, String(user.id), prize]);
+          `, [history.rows[0].id, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
           claimId = claim.rows[0].id;
         }
 
@@ -1190,7 +1255,8 @@ const server = http.createServer(async (req, res) => {
           prize,
           silver: updated.rows[0].silver,
           free_spins: updated.rows[0].free_spins,
-          claim_id: claimId
+          claim_id: claimId,
+          gift: winningGift
         });
 
       } catch (error) {
