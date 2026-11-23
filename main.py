@@ -103,51 +103,6 @@ def main_keyboard():
     ])
 
 
-async def register_user(user_id, referral_id=None):
-    if get_user(user_id):
-        return False
-
-    if referral_id == user_id:
-        referral_id = None
-
-    if referral_id and not get_user(referral_id):
-        referral_id = None
-
-    db.execute(
-        "INSERT INTO users (user_id, spins, invited_by) "
-        "VALUES (?, 3, ?)",
-        (user_id, referral_id)
-    )
-
-    if referral_id:
-        db.execute(
-            "UPDATE users SET referrals = referrals + 1 "
-            "WHERE user_id = ?",
-            (referral_id,)
-        )
-
-        inviter = get_user(referral_id)
-
-        if inviter["referrals"] % 10 == 0:
-            db.execute(
-                "UPDATE users SET spins = spins + 3 "
-                "WHERE user_id = ?",
-                (referral_id,)
-            )
-
-            try:
-                await bot.send_message(
-                    referral_id,
-                    "🎉 Ты пригласил 10 новых друзей!\n"
-                    "Начислено ещё 3 прокрутки."
-                )
-            except Exception:
-                pass
-
-    db.commit()
-    return True
-
-
 async def show_balance(message_or_callback, user_id):
     data = await internal_api(
         "/api/internal/bot/user", "POST", {"telegram_id": str(user_id)}
@@ -311,11 +266,20 @@ async def roulette_command(message: Message):
 
 @dp.message(Command("balance"))
 async def balance_command(message: Message):
-    await show_balance(message, message.from_user.id)
+    try:
+        await shared_user(message.from_user)
+        await show_balance(message, message.from_user.id)
+    except Exception as error:
+        await message.answer(f"Не удалось загрузить баланс: {error}")
 
 
 @dp.message(Command("referral"))
 async def referral_command(message: Message):
+    try:
+        await shared_user(message.from_user)
+    except Exception as error:
+        await message.answer(f"Сервис временно недоступен: {error}")
+        return
     me = await bot.get_me()
     link = (
         f"https://t.me/{me.username}"
@@ -551,6 +515,12 @@ async def rules_button(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "referral")
 async def referral_button(callback: CallbackQuery):
+    try:
+        await shared_user(callback.from_user)
+    except Exception as error:
+        await callback.message.answer(f"Сервис временно недоступен: {error}")
+        await callback.answer()
+        return
     me = await bot.get_me()
     link = (
         f"https://t.me/{me.username}"
