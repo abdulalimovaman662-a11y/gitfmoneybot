@@ -630,6 +630,39 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 }
 @media(prefers-reduced-motion:reduce){.tab-page>.card,.tab-page>.prize-card{animation:none}}
 
+
+/* GiftsDrop: home hub and independent section cards */
+body{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.tab-page{display:none}
+.tab-page.active{display:block}
+.home-page{padding:4px 0 22px;animation:pageIn .3s ease}
+.home-intro{padding:8px 3px 18px}
+.home-kicker{display:inline-flex;align-items:center;gap:7px;color:#a9a2d7;font-size:9px;font-weight:800;letter-spacing:2px}
+.home-kicker:before{content:"";width:6px;height:6px;border-radius:50%;background:#67e6a6;box-shadow:0 0 10px #67e6a6}
+.home-title{margin:9px 0 6px;font-size:29px;line-height:1.08;letter-spacing:-.8px;font-weight:900;color:#fff}
+.home-description{margin:0;color:#aaa8c7;font-size:12px;line-height:1.6;max-width:310px}
+.home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.home-tile{position:relative;isolation:isolate;width:100%;margin:0;font:inherit;letter-spacing:normal;min-width:0;aspect-ratio:1/1;border:1px solid var(--tile-border);border-radius:23px;padding:16px 14px 14px;overflow:hidden;text-align:left;color:#fff;background:var(--tile-bg);box-shadow:0 13px 30px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.11);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;cursor:pointer;transition:transform .2s ease,border-color .2s ease,filter .2s ease}
+.home-tile:before{content:"";position:absolute;z-index:-1;width:150px;height:150px;right:-58px;top:-62px;border-radius:50%;background:var(--tile-glow);filter:blur(7px);opacity:.85}
+.home-tile:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.10),transparent 42%,rgba(0,0,0,.16));pointer-events:none}
+.home-tile:active{transform:scale(.975);filter:brightness(1.12)}
+.home-tile-icon{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;font-size:29px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.17);box-shadow:inset 0 1px rgba(255,255,255,.16),0 8px 20px rgba(0,0,0,.13)}
+.home-tile-copy{display:block;min-width:0}
+.home-tile-title{display:block;font-size:15px;font-weight:900;letter-spacing:.3px;line-height:1.15}
+.home-tile-subtitle{display:block;margin-top:6px;color:rgba(255,255,255,.69);font-size:9px;line-height:1.4;font-weight:600}
+.home-tile-arrow{position:absolute;right:13px;bottom:14px;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.13);color:#fff;font-size:15px}
+.home-tile-roulette{--tile-bg:linear-gradient(145deg,#38205f,#1b1439 72%);--tile-border:rgba(185,139,255,.35);--tile-glow:rgba(169,102,255,.65)}
+.home-tile-prizes{--tile-bg:linear-gradient(145deg,#19465c,#14283f 72%);--tile-border:rgba(116,229,255,.28);--tile-glow:rgba(66,199,255,.5)}
+.home-tile-gifts{--tile-bg:linear-gradient(145deg,#5b2a58,#2b193f 72%);--tile-border:rgba(255,114,182,.3);--tile-glow:rgba(255,91,174,.52)}
+.home-tile-balance{--tile-bg:linear-gradient(145deg,#5b4720,#2c251b 72%);--tile-border:rgba(255,207,90,.3);--tile-glow:rgba(255,190,66,.52)}
+.home-tile-friends{--tile-bg:linear-gradient(145deg,#205445,#162f35 72%);--tile-border:rgba(103,230,166,.28);--tile-glow:rgba(68,224,160,.48)}
+.home-tile-profile{--tile-bg:linear-gradient(145deg,#34436d,#1c2344 72%);--tile-border:rgba(158,177,255,.3);--tile-glow:rgba(112,145,255,.5)}
+.section-back{display:flex;align-items:center;gap:9px;margin:2px 0 14px}
+.section-back button{width:auto;margin:0;padding:9px 13px;border:1px solid rgba(167,150,255,.22);border-radius:12px;background:rgba(255,255,255,.055);color:#e8e4ff;font-size:10px;letter-spacing:.4px;box-shadow:none}
+.section-back span{color:#8e89b4;font-size:9px;letter-spacing:1.3px;font-weight:800}
+@media(max-width:360px){.home-grid{gap:9px}.home-tile{padding:13px 11px;border-radius:19px}.home-tile-title{font-size:13px}.home-tile-subtitle{font-size:8px}.home-tile-icon{width:47px;height:47px;font-size:25px}}
+@media(prefers-reduced-motion:reduce){.home-page,.home-tile{animation:none;transition:none}}
+
 </style>
 </head>
 <body>
@@ -647,7 +680,37 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
   </div>
 </header>
 
-<section class="tab-page active" id="tab-spin">
+
+<section class="tab-page home-page active" id="tab-home">
+ <div class="home-intro">
+  <div class="home-kicker">GIFTSDROP • PREMIUM EXPERIENCE</div>
+  <h1 class="home-title">Выбери свой раздел</h1>
+  <p class="home-description">Всё самое интересное в GiftsDrop — каждый раздел отдельно.</p>
+ </div>
+ <div class="home-grid" aria-label="Разделы GiftsDrop">
+  <button class="home-tile home-tile-roulette" onclick="showTab('spin')" aria-label="Открыть рулетку">
+   <span class="home-tile-icon">🎰</span><span class="home-tile-copy"><span class="home-tile-title">РУЛЕТКА</span><span class="home-tile-subtitle">Испытай удачу и забери NFT</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-prizes" onclick="showTab('prizes')" aria-label="Открыть призы и шансы">
+   <span class="home-tile-icon">🏆</span><span class="home-tile-copy"><span class="home-tile-title">ПРИЗЫ</span><span class="home-tile-subtitle">Подарки и шансы выпадения</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-gifts" onclick="showTab('gifts')" aria-label="Открыть магазин подарков">
+   <span class="home-tile-icon">🎁</span><span class="home-tile-copy"><span class="home-tile-title">МАГАЗИН</span><span class="home-tile-subtitle">Каталог Telegram-подарков</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-balance" onclick="showTab('balance')" aria-label="Открыть баланс">
+   <span class="home-tile-icon">🪙</span><span class="home-tile-copy"><span class="home-tile-title">БАЛАНС</span><span class="home-tile-subtitle">Серебро и пополнение Stars</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-friends" onclick="showTab('friends')" aria-label="Открыть друзей">
+   <span class="home-tile-icon">👥</span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-profile" onclick="showTab('profile')" aria-label="Открыть профиль и коллекцию">
+   <span class="home-tile-icon">👤</span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+ </div>
+</section>
+
+<section class="tab-page" id="tab-spin">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>РУЛЕТКА</span></div>
  <div class="card">
   <div class="section-tag">YOUR BALANCE</div>
   <div class="stats">
@@ -694,6 +757,7 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 </section>
 
 <section class="tab-page" id="tab-prizes">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРИЗЫ И ШАНСЫ</span></div>
  <div class="page-intro"><span class="eyebrow">GIFTSDROP • ПРАВИЛА</span><h1>Призы и шансы</h1><p>Все результаты определяются сервером. Здесь указаны действующие вероятности выпадения.</p></div>
  <div class="prize-card prize-empty"><div class="prize-emoji">🫧</div><div><b>Без выигрыша</b><span>Попробуй удачу ещё раз</span></div><strong>79,999%</strong></div>
  <div class="prize-card"><div class="prize-emoji">🎁</div><div><b>Обычный NFT</b><span>Коллекционные подарки стоимостью 15–100 ⭐</span></div><strong>15%</strong></div>
@@ -703,6 +767,7 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 </section>
 
 <section class="tab-page" id="tab-profile">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРОФИЛЬ</span></div>
  <div class="page-intro"><span class="eyebrow">ТВОЙ АККАУНТ</span><h1>Профиль</h1><p>Твоя статистика и игровой баланс в GiftsDrop.</p></div>
  <div class="card profile-card">
   <div class="profile-avatar" id="profileAvatar">✦</div>
@@ -719,6 +784,7 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 </section>
 
 <section class="tab-page" id="tab-friends">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ДРУЗЬЯ</span></div>
  <div class="card">
   <div class="section-tag">INVITE & EARN</div>
   <h2>Приглашай друзей</h2>
@@ -739,6 +805,7 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 </section>
 
 <section class="tab-page" id="tab-balance">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>БАЛАНС</span></div>
  <div class="card">
   <div class="section-tag">ADD FUNDS</div>
   <h2>Пополнить серебро</h2>
@@ -776,6 +843,7 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 </section>
 
 <section class="tab-page" id="tab-gifts">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>МАГАЗИН</span></div>
  <div class="card">
   <div class="gift-hero">
    <div class="section-tag">THE WORLD OF TELEGRAM GIFTS</div>
@@ -822,14 +890,7 @@ button:focus-visible,.nav-button:focus-visible,input:focus-visible,select:focus-
 
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
 
-<nav class="bottom-nav">
- <button class="nav-button active" id="nav-spin" onclick="showTab('spin')"><span class="nav-icon">🎰</span><span>Рулетка</span></button>
- <button class="nav-button" id="nav-prizes" onclick="showTab('prizes')"><span class="nav-icon">🏆</span><span>Призы</span></button>
- <button class="nav-button" id="nav-friends" onclick="showTab('friends')"><span class="nav-icon">👥</span><span>Друзья</span></button>
- <button class="nav-button" id="nav-gifts" onclick="showTab('gifts')"><span class="nav-icon">🎁</span><span>Магазин</span></button>
- <button class="nav-button" id="nav-balance" onclick="showTab('balance')"><span class="nav-icon">🪙</span><span>Баланс</span></button>
- <button class="nav-button" id="nav-profile" onclick="showTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></button>
-</nav>
+
 
 <script>
 const tg = window.Telegram.WebApp;
@@ -933,11 +994,13 @@ async function loadRecentWins() {
 
 function showTab(name) {
  const tabs = ['spin','prizes','friends','gifts','balance','profile'];
+ const isHome = name === 'home';
+ document.getElementById('tab-home').classList.toggle('active',isHome);
  tabs.forEach(tab => {
-  document.getElementById('tab-'+tab).classList.toggle('active',tab===name);
-  document.getElementById('nav-'+tab).classList.toggle('active',tab===name);
+  document.getElementById('tab-'+tab).classList.toggle('active',!isHome && tab===name);
  });
  window.scrollTo({top:0,behavior:'smooth'});
+ if(isHome) return;
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
  if(name==='profile') loadProfile();
