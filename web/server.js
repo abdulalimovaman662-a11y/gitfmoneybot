@@ -753,8 +753,8 @@ const server = http.createServer(async (req, res) => {
       const amount = Number(body.amount);
       const stars = Number(body.stars);
       const chargeId = String(body.charge_id || '');
-      if (!/^\d+$/.test(telegramId) || ![20, 60].includes(amount) ||
-          stars !== amount || !chargeId) {
+      if (!/^\d+$/.test(telegramId) || !Number.isSafeInteger(amount) ||
+          amount < 1 || amount > 1000 || stars !== amount || !chargeId) {
         return send(res, 400, { error: 'Некорректные данные пополнения серебра' });
       }
       const client = await pool.connect();
