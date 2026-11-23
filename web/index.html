@@ -845,11 +845,9 @@ async function loadRecentWins() {
    track.appendChild(chip);
   });
   addBatch();
-  if(wins.length>1) {
-   const duplicate=track.cloneNode(true);
-   duplicate.setAttribute('aria-hidden','true');
-   track.append(...Array.from(duplicate.children));
-  }
+  const duplicate=track.cloneNode(true);
+  duplicate.setAttribute('aria-hidden','true');
+  track.append(...Array.from(duplicate.children));
   track.style.animation='';
  } catch(error) {
   track.replaceChildren();
