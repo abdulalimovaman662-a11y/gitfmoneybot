@@ -881,6 +881,144 @@ button.danger:not(.nav-button){
 .home-tile-upgrade{--tile-bg:linear-gradient(145deg,#50f4ee 0%,#148cae 55%,#17416b 100%);--tile-border:#c1fffc;--tile-glow:rgba(63,232,255,.98)}
 @media(hover:hover){.home-tile:hover{transform:translateY(-3px) scale(1.015);filter:brightness(1.12);box-shadow:0 0 0 1px rgba(255,255,255,.16),0 0 30px var(--tile-glow),0 20px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35) !important}}
 
+
+/* GIFTDROP WOW: единая неоновая атмосфера для всех вкладок */
+.tab-page.active{
+ position:relative;
+ isolation:isolate;
+ animation:gd-page-enter .48s cubic-bezier(.2,.75,.25,1) both;
+}
+.tab-page.active:before{
+ content:"";
+ position:absolute;
+ z-index:-1;
+ pointer-events:none;
+ inset:-18px -12px auto;
+ height:340px;
+ background:
+  radial-gradient(ellipse at 12% 8%,rgba(255,65,143,.17),transparent 48%),
+  radial-gradient(ellipse at 88% 22%,rgba(150,72,255,.14),transparent 48%),
+  radial-gradient(ellipse at 50% 65%,rgba(255,90,130,.07),transparent 58%);
+ filter:blur(12px);
+}
+@keyframes gd-page-enter{
+ from{opacity:0;transform:translateY(13px);filter:blur(3px)}
+ to{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+.tab-page.active .card{
+ border-color:rgba(255,111,177,.3) !important;
+ background:
+  radial-gradient(ellipse at 100% 0%,rgba(255,87,161,.095),transparent 48%),
+  linear-gradient(145deg,rgba(49,13,34,.96),rgba(23,8,23,.98)) !important;
+ box-shadow:
+  0 0 0 1px rgba(255,110,175,.055),
+  0 0 24px rgba(255,55,139,.105),
+  0 14px 36px rgba(0,0,0,.3),
+  inset 0 1px 0 rgba(255,255,255,.075) !important;
+ animation:gd-card-glow 5s ease-in-out infinite alternate;
+}
+@keyframes gd-card-glow{
+ from{box-shadow:0 0 0 1px rgba(255,110,175,.045),0 0 18px rgba(255,55,139,.08),0 14px 36px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06)}
+ to{box-shadow:0 0 0 1px rgba(255,130,190,.1),0 0 28px rgba(255,55,139,.16),0 14px 36px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1)}
+}
+.tab-page.active h2,
+.tab-page.active h3{
+ text-shadow:0 0 18px rgba(255,112,181,.25);
+}
+.tab-page.active .stat,
+.tab-page.active .notice,
+.tab-page.active .odds,
+.tab-page.active .order-card,
+.tab-page.active .inventory-item,
+.tab-page.active .win-chip,
+.tab-page.active .rocket-player-row,
+.tab-page.active .rocket-history-row{
+ border-color:rgba(255,112,177,.22) !important;
+ box-shadow:0 0 16px rgba(255,65,145,.075),inset 0 1px 0 rgba(255,255,255,.045);
+}
+.tab-page.active button:not(.nav-button){
+ position:relative;
+ overflow:hidden;
+ box-shadow:
+  0 0 0 1px rgba(255,180,218,.14),
+  0 7px 22px rgba(255,65,145,.24),
+  0 0 19px rgba(255,65,145,.13),
+  inset 0 1px 0 rgba(255,255,255,.35) !important;
+ transition:transform .2s ease,filter .2s ease,box-shadow .2s ease !important;
+}
+.tab-page.active button:not(.nav-button):before{
+ content:"";
+ position:absolute;
+ top:-80%;
+ left:-55%;
+ width:34%;
+ height:260%;
+ transform:rotate(25deg);
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+ opacity:.7;
+ pointer-events:none;
+ animation:gd-button-shine 5.5s ease-in-out infinite;
+}
+@keyframes gd-button-shine{
+ 0%,65%,100%{left:-55%;opacity:0}
+ 72%{opacity:.7}
+ 88%{left:130%;opacity:0}
+}
+@media(hover:hover){
+ .tab-page.active button:not(:disabled):not(.nav-button):hover{
+  transform:translateY(-2px);
+  filter:brightness(1.13) saturate(1.12);
+  box-shadow:0 0 0 1px rgba(255,210,232,.3),0 10px 28px rgba(255,65,145,.34),0 0 27px rgba(255,65,145,.25),inset 0 1px 0 rgba(255,255,255,.4) !important;
+ }
+}
+.tab-page.active button:not(:disabled):not(.nav-button):active{
+ transform:scale(.975);
+ filter:brightness(1.2);
+}
+.tab-page.active input:not([type=range]),
+.tab-page.active select,
+.tab-page.active textarea{
+ border-color:rgba(255,111,177,.32) !important;
+ background-color:rgba(35,9,27,.88) !important;
+ box-shadow:inset 0 1px 8px rgba(0,0,0,.22),0 0 12px rgba(255,65,145,.055);
+}
+.tab-page.active input:focus,
+.tab-page.active select:focus,
+.tab-page.active textarea:focus{
+ outline:none;
+ border-color:rgba(255,130,190,.8) !important;
+ box-shadow:0 0 0 3px rgba(255,79,154,.13),0 0 20px rgba(255,79,154,.18) !important;
+}
+.tab-page.active .upgrade-wheel,
+.tab-page.active .upgrade-orb,
+.tab-page.active .rocket-stage{
+ filter:drop-shadow(0 0 16px rgba(255,85,155,.16));
+}
+.tab-page.active .upgrade-source-item,
+.tab-page.active .upgrade-target-item,
+.tab-page.active .rocket-live-stats>div{
+ transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+.tab-page.active .upgrade-source-item.selected,
+.tab-page.active .upgrade-target-item.selected{
+ border-color:#ff9acb !important;
+ box-shadow:0 0 0 1px rgba(255,154,203,.25),0 0 24px rgba(255,79,154,.22) !important;
+}
+.nav-button{
+ transition:color .2s ease,background .2s ease,box-shadow .2s ease,transform .2s ease !important;
+}
+.nav-button.active{
+ color:#ffd0e7 !important;
+ background:linear-gradient(135deg,rgba(255,79,154,.25),rgba(173,55,135,.16)) !important;
+ border-color:rgba(255,143,194,.62) !important;
+ box-shadow:0 0 18px rgba(255,79,154,.24),inset 0 0 12px rgba(255,79,154,.1) !important;
+ text-shadow:0 0 12px rgba(255,154,203,.5);
+}
+@media(prefers-reduced-motion:reduce){
+ .tab-page.active,.tab-page.active .card,.tab-page.active button:before{animation:none !important}
+ .tab-page.active button,.nav-button{transition:none !important}
+}
+
 </style>
 </head>
 <body>
