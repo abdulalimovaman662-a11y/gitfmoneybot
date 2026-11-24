@@ -178,6 +178,45 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS prize_stars INTEGER,
       ADD COLUMN IF NOT EXISTS prize_image_url TEXT;
 
+    CREATE TABLE IF NOT EXISTS user_inventory (
+      id BIGSERIAL PRIMARY KEY,
+      source_claim_id BIGINT NOT NULL UNIQUE REFERENCES prize_claims(id),
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      prize_type TEXT NOT NULL CHECK (prize_type IN ('ordinary', 'unusual', 'rare')),
+      prize_name TEXT NOT NULL,
+      prize_stars INTEGER NOT NULL DEFAULT 0,
+      prize_image_url TEXT,
+      status TEXT NOT NULL DEFAULT 'owned'
+        CHECK (status IN ('owned', 'withdraw_pending', 'withdrawn', 'consumed')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS user_inventory_owner_idx
+      ON user_inventory(telegram_id, status, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS withdrawal_requests (
+      id BIGSERIAL PRIMARY KEY,
+      inventory_id BIGINT NOT NULL REFERENCES user_inventory(id),
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'completed', 'rejected')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      processed_at TIMESTAMPTZ
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS withdrawal_one_pending_per_item
+      ON withdrawal_requests(inventory_id) WHERE status = 'pending';
+
+    INSERT INTO user_inventory
+      (source_claim_id, telegram_id, prize_type, prize_name, prize_stars,
+       prize_image_url, status, created_at)
+    SELECT c.id, c.telegram_id, c.prize_type, c.prize_name,
+           COALESCE(c.prize_stars, 0), c.prize_image_url,
+           CASE WHEN c.status = 'done' THEN 'withdrawn' ELSE 'owned' END,
+           c.created_at
+    FROM prize_claims c
+    WHERE c.prize_name IS NOT NULL AND c.prize_name <> ''
+    ON CONFLICT (source_claim_id) DO NOTHING;
+
     CREATE TABLE IF NOT EXISTS bot_payments (
       charge_id TEXT PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -1121,6 +1160,128 @@ const server = http.createServer(async (req, res) => {
       `, [String(user.id)]);
 
       return send(res, 200, result.rows[0]);
+    }
+
+    // Серверный NFT-инвентарь. Записи создаются только из подтверждённых выигрышей.
+    if (url.pathname === '/api/me/inventory' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const result = await pool.query(
+        \`SELECT id AS inventory_id, prize_type, prize_name, prize_stars,
+                prize_image_url, status, created_at
+         FROM user_inventory
+         WHERE telegram_id = $1 AND status IN ('owned', 'withdraw_pending')
+         ORDER BY created_at DESC LIMIT 100\`,
+        [String(user.id)]
+      );
+      return send(res, 200, { items: result.rows.map(row => ({
+        ...row, inventory_id: Number(row.inventory_id),
+        prize_stars: Number(row.prize_stars) || 0
+      })) });
+    }
+
+    if (url.pathname === '/api/me/withdrawals' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const body = await readBody(req);
+      const inventoryId = String(body.inventory_id || '');
+      if (!/^\d+$/.test(inventoryId)) {
+        return send(res, 400, { error: 'Некорректный предмет инвентаря' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const item = await client.query(
+          'SELECT * FROM user_inventory WHERE id = $1 AND telegram_id = $2 FOR UPDATE',
+          [inventoryId, String(user.id)]
+        );
+        if (!item.rowCount || item.rows[0].status !== 'owned') {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Предмет уже выведен или ожидает обработки' });
+        }
+        const request = await client.query(
+          \`INSERT INTO withdrawal_requests (inventory_id, telegram_id)
+           VALUES ($1, $2) RETURNING id, status, created_at\`,
+          [inventoryId, String(user.id)]
+        );
+        await client.query(
+          \`UPDATE user_inventory SET status = 'withdraw_pending', updated_at = NOW()
+           WHERE id = $1\`, [inventoryId]
+        );
+        await client.query('COMMIT');
+        return send(res, 201, { success: true, request: request.rows[0] });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        if (error.code === '23505') return send(res, 409, { error: 'Заявка на этот предмет уже существует' });
+        throw error;
+      } finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/admin/withdrawals' && req.method === 'GET') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+      const result = await pool.query(
+        \`SELECT r.id, r.telegram_id, u.username, u.first_name,
+                i.id AS inventory_id, i.prize_name, i.prize_stars,
+                i.prize_image_url, r.status, r.created_at
+         FROM withdrawal_requests r
+         JOIN users u ON u.telegram_id = r.telegram_id
+         JOIN user_inventory i ON i.id = r.inventory_id
+         WHERE r.status = 'pending' ORDER BY r.created_at ASC LIMIT 100\`
+      );
+      return send(res, 200, { requests: result.rows });
+    }
+
+    const withdrawalDecision = url.pathname.match(/^\/api\/admin\/withdrawals\/(\d+)\/(complete|reject)$/);
+    if (withdrawalDecision && req.method === 'POST') {
+      const admin = await requireAdmin(req);
+      if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
+      const requestId = withdrawalDecision[1];
+      const action = withdrawalDecision[2];
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const locked = await client.query(
+          \`SELECT r.id, r.inventory_id, r.telegram_id, r.status, i.source_claim_id
+           FROM withdrawal_requests r JOIN user_inventory i ON i.id = r.inventory_id
+           WHERE r.id = $1 FOR UPDATE OF r, i\`, [requestId]
+        );
+        if (!locked.rowCount || locked.rows[0].status !== 'pending') {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Заявка уже обработана или не найдена' });
+        }
+        const row = locked.rows[0];
+        if (action === 'complete') {
+          await client.query(
+            \`UPDATE user_inventory SET status = 'withdrawn', updated_at = NOW()
+             WHERE id = $1 AND status = 'withdraw_pending'\`, [row.inventory_id]
+          );
+          await client.query(
+            \`UPDATE prize_claims SET status = 'done', processed_at = NOW()
+             WHERE id = $1 AND status = 'pending'\`, [row.source_claim_id]
+          );
+          await client.query(
+            \`UPDATE withdrawal_requests SET status = 'completed', processed_at = NOW()
+             WHERE id = $1\`, [requestId]
+          );
+        } else {
+          await client.query(
+            \`UPDATE user_inventory SET status = 'owned', updated_at = NOW()
+             WHERE id = $1 AND status = 'withdraw_pending'\`, [row.inventory_id]
+          );
+          await client.query(
+            \`UPDATE withdrawal_requests SET status = 'rejected', processed_at = NOW()
+             WHERE id = $1\`, [requestId]
+          );
+        }
+        await client.query('COMMIT');
+        return send(res, 200, { success: true, status: action === 'complete' ? 'completed' : 'rejected' });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
     }
 
     // История NFT-выигрышей только текущего Telegram-пользователя.
