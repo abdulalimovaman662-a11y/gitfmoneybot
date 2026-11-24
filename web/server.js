@@ -188,6 +188,7 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS xp BIGINT NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS last_xp_date DATE,
       ADD COLUMN IF NOT EXISTS rank_bonus_openings BIGINT NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS selected_wings TEXT NOT NULL DEFAULT 'auto',
       ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE;
 
     CREATE TABLE IF NOT EXISTS spin_history (
@@ -1237,6 +1238,37 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // Выбор любых уже открытых крыльев. Ранг при этом не меняется.
+    if (url.pathname === '/api/me/wings' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const body = await readBody(req);
+      const selected = String(body.wing_key || 'auto');
+      const chosenRank = PROFILE_RANKS.find(rank => rank.key === selected);
+      if (selected !== 'auto' && (!chosenRank || chosenRank.min === 0)) {
+        return send(res, 400, { error: 'Такой вариант крыльев недоступен' });
+      }
+      const account = await pool.query(
+        'SELECT rank_bonus_openings FROM users WHERE telegram_id = $1',
+        [String(user.id)]
+      );
+      const spins = await pool.query(
+        'SELECT COUNT(*)::BIGINT AS total FROM spin_history WHERE telegram_id = $1',
+        [String(user.id)]
+      );
+      const openings = Number(spins.rows[0].total || 0) +
+        Math.max(0, Number(account.rows[0]?.rank_bonus_openings) || 0);
+      if (selected !== 'auto' && openings < chosenRank.min) {
+        return send(res, 403, { error: 'Сначала достигни этого ранга, чтобы открыть такие крылья' });
+      }
+      await pool.query(
+        'UPDATE users SET selected_wings = $1 WHERE telegram_id = $2',
+        [selected, String(user.id)]
+      );
+      return send(res, 200, { success: true, selected_wings: selected });
+    }
+
     // Аккаунт
     if (url.pathname === '/api/me' && req.method === 'GET') {
       const user = getTelegramUser(req);
@@ -1259,7 +1291,7 @@ const server = http.createServer(async (req, res) => {
       `, [String(user.id)]);
 
       const result = await pool.query(`
-        SELECT silver, free_spins, referral_count, xp, rank_bonus_openings
+        SELECT silver, free_spins, referral_count, xp, rank_bonus_openings, selected_wings
         FROM users
         WHERE telegram_id = $1
       `, [String(user.id)]);
@@ -1285,6 +1317,7 @@ const server = http.createServer(async (req, res) => {
         rank: rank.name,
         rank_key: rank.key,
         rank_wings: rank.wings,
+        selected_wings: account.selected_wings || 'auto',
         next_rank: rank.next_rank,
         rank_progress: rank.rank_progress,
         openings_to_next_rank: rank.openings_to_next,
