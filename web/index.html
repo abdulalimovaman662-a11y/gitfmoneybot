@@ -1018,10 +1018,10 @@ button:disabled{opacity:.55;filter:saturate(.65)}
 
 <section class="tab-page" id="tab-inventory">
  <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ИНВЕНТАРЬ</span></div>
- <div class="page-intro inventory-intro"><span class="eyebrow">YOUR TREASURE</span><h1>Твой инвентарь</h1><p>Здесь собраны выигранные NFT и подарки. Предметы можно будет вывести в Telegram или обменять на внутреннее серебро.</p></div>
+ <div class="page-intro inventory-intro"><span class="eyebrow">YOUR TREASURE</span><h1>Твой инвентарь</h1><p>Здесь собраны выигранные NFT и подарки. Доступные NFT можно отправить на вывод. Серебро вывести нельзя.</p></div>
  <div class="inventory-summary"><span>🎒 МОИ ПРЕДМЕТЫ</span><b id="inventoryCount">—</b></div>
  <div class="card inventory-card"><div id="inventoryItems"><p class="muted">Загружаем инвентарь…</p></div></div>
- <div class="notice">Серебро нельзя вывести. Выводятся только NFT и подарки. Кнопки вывода и обмена активируем после подключения защищённого учёта предметов.</div>
+ <div class="notice">Серебро нельзя вывести. Выводятся только NFT и подарки. Вывод оформляется заявкой и подтверждается администратором после фактической отправки подарка.</div>
 </section>
 
 <section class="tab-page" id="tab-rocket">
@@ -1207,31 +1207,48 @@ async function loadInventory() {
  if(!container)return;
  container.replaceChildren();
  try {
-  const data=await api('/api/me/wins');
-  const wins=Array.isArray(data.wins)?data.wins:[];
-  count.textContent=String(wins.length);
-  if(!wins.length) {
+  const data=await api('/api/me/inventory');
+  const items=Array.isArray(data.items)?data.items:[];
+  count.textContent=String(items.length);
+  if(!items.length) {
    const empty=document.createElement('p');empty.className='muted';
-   empty.textContent='Пока здесь пусто. Выигранные подарки появятся в этом разделе.';
+   empty.textContent='Пока здесь пусто. Выигранные NFT появятся здесь.';
    container.appendChild(empty);return;
   }
   const grid=document.createElement('div');grid.className='inventory-grid';
-  wins.forEach(win=>{
+  items.forEach(itemData=>{
    const item=document.createElement('article');item.className='inventory-item';
    const art=document.createElement('div');art.className='inventory-art';
-   const url=typeof win.prize_image_url==='string'?win.prize_image_url:'';
+   const url=typeof itemData.prize_image_url==='string'?itemData.prize_image_url:'';
    try {
     const parsed=new URL(url,window.location.origin);
     if(parsed.protocol==='https:'||parsed.protocol==='http:') {
-     const img=document.createElement('img');img.src=parsed.href;img.alt=String(win.prize_name||'NFT-подарок');img.loading='lazy';
+     const img=document.createElement('img');img.src=parsed.href;img.alt=String(itemData.prize_name||'NFT-подарок');img.loading='lazy';
      img.onerror=()=>{img.remove();art.textContent='🎁';};art.appendChild(img);
     } else art.textContent='🎁';
    } catch {art.textContent='🎁';}
-   const name=document.createElement('b');name.className='inventory-name';name.textContent=String(win.prize_name||'NFT-подарок');
+   const name=document.createElement('b');name.className='inventory-name';name.textContent=String(itemData.prize_name||'NFT-подарок');
    const meta=document.createElement('span');meta.className='inventory-meta';
-   meta.textContent=(Number(win.prize_stars)>0?Number(win.prize_stars)+' ⭐ · ':'')+(win.created_at?new Date(win.created_at).toLocaleDateString('ru-RU'):'');
-   const status=document.createElement('span');status.className='inventory-status';status.textContent=win.status==='done'?'ВЫДАН':'ОЖИДАЕТ ВЫДАЧИ';
-   item.append(art,name,meta,status);grid.appendChild(item);
+   meta.textContent=(Number(itemData.prize_stars)>0?Number(itemData.prize_stars)+' ⭐ · ':'')+(itemData.created_at?new Date(itemData.created_at).toLocaleDateString('ru-RU'):'');
+   const status=document.createElement('span');status.className='inventory-status';
+   status.textContent=itemData.status==='withdraw_pending'?'ЗАЯВКА НА ВЫВОД': 'В ИНВЕНТАРЕ';
+   item.append(art,name,meta,status);
+   if(itemData.status==='owned') {
+    const withdraw=document.createElement('button');
+    withdraw.type='button';withdraw.className='inventory-withdraw-btn';withdraw.textContent='ВЫВЕСТИ NFT';
+    withdraw.addEventListener('click',async()=>{
+     withdraw.disabled=true;withdraw.textContent='ОТПРАВКА...';
+     try {
+      await api('/api/me/withdrawals',{method:'POST',body:JSON.stringify({inventory_id:itemData.inventory_id})});
+      await loadInventory();
+     } catch(error) {
+      withdraw.disabled=false;withdraw.textContent='ВЫВЕСТИ NFT';
+      status.textContent=error.message;
+     }
+    });
+    item.appendChild(withdraw);
+   }
+   grid.appendChild(item);
   });
   container.appendChild(grid);
  } catch(error) {
