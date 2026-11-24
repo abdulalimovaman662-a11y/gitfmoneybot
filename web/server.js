@@ -178,6 +178,14 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS prize_stars INTEGER,
       ADD COLUMN IF NOT EXISTS prize_image_url TEXT;
 
+    -- Быстрая выдача последних NFT-выигрышей в ленте и профиле.
+    CREATE INDEX IF NOT EXISTS prize_claims_recent_named_idx
+      ON prize_claims(created_at DESC)
+      WHERE prize_name IS NOT NULL AND prize_name <> '';
+    CREATE INDEX IF NOT EXISTS prize_claims_user_recent_named_idx
+      ON prize_claims(telegram_id, created_at DESC)
+      WHERE prize_name IS NOT NULL AND prize_name <> '';
+
     CREATE TABLE IF NOT EXISTS user_inventory (
       id BIGSERIAL PRIMARY KEY,
       source_claim_id BIGINT NOT NULL UNIQUE REFERENCES prize_claims(id),
