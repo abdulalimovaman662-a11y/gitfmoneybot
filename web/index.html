@@ -1728,9 +1728,80 @@ body{
  transition:color .12s ease,background .12s ease,box-shadow .12s ease,transform .12s ease !important;
 }
 
+
+/* GiftsDrop legal consent gate */
+#gdLegalGate{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(7,6,20,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#gdLegalGate.is-open{display:flex}
+#gdLegalGate .gd-legal-panel{width:min(100%,520px);max-height:min(88dvh,780px);overflow:auto;padding:22px;border:1px solid rgba(185,162,255,.32);border-radius:24px;background:linear-gradient(155deg,#26204f,#11102b 72%);box-shadow:0 24px 90px rgba(0,0,0,.6);color:#f7f5ff}
+#gdLegalGate .gd-legal-kicker{font-size:9px;font-weight:900;letter-spacing:2px;color:#9eeeff}
+#gdLegalGate h2{font-size:24px;margin:9px 0;color:#fff}
+#gdLegalGate .gd-legal-lead{font-size:12px;line-height:1.65;color:#c1bfdc}
+#gdLegalGate .gd-legal-draft{margin:13px 0;padding:11px 12px;border:1px solid rgba(255,207,90,.25);border-radius:13px;background:rgba(255,207,90,.07);color:#ffe69a;font-size:10px;line-height:1.6}
+#gdLegalGate details{margin:9px 0;border:1px solid rgba(184,169,255,.17);border-radius:13px;background:rgba(8,7,26,.35);overflow:hidden}
+#gdLegalGate summary{padding:13px 14px;cursor:pointer;color:#eee8ff;font-size:12px;font-weight:800}
+#gdLegalGate .gd-legal-copy{padding:0 14px 14px;color:#bcb9d7;font-size:11px;line-height:1.7}
+#gdLegalGate .gd-legal-copy p{margin:7px 0}
+#gdLegalGate .gd-legal-check{display:flex;align-items:flex-start;gap:10px;margin:16px 0 8px;color:#e9e5ff;font-size:11px;line-height:1.55}
+#gdLegalGate .gd-legal-check input{width:18px;min-width:18px;height:18px;min-height:18px;margin:1px 0 0;accent-color:#ffcf5a}
+#gdLegalGate .gd-legal-actions{display:flex;gap:9px}
+#gdLegalGate .gd-legal-actions button{flex:1;margin-top:8px}
+#gdLegalGate .gd-legal-foot{margin-top:12px;color:#8985aa;font-size:9px;line-height:1.55}
+body.gd-legal-locked{overflow:hidden}
+
 </style>
 </head>
 <body>
+
+<div id="gdLegalGate" role="dialog" aria-modal="true" aria-labelledby="gdLegalTitle">
+ <div class="gd-legal-panel">
+  <div class="gd-legal-kicker">GIFTSDROP · ПЕРВЫЙ ВХОД</div>
+  <h2 id="gdLegalTitle">Перед началом ознакомься с правилами</h2>
+  <p class="gd-legal-lead">Для продолжения нужно прочитать условия использования, информацию о данных и правила игровых механик. Документы ниже — предварительная редакция.</p>
+  <div class="gd-legal-draft"><b>Важно:</b> это не государственная лицензия и не заключение юриста. Страна регистрации и юридические реквизиты владельца пока не указаны, поэтому документы нельзя считать окончательными или использовать как подтверждение законности азартной деятельности.</div>
+  <details>
+   <summary>1. Пользовательское соглашение</summary>
+   <div class="gd-legal-copy">
+    <p>GiftsDrop предоставляет доступ к функциям сайта и Telegram Mini App. Пользователь обязуется соблюдать применимое законодательство, не пытаться вмешиваться в работу сервиса, обходить ограничения или использовать ошибки системы.</p>
+    <p>Доступ может временно ограничиваться для технического обслуживания, защиты пользователей или расследования нарушений. Описание функций на сайте не является обещанием получения дохода, прибыли или конкретного предмета.</p>
+    <p>Владелец сервиса, его юридическое наименование, адрес и контакт для обращений должны быть опубликованы здесь до окончательного запуска: <b>[указать данные оператора]</b>.</p>
+   </div>
+  </details>
+  <details>
+   <summary>2. Политика конфиденциальности</summary>
+   <div class="gd-legal-copy">
+    <p>При использовании Mini App Telegram может передавать приложению доступные данные профиля, например Telegram ID, имя и username. Сервис также может обрабатывать технические сведения, состояние аккаунта, историю игровых действий, инвентарь и обращения в поддержку — в объёме, необходимом для работы функций и защиты от злоупотреблений.</p>
+    <p>Окончательный перечень данных, цели и правовые основания обработки, сроки хранения, получатели данных, порядок удаления и контакт оператора должны быть уточнены владельцем проекта и опубликованы до запуска: <b>[заполнить сведения об операторе и обработке данных]</b>.</p>
+    <p>Не отправляй в чат поддержки пароли, коды входа, платёжные реквизиты или другие секретные данные. Обработка данных Telegram также регулируется документами самой платформы.</p>
+   </div>
+  </details>
+  <details>
+   <summary>3. Правила ракеты и апгрейда</summary>
+   <div class="gd-legal-copy">
+    <p>Ракета и апгрейд могут содержать случайный результат. Результат попытки не гарантирован; отображаемый шанс должен соответствовать фактической вероятности, а правила расчёта должны быть прозрачны до нажатия кнопки.</p>
+    <p><b>Текущая реализация:</b> ракетка использует тестовый баланс, а апгрейд выполняется в тестовом режиме. Текущие тестовые попытки не изменяют реальный баланс и не перемещают NFT из настоящего инвентаря. Это описание нужно обновить, если механики будут подключены к реальным ценностям.</p>
+    <p>До включения ставок или операций с реальными цифровыми активами необходимо отдельно проверить требования страны запуска, возрастные ограничения, лицензирование, правила платежей и защиту пользователей.</p>
+   </div>
+  </details>
+  <details>
+   <summary>4. Платежи, Telegram Stars и возвраты</summary>
+   <div class="gd-legal-copy">
+    <p>Условия покупки, начисления и использования внутреннего баланса, Telegram Stars, цифровых подарков и возвратов должны быть описаны отдельно и соответствовать правилам Telegram и применимому законодательству.</p>
+    <p>До публикации необходимо указать продавца/оператора, цены, порядок подтверждения платежа, сроки зачисления, правила отмены и возврата, а также канал поддержки: <b>[указать реквизиты и порядок обращений]</b>.</p>
+   </div>
+  </details>
+  <details>
+   <summary>5. Ограничения и ответственность</summary>
+   <div class="gd-legal-copy">
+    <p>Сервис предоставляется в пределах, допускаемых применимым законодательством. Нельзя обещать пользователю выигрыш или гарантированную стоимость цифрового предмета. Ограничения ответственности не отменяют обязательные права потребителей и иные права, которые нельзя ограничить законом.</p>
+    <p>Если механика будет признана азартной игрой, лотереей или иной регулируемой деятельностью в стране пользователя или оператора, её нельзя запускать без предварительной правовой проверки и необходимых разрешений.</p>
+   </div>
+  </details>
+  <label class="gd-legal-check"><input id="gdLegalAgree" type="checkbox"><span>Я ознакомился(лась) с документами выше, понимаю, что результаты игровых механик могут быть случайными, и принимаю условия использования и политику конфиденциальности.</span></label>
+  <div class="gd-legal-actions"><button id="gdLegalContinue" type="button" disabled>ПРИНИМАЮ И ПРОДОЛЖАЮ</button></div>
+  <div class="gd-legal-foot">Редакция 0.1 · 24 ноября 2026. Согласие сохраняется на этом устройстве. При существенном обновлении документов запрос согласия будет показан повторно.</div>
+ </div>
+</div>
+
 
 <div id="gdSnowLayer" aria-hidden="true"></div>
 <header class="app-header">
@@ -3463,5 +3534,26 @@ function renderNftBattleResult(battle){
 }
 
 </script>
+
+<script>
+(function(){
+ const VERSION='gd-legal-draft-0.1';
+ const gate=document.getElementById('gdLegalGate');
+ const check=document.getElementById('gdLegalAgree');
+ const proceed=document.getElementById('gdLegalContinue');
+ if(!gate||!check||!proceed)return;
+ let accepted=false;
+ try{accepted=localStorage.getItem('gd_legal_consent')===VERSION;}catch(e){}
+ function closeGate(){gate.classList.remove('is-open');document.body.classList.remove('gd-legal-locked');}
+ if(!accepted){gate.classList.add('is-open');document.body.classList.add('gd-legal-locked');}
+ check.addEventListener('change',()=>{proceed.disabled=!check.checked;});
+ proceed.addEventListener('click',()=>{
+  if(!check.checked)return;
+  try{localStorage.setItem('gd_legal_consent',VERSION);}catch(e){}
+  closeGate();
+ });
+})();
+</script>
+
 </body>
 </html>
