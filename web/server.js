@@ -345,6 +345,34 @@ async function initDatabase() {
     CREATE INDEX IF NOT EXISTS gift_orders_status_idx
       ON gift_orders(status, created_at DESC);
 
+
+    CREATE TABLE IF NOT EXISTS rocket_rounds (
+      id BIGSERIAL PRIMARY KEY,
+      crash_at NUMERIC(6,2) NOT NULL CHECK (crash_at >= 1.01 AND crash_at <= 10.00),
+      starts_at TIMESTAMPTZ NOT NULL,
+      status TEXT NOT NULL DEFAULT 'betting' CHECK (status IN ('betting','running','crashed')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      crashed_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS rocket_rounds_recent_idx ON rocket_rounds(id DESC);
+    CREATE TABLE IF NOT EXISTS rocket_bets (
+      id BIGSERIAL PRIMARY KEY,
+      round_id BIGINT NOT NULL REFERENCES rocket_rounds(id),
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      stake_kind TEXT NOT NULL CHECK (stake_kind IN ('silver','nft')),
+      stake_amount INTEGER NOT NULL CHECK (stake_amount > 0),
+      inventory_id BIGINT REFERENCES user_inventory(id),
+      nft_name TEXT,
+      status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','cashed_out','crashed')),
+      cashout_multiplier NUMERIC(6,2),
+      payout_silver INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      settled_at TIMESTAMPTZ,
+      UNIQUE(round_id, telegram_id)
+    );
+    CREATE INDEX IF NOT EXISTS rocket_bets_round_idx ON rocket_bets(round_id, status);
+    CREATE INDEX IF NOT EXISTS rocket_bets_user_idx ON rocket_bets(telegram_id, created_at DESC);
+
     CREATE TABLE IF NOT EXISTS nft_battles (
       id BIGSERIAL PRIMARY KEY,
       creator_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -1514,6 +1542,151 @@ const server = http.createServer(async (req, res) => {
         throw error;
       } finally { client.release(); }
     }
+
+
+    // Server-authoritative rocket game. Client never receives the crash point.
+    if (url.pathname === '/api/rocket/state' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(731245)");
+        let round = (await client.query(
+          "SELECT * FROM rocket_rounds WHERE status IN ('betting','running') ORDER BY id DESC LIMIT 1 FOR UPDATE"
+        )).rows[0];
+        const now = Date.now();
+        if (round && now >= new Date(round.starts_at).getTime()) {
+          const elapsed = (now - new Date(round.starts_at).getTime()) / 1000;
+          const current = Math.min(10, Math.pow(1.18, Math.max(0, elapsed)));
+          if (current >= Number(round.crash_at)) {
+            await client.query("UPDATE rocket_rounds SET status='crashed', crashed_at=NOW() WHERE id=$1", [round.id]);
+            await client.query("UPDATE rocket_bets SET status='crashed', settled_at=NOW() WHERE round_id=$1 AND status='active'", [round.id]);
+            round = (await client.query("SELECT * FROM rocket_rounds WHERE id=$1", [round.id])).rows[0];
+          } else {
+            await client.query("UPDATE rocket_rounds SET status='running' WHERE id=$1 AND status='betting'", [round.id]);
+            round.status='running';
+          }
+        }
+        const balance = await client.query("SELECT silver FROM users WHERE telegram_id=$1", [String(user.id)]);
+        const myBet = round ? await client.query(
+          "SELECT id, stake_kind, stake_amount, nft_name, status, cashout_multiplier, payout_silver FROM rocket_bets WHERE round_id=$1 AND telegram_id=$2",
+          [round.id, String(user.id)]
+        ) : { rows: [] };
+        const players = round ? await client.query(
+          `SELECT COALESCE(NULLIF(u.username,''), NULLIF(u.first_name,''), 'Игрок') AS name,
+                  b.stake_kind, b.stake_amount, b.status, b.cashout_multiplier
+           FROM rocket_bets b JOIN users u ON u.telegram_id=b.telegram_id
+           WHERE b.round_id=$1 ORDER BY b.created_at ASC LIMIT 30`, [round.id]
+        ) : { rows: [] };
+        const history = await client.query(
+          "SELECT id, crash_at FROM rocket_rounds WHERE status='crashed' ORDER BY id DESC LIMIT 12"
+        );
+        await client.query('COMMIT');
+        const startMs = round ? new Date(round.starts_at).getTime() : now;
+        const current = round && now >= startMs && round.status !== 'crashed'
+          ? Math.min(10, Number((Math.pow(1.18, (now-startMs)/1000)).toFixed(2))) : 1;
+        return send(res, 200, {
+          round: round ? { id:Number(round.id), status:round.status, starts_at:round.starts_at, multiplier:current } : null,
+          balance: Number(balance.rows[0]?.silver || 0),
+          my_bet: myBet.rows[0] ? { ...myBet.rows[0], id:Number(myBet.rows[0].id), stake_amount:Number(myBet.rows[0].stake_amount), payout_silver:Number(myBet.rows[0].payout_silver) } : null,
+          players: players.rows.map(p=>({ name:p.name, kind:p.stake_kind, amount:Number(p.stake_amount), status:p.status, multiplier:p.cashout_multiplier ? Number(p.cashout_multiplier) : null })),
+          history: history.rows.map(r=>({id:Number(r.id), crash:Number(r.crash_at)}))
+        });
+      } catch (error) { await client.query('ROLLBACK'); throw error; }
+      finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/rocket/bet' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const body = await readBody(req);
+      const kind = body.kind === 'nft' ? 'nft' : 'silver';
+      const amount = Number(body.amount);
+      const inventoryId = String(body.inventory_id || '');
+      if (kind === 'silver' && (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000)) {
+        return send(res, 400, { error: 'Укажи корректную ставку серебром' });
+      }
+      if (kind === 'nft' && !/^\d+$/.test(inventoryId)) return send(res, 400, { error: 'Выбери NFT из инвентаря' });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(731245)");
+        const telegramId=String(user.id);
+        const account=await client.query("SELECT silver FROM users WHERE telegram_id=$1 FOR UPDATE",[telegramId]);
+        let stakeAmount=amount, nftName=null, item=null;
+        if(kind==='silver') {
+          if(Number(account.rows[0].silver)<amount){await client.query('ROLLBACK');return send(res,409,{error:'Недостаточно серебра на балансе'});}
+          await client.query("UPDATE users SET silver=silver-$1 WHERE telegram_id=$2",[amount,telegramId]);
+        } else {
+          const found=await client.query("SELECT * FROM user_inventory WHERE id=$1 AND telegram_id=$2 AND status='owned' FOR UPDATE",[inventoryId,telegramId]);
+          if(!found.rowCount){await client.query('ROLLBACK');return send(res,409,{error:'NFT уже используется или недоступен'});}
+          item=found.rows[0]; stakeAmount=Math.max(1,Number(item.prize_stars)||1); nftName=item.prize_name;
+          await client.query("UPDATE user_inventory SET status='consumed', updated_at=NOW() WHERE id=$1",[inventoryId]);
+        }
+        let round=(await client.query("SELECT * FROM rocket_rounds WHERE status IN ('betting','running') ORDER BY id DESC LIMIT 1 FOR UPDATE")).rows[0];
+        const now=Date.now();
+        if(round && now >= new Date(round.starts_at).getTime()) {
+          const m=Math.pow(1.18,(now-new Date(round.starts_at).getTime())/1000);
+          if(m>=Number(round.crash_at)) {
+            await client.query("UPDATE rocket_rounds SET status='crashed',crashed_at=NOW() WHERE id=$1",[round.id]);
+            await client.query("UPDATE rocket_bets SET status='crashed',settled_at=NOW() WHERE round_id=$1 AND status='active'",[round.id]);
+            round=null;
+          } else {
+            await client.query("UPDATE rocket_rounds SET status='running' WHERE id=$1 AND status='betting'",[round.id]);
+          }
+        }
+        if(!round) {
+          const crash=Number((1.01+Math.random()*8.99).toFixed(2));
+          const created=await client.query("INSERT INTO rocket_rounds(crash_at,starts_at) VALUES($1,NOW()+INTERVAL '5 seconds') RETURNING *",[crash]);
+          round=created.rows[0];
+        }
+        const bet=await client.query(
+          "INSERT INTO rocket_bets(round_id,telegram_id,stake_kind,stake_amount,inventory_id,nft_name) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",
+          [round.id,telegramId,kind,stakeAmount,kind==='nft'?inventoryId:null,nftName]
+        );
+        const updated=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[telegramId]);
+        await client.query('COMMIT');
+        return send(res,201,{success:true,bet_id:Number(bet.rows[0].id),round_id:Number(round.id),starts_at:round.starts_at,balance:Number(updated.rows[0].silver),stake_kind:kind,stake_amount:stakeAmount,nft_name:nftName});
+      } catch(error) {
+        await client.query('ROLLBACK');
+        if(error.code==='23505') return send(res,409,{error:'Ты уже участвуешь в этом раунде'});
+        throw error;
+      } finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/rocket/cashout' && req.method === 'POST') {
+      const user=getTelegramUser(req);
+      if(!user) return send(res,401,{error:'Ошибка авторизации Telegram'});
+      await ensureUser(user,req);
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const active=await client.query(
+          "SELECT b.*,r.starts_at,r.crash_at,r.status AS round_status FROM rocket_bets b JOIN rocket_rounds r ON r.id=b.round_id WHERE b.telegram_id=$1 AND b.status='active' ORDER BY b.created_at DESC LIMIT 1 FOR UPDATE OF b,r",
+          [String(user.id)]
+        );
+        if(!active.rowCount){await client.query('ROLLBACK');return send(res,409,{error:'Нет активной ставки'});}
+        const bet=active.rows[0], now=Date.now(), start=new Date(bet.starts_at).getTime();
+        const multiplier=Number((Math.pow(1.18,Math.max(0,(now-start)/1000))).toFixed(2));
+        if(bet.round_status==='crashed' || now<start || multiplier>=Number(bet.crash_at)) {
+          await client.query("UPDATE rocket_rounds SET status='crashed',crashed_at=COALESCE(crashed_at,NOW()) WHERE id=$1",[bet.round_id]);
+          await client.query("UPDATE rocket_bets SET status='crashed',settled_at=NOW() WHERE round_id=$1 AND status='active'",[bet.round_id]);
+          await client.query('COMMIT');
+          return send(res,409,{error:'Слишком поздно — ракета уже упала',crashed:true});
+        }
+        const payout=Math.floor(Number(bet.stake_amount)*multiplier);
+        await client.query("UPDATE users SET silver=silver+$1 WHERE telegram_id=$2",[payout,String(user.id)]);
+        await client.query("UPDATE rocket_bets SET status='cashed_out',cashout_multiplier=$1,payout_silver=$2,settled_at=NOW() WHERE id=$3",[multiplier,payout,bet.id]);
+        const balance=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[String(user.id)]);
+        await client.query('COMMIT');
+        return send(res,200,{success:true,multiplier,payout_silver:payout,balance:Number(balance.rows[0].silver),stake_kind:bet.stake_kind,nft_name:bet.nft_name});
+      } catch(error){await client.query('ROLLBACK');throw error;}
+      finally{client.release();}
+    }
+
 
     // История NFT-выигрышей только текущего Telegram-пользователя.
     if (url.pathname === '/api/me/wins' && req.method === 'GET') {
