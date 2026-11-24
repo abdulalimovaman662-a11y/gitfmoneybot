@@ -797,7 +797,32 @@ body{
   radial-gradient(ellipse at 0% 55%,rgba(125,8,27,.24),transparent 48%),
   linear-gradient(180deg,#300711 0%,#1b050d 58%,#10040a 100%) !important;
 }
-\n</style>
+\n
+/* GiftsDrop: розовые кнопки */
+button:not(.nav-button){
+ background:linear-gradient(110deg,#ff4f9a 0%,#ff78b8 52%,#ffa0cf 100%) !important;
+ color:#2a0718 !important;
+ border:1px solid rgba(255,190,220,.55) !important;
+ box-shadow:0 7px 22px rgba(255,79,154,.22) !important;
+}
+button.secondary:not(.nav-button){
+ background:linear-gradient(135deg,rgba(255,79,154,.2),rgba(255,120,184,.12)) !important;
+ color:#ffc1df !important;
+ border:1px solid rgba(255,120,184,.38) !important;
+ box-shadow:none !important;
+}
+button.danger:not(.nav-button){
+ background:linear-gradient(110deg,#d93679,#ff6b9f) !important;
+ color:#fff !important;
+ border-color:rgba(255,190,220,.5) !important;
+}
+.nav-button.active{
+ color:#ff9bc9 !important;
+ background:rgba(255,79,154,.15) !important;
+ border-color:rgba(255,120,184,.35) !important;
+}
+
+</style>
 </head>
 <body>
 
