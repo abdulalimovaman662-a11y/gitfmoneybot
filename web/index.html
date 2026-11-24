@@ -2154,14 +2154,13 @@ async function loadProfile() {
    avatar.innerHTML='';
    const img=document.createElement('img'); img.src=user.photo_url; img.alt='Аватар Telegram'; avatar.appendChild(img);
   }
-  const [data,refs]=await Promise.all([
+  const [data]=await Promise.all([
    api('/api/me'),
-   api('/api/referrals'),
    loadProfileWinHistory()
   ]);
   document.getElementById('profileSilver').textContent=data.silver ?? 0;
   document.getElementById('profileSpins').textContent=data.free_spins ?? 0;
-  document.getElementById('profileRefs').textContent=refs.referral_count ?? 0;
+  document.getElementById('profileRefs').textContent=data.referral_count ?? 0;
  } catch(error) {
   document.getElementById('profileUsername').textContent='Не удалось загрузить статистику';
  }
@@ -2248,13 +2247,18 @@ async function loadAccount() {
  try {
   const [data]=await Promise.all([
    api('/api/me'),
-   loadReferrals(),
    checkAdmin()
   ]);
   document.getElementById('silver').textContent=data.silver;
   document.getElementById('spins').textContent=data.free_spins;
   document.getElementById('silverBalance').textContent=data.silver;
   document.getElementById('spinsBalance').textContent=data.free_spins;
+  referralLink=data.referral_link || '';
+  document.getElementById('refCount').textContent=data.referral_count ?? 0;
+  document.getElementById('refProgress').style.width=((data.progress||0)*10)+'%';
+  document.getElementById('refProgressText').textContent=
+   (data.progress||0)+' из 10 — осталось '+(data.remaining??10);
+  document.getElementById('refLink').textContent=referralLink;
  } catch(error) {
   document.getElementById('message').textContent=error.message;
  }
