@@ -1602,6 +1602,7 @@ const server = http.createServer(async (req, res) => {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
+      if (process.env.ROCKET_LIVE_ENABLED !== 'true') return send(res, 403, { error: 'Реальные ставки пока отключены до завершения юридической настройки проекта' });
       const body = await readBody(req);
       const kind = body.kind === 'nft' ? 'nft' : 'silver';
       const amount = Number(body.amount);
