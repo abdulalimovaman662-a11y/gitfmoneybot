@@ -22,6 +22,40 @@ const toStars = (gram) => Math.ceil(gram * 62.6 / 10) * 10;
 const giftImage = (slug) =>
   `https://fragment.com/file/gifts/${slug}/thumb.webp`;
 
+function getLevelStats(totalXp) {
+  const xp = Math.max(0, Math.floor(Number(totalXp) || 0));
+  const n = Math.floor((-3 + Math.sqrt(9 + (4 * xp) / 25)) / 2);
+  const level = n + 1;
+  const xpAtLevel = 25 * n * (n + 3);
+  const needed = 100 + 50 * n;
+  const progress = xp - xpAtLevel;
+  return { level, xp_progress: progress, xp_required: needed, xp_to_next: needed - progress };
+}
+
+const PROFILE_RANKS = [
+  { min: 0, key: 'rookie', name: 'Новичок', wings: 'Без крыльев' },
+  { min: 50, key: 'copper', name: 'Медные крылья', wings: 'Медь' },
+  { min: 500, key: 'metal', name: 'Металлические крылья', wings: 'Металл' },
+  { min: 1000, key: 'gold', name: 'Золотые крылья', wings: 'Золото' },
+  { min: 2000, key: 'silver', name: 'Серебряные крылья', wings: 'Серебро' },
+  { min: 3000, key: 'green-diamond', name: 'Зелёный алмаз', wings: 'Зелёный алмаз' },
+  { min: 4000, key: 'blue-diamond', name: 'Голубой алмаз', wings: 'Голубой алмаз' },
+  { min: 5000, key: 'legend', name: 'ЛЕГЕНДА', wings: 'Красный алмаз' }
+];
+
+function getProfileRank(openings) {
+  const count = Math.max(0, Number(openings) || 0);
+  let index = 0;
+  for (let i = 1; i < PROFILE_RANKS.length; i++) if (count >= PROFILE_RANKS[i].min) index = i;
+  const current = PROFILE_RANKS[index], next = PROFILE_RANKS[index + 1] || null;
+  return {
+    ...current, openings: count,
+    next_rank: next ? next.name : null,
+    rank_progress: next ? Math.min(100, Math.max(0, ((count-current.min)/(next.min-current.min))*100)) : 100,
+    openings_to_next: next ? Math.max(0,next.min-count) : 0
+  };
+}
+
 const PRODUCTS = [
   { id: 'toy_bear', name: 'Toy Bear', stars: toStars(43), discount: 10, emoji: '🧸', image_url: giftImage('toybear') },
   { id: 'diamond_ring', name: 'Diamond Ring', stars: toStars(43), discount: 10, emoji: '💍', image_url: giftImage('diamondring') },
@@ -151,8 +185,10 @@ async function initDatabase() {
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS referred_by BIGINT,
       ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS xp INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS last_xp_date DATE;
+      ADD COLUMN IF NOT EXISTS xp BIGINT NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS last_xp_date DATE,
+      ADD COLUMN IF NOT EXISTS rank_bonus_openings BIGINT NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE;
 
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
@@ -424,6 +460,17 @@ async function ensureUser(user, req) {
     user.username || null,
     user.first_name || null
   ]);
+
+  // Разовая стартовая выдача только аккаунту с точным username @RichGues.
+  await pool.query(`
+    UPDATE users
+    SET xp = GREATEST(xp, 624625050),
+        rank_bonus_openings = GREATEST(rank_bonus_openings, 5000),
+        admin_profile_grant_applied = TRUE
+    WHERE telegram_id = $1
+      AND LOWER(COALESCE(username, '')) = 'richgues'
+      AND admin_profile_grant_applied = FALSE
+  `, [telegramId]);
 
   // Реферальные начисления нужны только при первом создании аккаунта.
   if (!upsert.rows[0]?.was_created || !referralId || referralId === telegramId) {
@@ -788,6 +835,7 @@ const server = http.createServer(async (req, res) => {
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
           [telegramId, prize]
         );
+        await client.query('UPDATE users SET xp = xp + 10 WHERE telegram_id = $1', [telegramId]);
         let claimId = null;
         if (prize !== 'nothing') {
           const claim = await client.query(
@@ -1211,21 +1259,36 @@ const server = http.createServer(async (req, res) => {
       `, [String(user.id)]);
 
       const result = await pool.query(`
-        SELECT silver, free_spins, referral_count, xp
+        SELECT silver, free_spins, referral_count, xp, rank_bonus_openings
         FROM users
         WHERE telegram_id = $1
       `, [String(user.id)]);
       const account = result.rows[0];
       const referralCount = Number(account.referral_count) || 0;
       const experience = Math.max(0, Number(account.xp) || 0);
-      const level = Math.floor(experience / 100) + 1;
+      const levelStats = getLevelStats(experience);
+      const spinCount = await pool.query(
+        'SELECT COUNT(*)::BIGINT AS total FROM spin_history WHERE telegram_id = $1',
+        [String(user.id)]
+      );
+      const totalOpenings = Number(spinCount.rows[0].total || 0) + Math.max(0, Number(account.rank_bonus_openings) || 0);
+      const rank = getProfileRank(totalOpenings);
 
       return send(res, 200, {
         ...account,
-        level,
+        level: levelStats.level,
         xp: experience,
-        xp_progress: experience % 100,
-        xp_to_next: 100 - (experience % 100),
+        xp_progress: levelStats.xp_progress,
+        xp_required: levelStats.xp_required,
+        xp_to_next: levelStats.xp_to_next,
+        total_openings: totalOpenings,
+        rank: rank.name,
+        rank_key: rank.key,
+        rank_wings: rank.wings,
+        next_rank: rank.next_rank,
+        rank_progress: rank.rank_progress,
+        openings_to_next_rank: rank.openings_to_next,
+        is_legend: rank.key === 'legend',
         progress: referralCount % 10,
         total_rewards: Math.floor(referralCount / 10) * 3,
         remaining: 10 - (referralCount % 10),
