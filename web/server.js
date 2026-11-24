@@ -1277,7 +1277,7 @@ const server = http.createServer(async (req, res) => {
       const found = await pool.query(`
         SELECT username, first_name FROM users
         WHERE username IS NOT NULL AND username ILIKE '%' || $1 || '%'
-        ORDER BY CASE WHEN LOWER(username) = LOWER($2) THEN 0 ELSE 1 END, username ASC
+        ORDER BY CASE WHEN LOWER(username) = LOWER($1) THEN 0 ELSE 1 END, username ASC
         LIMIT 20
       `, [query]);
       return send(res, 200, { users: found.rows });
