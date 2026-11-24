@@ -399,63 +399,53 @@ async function readBody(req) {
 async function ensureUser(user, req) {
   const telegramId = String(user.id);
   const referralId = getReferralId(req);
-  const client = await pool.connect();
 
+  // Для существующего пользователя — один SQL-запрос вместо
+  // подключения, транзакции и отдельных INSERT/UPDATE.
+  const upsert = await pool.query(`
+    INSERT INTO users (telegram_id, username, first_name)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (telegram_id) DO UPDATE
+      SET username = EXCLUDED.username,
+          first_name = EXCLUDED.first_name
+    RETURNING (xmax = 0) AS was_created
+  `, [
+    telegramId,
+    user.username || null,
+    user.first_name || null
+  ]);
+
+  // Реферальные начисления нужны только при первом создании аккаунта.
+  if (!upsert.rows[0]?.was_created || !referralId || referralId === telegramId) {
+    return;
+  }
+
+  const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    const inserted = await client.query(`
-      INSERT INTO users (telegram_id, username, first_name)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (telegram_id) DO NOTHING
-      RETURNING telegram_id
-    `, [
-      telegramId,
-      user.username || null,
-      user.first_name || null
-    ]);
-
-    await client.query(`
+    const referrer = await client.query(`
       UPDATE users
-      SET username = $1, first_name = $2
-      WHERE telegram_id = $3
-    `, [
-      user.username || null,
-      user.first_name || null,
-      telegramId
-    ]);
+      SET referral_count = referral_count + 1
+      WHERE telegram_id = $1
+      RETURNING referral_count
+    `, [referralId]);
 
-    if (
-      inserted.rowCount === 1 &&
-      referralId &&
-      referralId !== telegramId
-    ) {
-      const referrer = await client.query(`
+    if (referrer.rowCount === 1) {
+      await client.query(`
         UPDATE users
-        SET referral_count = referral_count + 1
-        WHERE telegram_id = $1
-        RETURNING referral_count
-      `, [referralId]);
+        SET referred_by = $1
+        WHERE telegram_id = $2
+      `, [referralId, telegramId]);
 
-      if (referrer.rowCount === 1) {
+      const count = Number(referrer.rows[0].referral_count);
+      if (count % 10 === 0) {
         await client.query(`
           UPDATE users
-          SET referred_by = $1
-          WHERE telegram_id = $2
-        `, [referralId, telegramId]);
-
-        const count = Number(referrer.rows[0].referral_count);
-
-        if (count % 10 === 0) {
-          await client.query(`
-            UPDATE users
-            SET free_spins = free_spins + 3
-            WHERE telegram_id = $1
-          `, [referralId]);
-        }
+          SET free_spins = free_spins + 3
+          WHERE telegram_id = $1
+        `, [referralId]);
       }
     }
-
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -1206,8 +1196,16 @@ const server = http.createServer(async (req, res) => {
         FROM users
         WHERE telegram_id = $1
       `, [String(user.id)]);
+      const account = result.rows[0];
+      const referralCount = Number(account.referral_count) || 0;
 
-      return send(res, 200, result.rows[0]);
+      return send(res, 200, {
+        ...account,
+        progress: referralCount % 10,
+        total_rewards: Math.floor(referralCount / 10) * 3,
+        remaining: 10 - (referralCount % 10),
+        referral_link: `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
+      });
     }
 
     // Серверный NFT-инвентарь. Записи создаются только из подтверждённых выигрышей.
