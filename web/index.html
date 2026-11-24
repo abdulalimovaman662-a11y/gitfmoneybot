@@ -1435,6 +1435,31 @@ body{
 @keyframes gdSnowFall{0%{transform:translate3d(0,-5vh,0) rotate(0)}50%{transform:translate3d(var(--drift),48vh,0) rotate(180deg)}100%{transform:translate3d(calc(var(--drift) * -.55),108vh,0) rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.gd-snowflake{animation:none!important}}
 
+/* Animated emoji on GiftsDrop main-menu tiles */
+.home-tile-icon .gd-home-emoji{
+ display:inline-block;
+ transform-origin:50% 65%;
+ will-change:transform,filter;
+ animation:gdMenuEmojiFloat 2.8s ease-in-out infinite;
+ filter:drop-shadow(0 3px 5px rgba(0,0,0,.28));
+}
+.home-grid .home-tile:nth-child(2n) .gd-home-emoji{animation-delay:-.9s}
+.home-grid .home-tile:nth-child(3n) .gd-home-emoji{animation-delay:-1.7s}
+.home-tile:active .gd-home-emoji{animation:gdMenuEmojiPop .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes gdMenuEmojiFloat{
+ 0%,100%{transform:translateY(0) rotate(-5deg) scale(1);filter:drop-shadow(0 3px 5px rgba(0,0,0,.28))}
+ 25%{transform:translateY(-4px) rotate(4deg) scale(1.07)}
+ 55%{transform:translateY(-1px) rotate(-2deg) scale(1.02);filter:drop-shadow(0 0 8px rgba(255,220,225,.62))}
+ 78%{transform:translateY(-5px) rotate(5deg) scale(1.06)}
+}
+@keyframes gdMenuEmojiPop{
+ 0%{transform:scale(1) rotate(0)}
+ 45%{transform:scale(1.32) rotate(-12deg)}
+ 75%{transform:scale(.92) rotate(8deg)}
+ 100%{transform:scale(1) rotate(0)}
+}
+@media(prefers-reduced-motion:reduce){.home-tile-icon .gd-home-emoji{animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -1462,31 +1487,31 @@ body{
  </div>
  <div class="home-grid" aria-label="Разделы GiftsDrop">
   <button class="home-tile home-tile-roulette" onclick="showTab('spin')" aria-label="Открыть рулетку">
-   <span class="home-tile-icon">🎰</span><span class="home-tile-copy"><span class="home-tile-title">РУЛЕТКА</span><span class="home-tile-subtitle">Испытай удачу и забери NFT</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🎰</span></span><span class="home-tile-copy"><span class="home-tile-title">РУЛЕТКА</span><span class="home-tile-subtitle">Испытай удачу и забери NFT</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-prizes" onclick="showTab('prizes')" aria-label="Открыть призы и шансы">
-   <span class="home-tile-icon">🏆</span><span class="home-tile-copy"><span class="home-tile-title">ПРИЗЫ</span><span class="home-tile-subtitle">Подарки и шансы выпадения</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРИЗЫ</span><span class="home-tile-subtitle">Подарки и шансы выпадения</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-gifts" onclick="showTab('gifts')" aria-label="Открыть магазин подарков">
-   <span class="home-tile-icon">🎁</span><span class="home-tile-copy"><span class="home-tile-title">МАГАЗИН</span><span class="home-tile-subtitle">Каталог Telegram-подарков</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🎁</span></span><span class="home-tile-copy"><span class="home-tile-title">МАГАЗИН</span><span class="home-tile-subtitle">Каталог Telegram-подарков</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-balance" onclick="showTab('balance')" aria-label="Открыть баланс">
-   <span class="home-tile-icon">🪙</span><span class="home-tile-copy"><span class="home-tile-title">БАЛАНС</span><span class="home-tile-subtitle">Серебро и пополнение Stars</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🪙</span></span><span class="home-tile-copy"><span class="home-tile-title">БАЛАНС</span><span class="home-tile-subtitle">Серебро и пополнение Stars</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-friends" onclick="showTab('friends')" aria-label="Открыть друзей">
-   <span class="home-tile-icon">👥</span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">👥</span></span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-profile" onclick="showTab('profile')" aria-label="Открыть профиль и коллекцию">
-   <span class="home-tile-icon">👤</span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">👤</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
-   <span class="home-tile-icon">🎒</span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-rocket" onclick="showTab('rocket')" aria-label="Открыть ракету">
-   <span class="home-tile-icon">🚀</span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🚀</span></span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-upgrade" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
-   <span class="home-tile-icon">⚡</span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">⚡</span></span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
 </section>
