@@ -1433,15 +1433,7 @@ body{
 #gdSnowLayer{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
 .gd-snowflake{position:absolute;top:-24px;left:var(--x);width:var(--size);height:var(--size);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 24%,#dff7ff 55%,rgba(190,225,255,.55) 100%);opacity:var(--opacity);filter:drop-shadow(0 0 5px rgba(220,245,255,.75));animation:gdSnowFall var(--duration) linear var(--delay) infinite;will-change:transform}
 @keyframes gdSnowFall{0%{transform:translate3d(0,-5vh,0) rotate(0)}50%{transform:translate3d(var(--drift),48vh,0) rotate(180deg)}100%{transform:translate3d(calc(var(--drift) * -.55),108vh,0) rotate(360deg)}}
-#gdChristmasTree{position:fixed;z-index:55;top:calc(env(safe-area-inset-top) + 112px);left:max(9px,calc((100vw - 560px)/2 + 9px));width:62px;height:76px;margin:0;padding:4px;border:1px solid rgba(255,220,140,.75);border-radius:19px;background:linear-gradient(155deg,rgba(112,0,22,.97),rgba(35,0,12,.98));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;box-shadow:0 0 0 2px rgba(255,255,255,.08),0 0 20px rgba(255,28,57,.48),0 0 36px rgba(255,194,82,.2),inset 0 1px rgba(255,255,255,.24);animation:gdTreeGlow 2.4s ease-in-out infinite alternate;cursor:pointer}
-#gdChristmasTree .gd-tree-art{font-size:35px;line-height:1.08;filter:drop-shadow(0 0 8px rgba(255,220,115,.65))}
-#gdChristmasTree .gd-tree-label{font-size:7px;font-weight:900;letter-spacing:.65px;color:#ffe6a1;white-space:nowrap;text-shadow:0 0 8px rgba(255,191,67,.8)}
-#gdChristmasTree:active{transform:scale(.95)}
-@keyframes gdTreeGlow{from{filter:brightness(.96);box-shadow:0 0 0 2px rgba(255,255,255,.06),0 0 14px rgba(255,28,57,.35),0 0 25px rgba(255,194,82,.12)}to{filter:brightness(1.16);box-shadow:0 0 0 2px rgba(255,255,255,.12),0 0 25px rgba(255,28,57,.7),0 0 42px rgba(255,194,82,.32)}}
-#gdChristmasToast{position:fixed;z-index:56;top:calc(env(safe-area-inset-top) + 195px);left:max(9px,calc((100vw - 560px)/2 + 9px));width:min(270px,calc(100vw - 92px));padding:12px 14px;border:1px solid rgba(255,218,140,.65);border-radius:15px;background:linear-gradient(145deg,rgba(93,0,23,.98),rgba(31,0,12,.98));color:#fff0d1;font-size:11px;line-height:1.5;box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 22px rgba(255,35,65,.28);opacity:0;transform:translateY(-7px) scale(.97);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
-#gdChristmasToast.visible{opacity:1;transform:translateY(0) scale(1)}
-#gdChristmasTree:disabled{opacity:.8;cursor:wait}
-@media(prefers-reduced-motion:reduce){.gd-snowflake,#gdChristmasTree{animation:none!important}#gdChristmasToast{transition:none}}
+@media(prefers-reduced-motion:reduce){.gd-snowflake{animation:none!important}}
 
 </style>
 </head>
@@ -1767,20 +1759,6 @@ let catalogLoaded = false;
   flake.style.setProperty('--drift',(-35+Math.random()*70)+'px');layer.appendChild(flake);
  }
 })();
-let christmasClaimBusy=false;
-async function claimChristmasBonus(){
- if(christmasClaimBusy)return;
- const button=document.getElementById('gdChristmasTree'),toast=document.getElementById('gdChristmasToast');
- const say=(message)=>{toast.textContent=message;toast.classList.add('visible');clearTimeout(window.gdChristmasToastTimer);window.gdChristmasToastTimer=setTimeout(()=>toast.classList.remove('visible'),4200);};
- christmasClaimBusy=true;button.disabled=true;say('🎁 Проверяем твой новогодний подарок…');
- try{
-  const data=await api('/api/christmas/claim',{method:'POST',body:JSON.stringify({})});
-  say(data.already_claimed?'🎄 Ты уже забрал свой подарок! Новогодние прокрутки были начислены ранее.':'🎅 С Новым годом! Тебе начислены 2 бесплатные прокрутки. Удачи!');
-  if(Number.isFinite(Number(data.free_spins))){const value=String(data.free_spins);['spins','spinsBalance','profileSpins'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=value;});}
-  button.querySelector('.gd-tree-label').textContent=data.already_claimed?'УЖЕ ПОЛУЧЕНО':'ПОДАРОК ✓';
- }catch(error){say(error.message||'Не удалось получить подарок. Попробуй ещё раз.');}
- finally{christmasClaimBusy=false;button.disabled=false;}
-}
 
 
 loadRecentWins();
