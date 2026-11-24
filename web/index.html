@@ -1654,6 +1654,16 @@ body{
 .profile-wing-option[data-wing="blue-diamond"]{color:#85d9ff}
 #profileEmblem[data-wing-style]:not([data-wing-style="legend"]) .profile-wing{width:102px;height:62px;top:25px;filter:drop-shadow(0 5px 9px rgba(0,0,0,.3))}
 @media(max-width:360px){#profileEmblem[data-wing-style]:not([data-wing-style="legend"]) .profile-wing{width:88px}}
+.player-search-row{display:flex;gap:8px;margin:16px 0}.player-search-row input{flex:1;min-width:0;margin:0}.player-search-row button{width:auto;min-width:88px;margin:0;padding-inline:13px}
+.player-search-results{display:grid;gap:8px}.player-result{display:flex;align-items:center;gap:12px;width:100%;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:15px;background:rgba(255,255,255,.045);color:#fff;text-align:left}
+.player-result-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#4768a7,#252b50);font-weight:900}
+.player-result-copy{display:flex;flex-direction:column;gap:4px;min-width:0}.player-result-copy small{color:#aaa8c7}
+.public-player-card{margin-top:16px;padding:18px}.public-player-head{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.public-player-avatar{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#7a57c8,#263d76);font-size:22px;font-weight:900}
+.public-player-name{font-size:18px;font-weight:900}.public-player-handle{color:#aaa8c7;font-size:12px;margin-top:3px}
+.public-player-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.public-player-stat{padding:12px;border-radius:12px;background:rgba(255,255,255,.05)}.public-player-stat b{display:block;font-size:18px}.public-player-stat span{display:block;color:#aaa8c7;font-size:10px;margin-top:4px}
+.public-player-rank{margin:12px 0;padding:12px;border-radius:12px;background:rgba(150,110,255,.1);text-align:center;font-weight:900}
 </style>
 </head>
 <body>
@@ -1706,6 +1716,9 @@ body{
   </button>
   <button class="home-tile home-tile-upgrade" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
    <span class="home-tile-icon"><span class="gd-home-emoji">⚡</span></span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile" onclick="showTab('players')" style="--tile-bg:linear-gradient(145deg,#183b62,#10182f);--tile-border:rgba(105,174,255,.28);--tile-glow:rgba(60,140,255,.42)" aria-label="Поиск игроков">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🔎</span></span><span class="home-tile-copy"><span class="home-tile-title">ПОИСК ИГРОКОВ</span><span class="home-tile-subtitle">Профили, ранги и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
 </section>
@@ -1765,6 +1778,15 @@ body{
  <div class="prize-card"><div class="prize-emoji">💜</div><div><b>Необычный NFT</b><span>Коллекционные подарки стоимостью 300–1000 ⭐</span></div><strong>5%</strong></div>
  <div class="prize-card rare-prize"><div class="prize-emoji">💎</div><div><b>Редкий NFT</b><span>Коллекционные подарки стоимостью 1000–10000 ⭐</span></div><strong>0,001%</strong></div>
  <div class="card"><div class="section-tag">КАК ЭТО РАБОТАЕТ</div><h2>Просто и прозрачно</h2><div class="rule-row"><span>🎟️</span><p><b>3 бесплатные попытки</b><br>Доступны при первом запуске.</p></div><div class="rule-row"><span>🪙</span><p><b>20 серебра за прокрутку</b><br>После использования бесплатных попыток.</p></div><div class="rule-row"><span>🛡️</span><p><b>Серверный результат</b><br>Анимация колеса не влияет на шанс выигрыша.</p></div></div>
+</section>
+
+<section class="tab-page" id="tab-players">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ИГРОКИ</span></div>
+ <div class="section-tag">GIFTSMONEY COMMUNITY</div><h2>Поиск игроков</h2>
+ <p class="muted">Найди игрока по Telegram username и открой его профиль.</p>
+ <div class="player-search-row"><input id="playerSearchInput" type="search" maxlength="32" placeholder="Например, @username" autocomplete="off"><button type="button" onclick="searchPlayers()">НАЙТИ</button></div>
+ <div id="playerSearchResults" class="player-search-results"><p class="muted">Введи минимум 2 символа.</p></div>
+ <div id="publicPlayerCard" class="card public-player-card" hidden></div>
 </section>
 
 <section class="tab-page" id="tab-profile">
@@ -2114,7 +2136,7 @@ async function loadRecentWins() {
 
 let gdTabTransitionTimer = null;
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade','players'];
  const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
  const targetId = 'tab-'+name;
  const target = document.getElementById(targetId);
@@ -2298,6 +2320,42 @@ async function loadProfile() {
  }
 }
 
+async function searchPlayers(){
+ const input=document.getElementById('playerSearchInput'),results=document.getElementById('playerSearchResults'),card=document.getElementById('publicPlayerCard');
+ const query=input.value.trim().replace(/^@/,'');card.hidden=true;
+ if(query.length<2){results.textContent='Введи минимум 2 символа.';return;}
+ results.textContent='Ищем игроков…';
+ try{
+  const data=await api('/api/users/search?q='+encodeURIComponent(query));results.replaceChildren();
+  if(!data.users.length){results.textContent='Игроки не найдены. Возможно, пользователь ещё не запускал GiftsMoney.';return;}
+  data.users.forEach(player=>{
+   const button=document.createElement('button');button.type='button';button.className='player-result';
+   const avatar=document.createElement('span');avatar.className='player-result-avatar';avatar.textContent=(player.first_name||player.username||'?').slice(0,1).toUpperCase();
+   const copy=document.createElement('span');copy.className='player-result-copy';
+   const name=document.createElement('b');name.textContent=player.first_name||player.username;
+   const handle=document.createElement('small');handle.textContent='@'+player.username;
+   copy.append(name,handle);button.append(avatar,copy);button.onclick=()=>loadPublicPlayer(player.username);results.appendChild(button);
+  });
+ }catch(error){results.textContent=error.message||'Ошибка поиска.';}
+}
+async function loadPublicPlayer(username){
+ const card=document.getElementById('publicPlayerCard');card.hidden=false;card.textContent='Загружаем профиль…';
+ try{
+  const data=await api('/api/users/profile?username='+encodeURIComponent(username));card.replaceChildren();
+  const head=document.createElement('div');head.className='public-player-head';
+  const avatar=document.createElement('div');avatar.className='public-player-avatar';avatar.textContent=(data.first_name||data.username||'?').slice(0,1).toUpperCase();
+  const info=document.createElement('div'),name=document.createElement('div'),handle=document.createElement('div');
+  name.className='public-player-name';name.textContent=data.first_name||data.username;handle.className='public-player-handle';handle.textContent='@'+data.username;
+  info.append(name,handle);head.append(avatar,info);card.appendChild(head);
+  const rank=document.createElement('div');rank.className='public-player-rank';rank.textContent=(data.rank_name||'Новичок')+' · '+Number(data.total_openings||0).toLocaleString('ru-RU')+' открытий';card.appendChild(rank);
+  const stats=document.createElement('div');stats.className='public-player-stats';
+  [['Уровень',data.level],['Всего XP',data.xp],['Открытия кубиков',data.total_openings],['Донатил',Number(data.donated_stars||0).toLocaleString('ru-RU')+' ⭐'],['Начислено серебра',data.donated_silver],['Пополнений',data.donation_count]].forEach(([label,value])=>{
+   const item=document.createElement('div');item.className='public-player-stat';const b=document.createElement('b');b.textContent=Number(value||0).toLocaleString('ru-RU');if(label==='Донатил')b.textContent=value;
+   const span=document.createElement('span');span.textContent=label;item.append(b,span);stats.appendChild(item);
+  });
+  card.appendChild(stats);
+ }catch(error){card.textContent=error.message||'Не удалось загрузить профиль.';}
+}
 async function selectProfileWings(wingKey,clickedButton) {
  const note=document.getElementById('profileWingNote');
  const buttons=[...document.querySelectorAll('.profile-wing-option')];
