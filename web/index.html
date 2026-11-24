@@ -965,6 +965,10 @@ button:disabled{opacity:.55;filter:saturate(.65)}
   <button class="secondary" onclick="loadPrizeClaims()">ОБНОВИТЬ ВЫИГРЫШИ</button>
   <div id="prizeAdminMessage"></div><div id="prizeAdminClaims"></div>
   <hr style="border-color:rgba(255,255,255,.08);margin:18px 0">
+  <h2>Заявки на вывод NFT</h2>
+  <button class="secondary" onclick="loadWithdrawalRequests()">ОБНОВИТЬ ВЫВОДЫ</button>
+  <div id="withdrawalAdminMessage"></div><div id="withdrawalAdminRequests"></div>
+  <hr style="border-color:rgba(255,255,255,.08);margin:18px 0">
   <h2>Заявки на пополнение</h2>
   <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
   <div id="adminMessage"></div><div id="requests"></div>
@@ -1604,11 +1608,54 @@ async function checkAdmin() {
   document.getElementById('giftAdminPanel').style.display='block';
   await loadRequests();
   await loadPrizeClaims();
+  await loadWithdrawalRequests();
   await loadGiftAdminOrders();
  } catch(error) {
   document.getElementById('adminPanel').style.display='none';
   document.getElementById('giftAdminPanel').style.display='none';
  }
+}
+
+async function loadWithdrawalRequests() {
+ const output=document.getElementById('withdrawalAdminRequests');
+ const message=document.getElementById('withdrawalAdminMessage');
+ if(!output||!message)return;
+ output.replaceChildren();message.textContent='Загружаем заявки...';
+ try {
+  const data=await api('/api/admin/withdrawals');
+  const requests=Array.isArray(data.requests)?data.requests:[];
+  message.textContent='Ожидают обработки: '+requests.length;
+  if(!requests.length){output.textContent='Новых заявок на вывод нет.';return;}
+  requests.forEach(request=>{
+   const card=document.createElement('div');card.className='request';
+   const title=document.createElement('b');title.textContent='Вывод NFT №'+request.id+' — '+(request.prize_name||'Подарок');
+   const info=document.createElement('div');
+   info.textContent='Игрок: '+(request.first_name||'Без имени')+
+    (request.username?' (@'+request.username+')':'')+
+    '\nTelegram ID: '+request.telegram_id+
+    '\nСтоимость: '+(request.prize_stars||'—')+' ⭐'+
+    '\nЗаявка: '+new Date(request.created_at).toLocaleString('ru-RU');
+   card.append(title,info);
+   if(request.prize_image_url){
+    const img=document.createElement('img');img.src=request.prize_image_url;img.alt=request.prize_name||'NFT';
+    img.style.cssText='width:72px;height:72px;object-fit:contain;display:block;margin:8px 0';card.append(img);
+   }
+   const complete=document.createElement('button');complete.textContent='ПОДАРОК ОТПРАВЛЕН';
+   complete.onclick=()=>processWithdrawal(request.id,'complete',complete);
+   const reject=document.createElement('button');reject.className='secondary';reject.textContent='ОТКЛОНИТЬ';
+   reject.onclick=()=>processWithdrawal(request.id,'reject',reject);
+   card.append(complete,reject);output.append(card);
+  });
+ } catch(error){message.textContent=error.message;}
+}
+async function processWithdrawal(id,action,button) {
+ const promptText=action==='complete'?'Подтверди: ты уже реально отправил NFT игроку?':'Отклонить заявку и вернуть NFT в инвентарь игрока?';
+ if(!confirm(promptText))return;
+ button.disabled=true;
+ try{
+  await api('/api/admin/withdrawals/'+id+'/'+action,{method:'POST',body:JSON.stringify({})});
+  await loadWithdrawalRequests();
+ }catch(error){button.disabled=false;document.getElementById('withdrawalAdminMessage').textContent=error.message;}
 }
 
 async function loadPrizeClaims() {
