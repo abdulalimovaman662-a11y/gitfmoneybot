@@ -1591,6 +1591,15 @@ body{
 #tab-home .inventory-art b,#tab-home .inventory-art i,#tab-home .inventory-art em,#tab-home .inventory-art small{font-size:0!important;color:transparent!important}
 #tab-home .profile-art .profile-tile-name{font-size:clamp(11px,3.2vw,15px)!important}
 
+/* Permanent account level */
+.level-card{border:1px solid rgba(151,110,255,.28);background:linear-gradient(135deg,rgba(74,39,135,.32),rgba(15,17,37,.96))}
+.level-topline,.level-xp-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.level-topline strong{font-size:14px;font-weight:900;letter-spacing:.08em;color:#d9c5ff}
+.level-xp-row{margin:17px 0 9px;font-size:12px;font-weight:800;color:#c9c1df}
+.level-progress{height:11px;overflow:hidden;border-radius:20px;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 4px rgba(0,0,0,.35)}
+.level-progress-fill{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#8154ff,#d5a7ff);box-shadow:0 0 14px rgba(160,112,255,.5);transition:width .65s cubic-bezier(.2,.8,.2,1)}
+.level-hint{margin:12px 0 0;font-size:12px;line-height:1.45}
+
 </style>
 </head>
 <body>
@@ -1712,6 +1721,12 @@ body{
   <div class="profile-name" id="profileName">Игрок GiftsDrop</div>
   <div class="profile-username" id="profileUsername">Открыто через Telegram</div>
   <div class="profile-stats"><div><b id="profileSilver">0</b><span>Серебро 🪙</span></div><div><b id="profileSpins">0</b><span>Бесплатные</span></div><div><b id="profileRefs">0</b><span>Друзья</span></div></div>
+ </div>
+ <div class="card level-card" id="profileLevelCard">
+  <div class="level-topline"><span class="section-tag">ТВОЙ УРОВЕНЬ</span><strong id="profileLevel">УРОВЕНЬ 1</strong></div>
+  <div class="level-xp-row"><span id="profileXp">20 / 100 XP</span><span id="profileXpNext">До следующего: 80 XP</span></div>
+  <div class="level-progress"><div class="level-progress-fill" id="profileLevelProgress"></div></div>
+  <p class="muted level-hint">За ежедневный вход начисляется +20 XP. Повышай уровень и следи за прогрессом!</p>
  </div>
   <div class="card" id="profileWinHistoryCard">
    <div class="section-tag">YOUR NFT COLLECTION</div>
@@ -2161,6 +2176,10 @@ async function loadProfile() {
   document.getElementById('profileSilver').textContent=data.silver ?? 0;
   document.getElementById('profileSpins').textContent=data.free_spins ?? 0;
   document.getElementById('profileRefs').textContent=data.referral_count ?? 0;
+  document.getElementById('profileLevel').textContent='УРОВЕНЬ '+(data.level ?? 1);
+  document.getElementById('profileXp').textContent=(data.xp_progress ?? 0)+' / 100 XP';
+  document.getElementById('profileXpNext').textContent='До следующего: '+(data.xp_to_next ?? 100)+' XP';
+  document.getElementById('profileLevelProgress').style.width=(data.xp_progress ?? 0)+'%';
  } catch(error) {
   document.getElementById('profileUsername').textContent='Не удалось загрузить статистику';
  }
