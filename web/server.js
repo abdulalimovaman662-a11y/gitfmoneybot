@@ -1269,6 +1269,49 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { success: true, selected_wings: selected });
     }
 
+    // Публичный поиск игроков по Telegram username.
+    if (url.pathname === '/api/users/search' && req.method === 'GET') {
+      if (!getTelegramUser(req)) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const query = String(url.searchParams.get('q') || '').trim().replace(/^@/, '');
+      if (query.length < 2) return send(res, 200, { users: [] });
+      const found = await pool.query(`
+        SELECT username, first_name FROM users
+        WHERE username IS NOT NULL AND username ILIKE $1
+        ORDER BY CASE WHEN LOWER(username) = LOWER($2) THEN 0 ELSE 1 END, username ASC
+        LIMIT 20
+      `, ['%' + query.replace(/[\\%_]/g, '\\    // Аккаунт
+    if (url.pathname === '/api/me' && req.method === 'GET') {') + '%', query]);
+      return send(res, 200, { users: found.rows });
+    }
+
+    // Публичная карточка: только статистика, без Telegram ID, баланса и инвентаря.
+    if (url.pathname === '/api/users/profile' && req.method === 'GET') {
+      if (!getTelegramUser(req)) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const username = String(url.searchParams.get('username') || '').trim().replace(/^@/, '');
+      if (!/^[a-zA-Z0-9_]{5,32}$/.test(username)) return send(res, 400, { error: 'Некорректный Telegram username' });
+      const found = await pool.query(`
+        SELECT telegram_id, username, first_name, xp, rank_bonus_openings, selected_wings
+        FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1
+      `, [username]);
+      if (!found.rowCount) return send(res, 404, { error: 'Игрок не найден. Возможно, он ещё не запускал GiftsMoney.' });
+      const player = found.rows[0], telegramId = String(found.rows[0].telegram_id);
+      const [spins, payments] = await Promise.all([
+        pool.query('SELECT COUNT(*)::BIGINT AS total FROM spin_history WHERE telegram_id = $1', [telegramId]),
+        pool.query('SELECT COALESCE(SUM(stars),0)::BIGINT AS stars, COALESCE(SUM(silver),0)::BIGINT AS silver, COUNT(*)::BIGINT AS count FROM bot_payments WHERE telegram_id = $1 AND stars > 0', [telegramId])
+      ]);
+      const openings = Number(spins.rows[0].total || 0) + Math.max(0, Number(player.rank_bonus_openings) || 0);
+      const rank = getProfileRank(openings), experience = Math.max(0, Number(player.xp) || 0);
+      const level = getLevelStats(experience), paid = payments.rows[0];
+      return send(res, 200, {
+        username: player.username, first_name: player.first_name,
+        level: level.level, xp: experience, total_openings: openings,
+        rank_key: rank.key, rank_name: rank.name, rank_wings: rank.wings,
+        selected_wings: player.selected_wings || 'auto',
+        donated_stars: Number(paid.stars || 0), donated_silver: Number(paid.silver || 0),
+        donation_count: Number(paid.count || 0)
+      });
+    }
+
     // Аккаунт
     if (url.pathname === '/api/me' && req.method === 'GET') {
       const user = getTelegramUser(req);
