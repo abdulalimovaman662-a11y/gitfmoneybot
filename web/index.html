@@ -1482,7 +1482,40 @@ body{
 
 /* Animated premium cube artwork — lightweight CSS only */
 .home-tile{isolation:isolate}
-.tile-art{position:absolute;z-index:0;right:9px;top:7px;width:66%;height:58%;pointer-events:none;opacity:.96}
+.tile-art{position:absolute;z-index:0;inset:0;width:100%;height:100%;border-radius:inherit;pointer-events:none;opacity:1;overflow:hidden}
+.home-tile{background:var(--tile-bg);padding:13px 13px 12px}
+.home-tile:after{z-index:1;background:linear-gradient(180deg,rgba(8,7,20,.04) 0%,rgba(8,7,20,.08) 34%,rgba(8,7,20,.78) 100%)}
+.home-tile-icon{z-index:3;position:relative}
+.home-tile-copy{z-index:3;position:relative;padding:7px 9px;border-radius:12px;background:rgba(7,7,18,.34);backdrop-filter:blur(3px);max-width:100%}
+.home-tile-arrow{z-index:4}
+.roulette-art{background:radial-gradient(ellipse at 52% 42%,rgba(245,194,91,.35),transparent 42%),linear-gradient(135deg,#41225f,#140f2d 70%,#6a2346)}
+.prizes-art{background:radial-gradient(circle at 50% 42%,rgba(113,220,255,.35),transparent 48%),linear-gradient(140deg,#17485b,#14213e 68%,#315b79)}
+.shop-art{background:radial-gradient(circle at 65% 30%,rgba(99,236,160,.28),transparent 42%),linear-gradient(135deg,#184d45,#25163b 75%,#73402d)}
+.balance-art{background:radial-gradient(circle at 55% 35%,rgba(255,215,103,.38),transparent 50%),linear-gradient(140deg,#6a4a19,#322019 68%,#875a21)}
+.friends-art{background:radial-gradient(ellipse at 50% 40%,rgba(93,245,183,.3),transparent 55%),linear-gradient(140deg,#145747,#102b38 72%,#24745a)}
+.profile-art{background:radial-gradient(circle at 50% 36%,rgba(151,172,255,.36),transparent 50%),linear-gradient(140deg,#344c87,#1b214b 70%,#60417e)}
+.inventory-art{background:radial-gradient(ellipse at 55% 38%,rgba(193,154,255,.35),transparent 50%),linear-gradient(140deg,#462d70,#1d1a42 70%,#75436f)}
+.roulette-art:before{top:50%;left:50%;transform:translate(-50%,-50%);width:57%;height:auto;aspect-ratio:1}
+.roulette-art:after{top:50%;left:50%;transform:translate(-50%,-50%);width:18%;height:auto;aspect-ratio:1}
+.roulette-art i{top:50%;left:50%;transform:translate(-50%,-50%);width:67%;height:auto;aspect-ratio:1}
+.roulette-art b{top:38%;left:48%;font-size:clamp(20px,6vw,32px)}
+.roulette-art em{top:12%;right:15%}
+.prizes-art b,.prizes-art i,.prizes-art em,.prizes-art small,.inventory-art b,.inventory-art i,.inventory-art em,.inventory-art small{width:24%;height:30%;font-size:clamp(19px,5vw,30px);border-radius:12px;background:linear-gradient(145deg,rgba(255,255,255,.34),rgba(255,255,255,.08))}
+.prizes-art b{left:12%;top:13%}.prizes-art i{left:48%;top:8%}.prizes-art em{left:28%;top:49%}.prizes-art small{left:68%;top:50%}
+.shop-art b{left:10%;top:13%;width:31%;height:31%;font-size:clamp(27px,7vw,42px)}
+.shop-art i{left:53%;top:8%;width:27%;height:27%;font-size:clamp(22px,6vw,34px)}
+.shop-art em{left:25%;top:52%;width:28%;height:28%;font-size:clamp(22px,6vw,34px)}
+.shop-art small{left:66%;top:51%;width:22%;height:22%;font-size:clamp(18px,5vw,28px)}
+.balance-art b{top:24%;right:8%;font-size:clamp(25px,8vw,42px)}
+.balance-art i{right:12%;top:51%;font-size:12px}
+.balance-art em{left:14%;top:28%;font-size:clamp(25px,7vw,38px)}
+.friends-art{top:34%;right:8%;width:84%;height:auto;text-align:center;font-size:clamp(25px,8vw,42px);letter-spacing:-1px}
+.profile-art{inset:0;width:100%;height:100%;border:0;border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden;background:transparent;box-shadow:none;animation:none}
+.profile-art img{width:58%;height:58%;max-width:118px;max-height:118px;object-fit:cover;border-radius:50%;border:3px solid rgba(255,255,255,.88);box-shadow:0 0 24px rgba(144,166,255,.55)}
+.profile-art .profile-tile-name{display:block;max-width:90%;padding:4px 10px;border-radius:20px;background:rgba(5,8,24,.58);color:#fff;font-size:clamp(11px,3.2vw,15px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 8px #000}
+.profile-art .profile-tile-avatar-fallback{width:58%;height:58%;max-width:118px;max-height:118px;display:grid;place-items:center;border-radius:50%;border:3px solid rgba(255,255,255,.8);background:linear-gradient(145deg,#91aaff,#343a79);font-size:clamp(38px,11vw,64px);box-shadow:0 0 24px rgba(144,166,255,.55)}
+.inventory-art b{left:9%;top:11%}.inventory-art i{left:47%;top:8%}.inventory-art em{left:24%;top:49%}.inventory-art small{left:67%;top:50%}
+@media(max-width:360px){.tile-art{transform:none}.profile-art img,.profile-art .profile-tile-avatar-fallback{width:54%;height:54%}}
 .home-tile-icon,.home-tile-copy,.home-tile-arrow{position:relative;z-index:2}
 .home-tile-icon{backdrop-filter:none}
 .roulette-art{display:grid;place-items:center}
@@ -1563,7 +1596,7 @@ body{
    <span class="tile-art friends-art" aria-hidden="true">friends</span><span class="home-tile-icon"><span class="gd-home-emoji">👥</span></span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-profile" onclick="showTab('profile')" aria-label="Открыть профиль и коллекцию">
-   <span class="tile-art profile-art" id="homeProfileArt" aria-hidden="true">👤</span><span class="home-tile-icon"><span class="gd-home-emoji">👤</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art profile-art" id="homeProfileArt" aria-hidden="true"><span class="profile-tile-avatar-fallback">👤</span><span class="profile-tile-name">Загрузка профиля…</span></span><span class="home-tile-icon"><span class="gd-home-emoji">👤</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
    <span class="tile-art inventory-art" aria-hidden="true"><b>💎</b><i>🎁</i><em>🪙</em><small>🌟</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
@@ -1825,6 +1858,25 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+function initHomeProfileTile() {
+ const tile=document.getElementById('homeProfileArt');
+ if(!tile)return;
+ const user=tg.initDataUnsafe&&tg.initDataUnsafe.user?tg.initDataUnsafe.user:{};
+ const displayName=user.username?'@'+user.username:[user.first_name,user.last_name].filter(Boolean).join(' ')||'Профиль Telegram';
+ tile.replaceChildren();
+ if(user.photo_url){
+  const img=document.createElement('img');
+  img.src=user.photo_url;img.alt='Аватар пользователя';img.loading='eager';
+  img.onerror=()=>{img.remove();const fallback=document.createElement('span');fallback.className='profile-tile-avatar-fallback';fallback.textContent=(user.first_name||'👤').slice(0,1).toUpperCase();tile.prepend(fallback);};
+  tile.appendChild(img);
+ }else{
+  const fallback=document.createElement('span');fallback.className='profile-tile-avatar-fallback';
+  fallback.textContent=(user.first_name||'👤').slice(0,1).toUpperCase();tile.appendChild(fallback);
+ }
+ const name=document.createElement('span');name.className='profile-tile-name';name.textContent=displayName;tile.appendChild(name);
+}
+initHomeProfileTile();
+
 let referralLink = '';
 let spinning = false;
 let catalogLoaded = false;
@@ -2054,8 +2106,7 @@ async function loadProfile() {
   document.getElementById('profileName').textContent=name;
   document.getElementById('profileUsername').textContent=user.username?'@'+user.username:'Аккаунт Telegram';
   const avatar=document.getElementById('profileAvatar');
-  const homeAvatar=document.getElementById('homeProfileArt');
-  if(homeAvatar){homeAvatar.textContent='';if(user.photo_url){const homeImg=document.createElement('img');homeImg.src=user.photo_url;homeImg.alt='';homeImg.loading='lazy';homeAvatar.appendChild(homeImg);}else{homeAvatar.textContent='👤';}}
+  initHomeProfileTile();
   if(user.photo_url) {
    avatar.innerHTML='';
    const img=document.createElement('img'); img.src=user.photo_url; img.alt='Аватар Telegram'; avatar.appendChild(img);
