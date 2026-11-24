@@ -1479,6 +1479,48 @@ body{
 @keyframes gdMenuTileLeave{to{opacity:0;transform:translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.tab-page.active,.tab-page.is-leaving,#tab-home.active .home-tile,#tab-home.is-leaving .home-tile{animation:none!important}}
 
+
+/* Animated premium cube artwork — lightweight CSS only */
+.home-tile{isolation:isolate}
+.tile-art{position:absolute;z-index:0;right:9px;top:7px;width:66%;height:58%;pointer-events:none;opacity:.96}
+.home-tile-icon,.home-tile-copy,.home-tile-arrow{position:relative;z-index:2}
+.home-tile-icon{backdrop-filter:none}
+.roulette-art{display:grid;place-items:center}
+.roulette-art:before{content:"";position:absolute;width:76px;height:76px;border-radius:50%;background:repeating-conic-gradient(#f8d477 0 10deg,#79243e 10deg 20deg,#171326 20deg 30deg);border:4px solid #f4d58c;box-shadow:0 0 20px rgba(255,208,107,.55);animation:gdRouletteSpin 8s linear infinite}
+.roulette-art:after{content:"";position:absolute;width:23px;height:23px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff4c2,#b57b2e 65%,#542d20);border:2px solid #ffe9a6}
+.roulette-art b{position:absolute;z-index:1;font-size:19px;filter:drop-shadow(0 2px 5px #000);animation:gdFloat 2.8s ease-in-out infinite}
+.roulette-art i{position:absolute;z-index:1;width:88px;height:88px;border:1px solid rgba(255,226,160,.6);border-radius:50%;animation:gdPulse 2.2s ease-in-out infinite}
+.roulette-art em{position:absolute;right:4px;top:3px;color:#ffe8a4;font-style:normal;animation:gdSpark 1.6s ease-in-out infinite}
+.prizes-art b,.prizes-art i,.prizes-art em,.prizes-art small,.inventory-art b,.inventory-art i,.inventory-art em,.inventory-art small{position:absolute;display:grid;place-items:center;width:34px;height:42px;border-radius:9px;border:1px solid rgba(255,255,255,.48);background:linear-gradient(145deg,rgba(255,255,255,.28),rgba(255,255,255,.06));box-shadow:0 7px 15px rgba(0,0,0,.28);font-size:21px;font-style:normal}
+.prizes-art b{left:12%;top:8%;transform:rotate(-13deg);animation:gdFloat 3s ease-in-out infinite}
+.prizes-art i{left:48%;top:0;transform:rotate(11deg);animation:gdFloat 3.5s ease-in-out infinite .3s}
+.prizes-art em{left:31%;top:43%;transform:rotate(8deg);animation:gdFloat 3.2s ease-in-out infinite .6s}
+.prizes-art small{left:67%;top:47%;font-size:16px;animation:gdSpark 2s infinite}
+.shop-art b,.shop-art i,.shop-art em,.shop-art small{position:absolute;display:grid;place-items:center;border-radius:50%;font-weight:1000;font-style:normal;text-shadow:0 3px 9px rgba(0,0,0,.45);box-shadow:0 5px 13px rgba(0,0,0,.25);animation:gdMoneyFloat 3s ease-in-out infinite}
+.shop-art b{left:5%;top:5%;width:42px;height:42px;background:linear-gradient(145deg,#75e7a4,#176c4c);color:#f1fff5;font-size:26px}
+.shop-art i{left:48%;top:0;width:36px;height:36px;background:linear-gradient(145deg,#ffe6a0,#9c5a20);color:#fff;font-size:22px;animation-delay:.4s}
+.shop-art em{left:25%;top:48%;width:38px;height:38px;background:linear-gradient(145deg,#fff0a8,#b88a25);color:#fff;font-size:19px;animation-delay:.8s}
+.shop-art small{left:69%;top:47%;width:30px;height:30px;background:linear-gradient(145deg,#a9caff,#4d5fb2);color:#fff;font-size:16px;animation-delay:1.1s}
+.balance-art b{position:absolute;top:3px;right:0;color:#fff1b2;font-size:clamp(23px,7vw,35px);font-weight:1000;letter-spacing:-1.5px;text-shadow:0 0 15px rgba(255,209,92,.7);font-variant-numeric:tabular-nums}
+.balance-art i{position:absolute;right:4px;top:42px;color:rgba(255,238,180,.65);font-size:10px;font-style:normal;font-weight:900;letter-spacing:1px}
+.balance-art em{position:absolute;left:10px;top:12px;color:#ffdf80;font-size:24px;font-style:normal;animation:gdFloat 2.6s ease-in-out infinite}
+.friends-art{top:20px;right:4px;width:auto;height:auto;color:rgba(190,255,222,.94);font-size:clamp(17px,5vw,25px);font-weight:1000;letter-spacing:-1px;text-transform:lowercase;text-shadow:0 0 15px rgba(99,255,190,.55);animation:gdFriendsGlow 2.4s ease-in-out infinite}
+.profile-art{display:grid;place-items:center;right:13px;top:9px;width:76px;height:76px;border-radius:50%;overflow:hidden;border:2px solid rgba(220,230,255,.8);background:linear-gradient(145deg,#738be8,#2a285e);font-size:34px;box-shadow:0 0 22px rgba(124,157,255,.55);animation:gdProfileFloat 3.2s ease-in-out infinite}
+.profile-art img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.inventory-art b{left:4%;top:4%;transform:rotate(-14deg);animation:gdFloat 2.8s infinite}
+.inventory-art i{left:45%;top:0;transform:rotate(12deg);animation:gdFloat 3.1s infinite .3s}
+.inventory-art em{left:22%;top:46%;transform:rotate(8deg);animation:gdFloat 3.4s infinite .6s}
+.inventory-art small{left:65%;top:45%;font-size:16px;animation:gdSpark 2s infinite}
+@keyframes gdRouletteSpin{to{transform:rotate(360deg)}}
+@keyframes gdFloat{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes gdMoneyFloat{0%,100%{translate:0 0;rotate:0deg}50%{translate:0 -8px;rotate:7deg}}
+@keyframes gdPulse{0%,100%{scale:.94;opacity:.55}50%{scale:1.08;opacity:1}}
+@keyframes gdSpark{0%,100%{opacity:.4;scale:.8}50%{opacity:1;scale:1.2}}
+@keyframes gdFriendsGlow{0%,100%{opacity:.72;transform:translateY(2px)}50%{opacity:1;transform:translateY(-3px)}}
+@keyframes gdProfileFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(prefers-reduced-motion:reduce){.tile-art,.tile-art *{animation:none!important}}
+@media(max-width:360px){.tile-art{transform:scale(.88);transform-origin:top right}.profile-art{width:66px;height:66px}}
+
 </style>
 </head>
 <body>
@@ -1506,25 +1548,25 @@ body{
  </div>
  <div class="home-grid" aria-label="Разделы GiftsDrop">
   <button class="home-tile home-tile-roulette" onclick="showTab('spin')" aria-label="Открыть рулетку">
-   <span class="home-tile-icon"><span class="gd-home-emoji">🎰</span></span><span class="home-tile-copy"><span class="home-tile-title">РУЛЕТКА</span><span class="home-tile-subtitle">Испытай удачу и забери NFT</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art roulette-art" aria-hidden="true"><i></i><b>🎡</b><em>✦</em></span><span class="home-tile-icon"><span class="gd-home-emoji">🎰</span></span><span class="home-tile-copy"><span class="home-tile-title">РУЛЕТКА</span><span class="home-tile-subtitle">Испытай удачу и забери NFT</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-prizes" onclick="showTab('prizes')" aria-label="Открыть призы и шансы">
-   <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРИЗЫ</span><span class="home-tile-subtitle">Подарки и шансы выпадения</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art prizes-art" aria-hidden="true"><i>💎</i><b>🎁</b><em>🪄</em><small>⭐</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРИЗЫ</span><span class="home-tile-subtitle">Подарки и шансы выпадения</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-gifts" onclick="showTab('gifts')" aria-label="Открыть магазин подарков">
-   <span class="home-tile-icon"><span class="gd-home-emoji">🎁</span></span><span class="home-tile-copy"><span class="home-tile-title">МАГАЗИН</span><span class="home-tile-subtitle">Каталог Telegram-подарков</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art shop-art" aria-hidden="true"><b>$</b><i>₽</i><em>⭐</em><small>€</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎁</span></span><span class="home-tile-copy"><span class="home-tile-title">МАГАЗИН</span><span class="home-tile-subtitle">Каталог Telegram-подарков</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-balance" onclick="showTab('balance')" aria-label="Открыть баланс">
-   <span class="home-tile-icon"><span class="gd-home-emoji">🪙</span></span><span class="home-tile-copy"><span class="home-tile-title">БАЛАНС</span><span class="home-tile-subtitle">Серебро и пополнение Stars</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art balance-art" aria-hidden="true"><b data-balance-roll>1</b><i>100 000</i><em>₽</em></span><span class="home-tile-icon"><span class="gd-home-emoji">🪙</span></span><span class="home-tile-copy"><span class="home-tile-title">БАЛАНС</span><span class="home-tile-subtitle">Серебро и пополнение Stars</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-friends" onclick="showTab('friends')" aria-label="Открыть друзей">
-   <span class="home-tile-icon"><span class="gd-home-emoji">👥</span></span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art friends-art" aria-hidden="true">friends</span><span class="home-tile-icon"><span class="gd-home-emoji">👥</span></span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-profile" onclick="showTab('profile')" aria-label="Открыть профиль и коллекцию">
-   <span class="home-tile-icon"><span class="gd-home-emoji">👤</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art profile-art" id="homeProfileArt" aria-hidden="true">👤</span><span class="home-tile-icon"><span class="gd-home-emoji">👤</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
-   <span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
+   <span class="tile-art inventory-art" aria-hidden="true"><b>💎</b><i>🎁</i><em>🪙</em><small>🌟</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-rocket" onclick="showTab('rocket')" aria-label="Открыть ракету">
    <span class="home-tile-icon"><span class="gd-home-emoji">🚀</span></span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
@@ -1994,6 +2036,8 @@ async function loadProfile() {
   document.getElementById('profileName').textContent=name;
   document.getElementById('profileUsername').textContent=user.username?'@'+user.username:'Аккаунт Telegram';
   const avatar=document.getElementById('profileAvatar');
+  const homeAvatar=document.getElementById('homeProfileArt');
+  if(homeAvatar){homeAvatar.textContent='';if(user.photo_url){const homeImg=document.createElement('img');homeImg.src=user.photo_url;homeImg.alt='';homeImg.loading='lazy';homeAvatar.appendChild(homeImg);}else{homeAvatar.textContent='👤';}}
   if(user.photo_url) {
    avatar.innerHTML='';
    const img=document.createElement('img'); img.src=user.photo_url; img.alt='Аватар Telegram'; avatar.appendChild(img);
