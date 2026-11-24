@@ -1460,6 +1460,49 @@ body{
 }
 @media(prefers-reduced-motion:reduce){.home-tile-icon .gd-home-emoji{animation:none!important}}
 
+/* Smooth menu/page enter and exit transitions */
+.tab-page.active{
+ animation:gdPageEnter .34s cubic-bezier(.2,.75,.25,1) both!important;
+}
+.tab-page.is-leaving{
+ display:block!important;
+ pointer-events:none!important;
+ animation:gdPageLeave .24s cubic-bezier(.4,0,.8,.35) both!important;
+}
+#tab-home.active .home-tile{
+ animation:gdMenuTileEnter .48s cubic-bezier(.18,.78,.25,1) both;
+}
+#tab-home.active .home-tile:nth-child(2){animation-delay:.035s}
+#tab-home.active .home-tile:nth-child(3){animation-delay:.07s}
+#tab-home.active .home-tile:nth-child(4){animation-delay:.105s}
+#tab-home.active .home-tile:nth-child(5){animation-delay:.14s}
+#tab-home.active .home-tile:nth-child(6){animation-delay:.175s}
+#tab-home.active .home-tile:nth-child(7){animation-delay:.21s}
+#tab-home.active .home-tile:nth-child(8){animation-delay:.245s}
+#tab-home.active .home-tile:nth-child(9){animation-delay:.28s}
+#tab-home.is-leaving .home-tile{
+ animation:gdMenuTileLeave .2s ease-in both!important;
+}
+@keyframes gdPageEnter{
+ from{opacity:0;transform:translateY(10px) scale(.992);filter:brightness(.82)}
+ to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
+}
+@keyframes gdPageLeave{
+ from{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
+ to{opacity:0;transform:translateY(-5px) scale(.985);filter:brightness(.8)}
+}
+@keyframes gdMenuTileEnter{
+ 0%{opacity:0;transform:translateY(15px) scale(.9);filter:brightness(.7)}
+ 70%{opacity:1;transform:translateY(-2px) scale(1.015);filter:brightness(1.13)}
+ 100%{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
+}
+@keyframes gdMenuTileLeave{
+ to{opacity:0;transform:translateY(-8px) scale(.94);filter:brightness(.75)}
+}
+@media(prefers-reduced-motion:reduce){
+ .tab-page.active,.tab-page.is-leaving,#tab-home.active .home-tile,#tab-home.is-leaving .home-tile{animation:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -1873,15 +1916,28 @@ async function loadRecentWins() {
  }
 }
 
+let gdTabTransitionTimer = null;
 function showTab(name) {
  const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade'];
- const isHome = name === 'home';
- document.getElementById('tab-home').classList.toggle('active',isHome);
- tabs.forEach(tab => {
-  document.getElementById('tab-'+tab).classList.toggle('active',!isHome && tab===name);
+ const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
+ const targetId = 'tab-'+name;
+ const target = document.getElementById(targetId);
+ if(!target) return;
+ if(gdTabTransitionTimer){clearTimeout(gdTabTransitionTimer);gdTabTransitionTimer=null;}
+ pages.forEach(page=>{
+  page.classList.remove('is-leaving');
+  if(page!==target && page.classList.contains('active')){
+   page.classList.remove('active');
+   page.classList.add('is-leaving');
+  }
  });
+ target.classList.add('active');
  window.scrollTo({top:0,behavior:'smooth'});
- if(isHome) return;
+ gdTabTransitionTimer=setTimeout(()=>{
+  pages.forEach(page=>page.classList.remove('is-leaving'));
+  gdTabTransitionTimer=null;
+ },260);
+ if(name==='home') return;
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
  if(name==='profile') loadProfile();
