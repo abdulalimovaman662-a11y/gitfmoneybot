@@ -1703,6 +1703,31 @@ body{
 .battle-side-title{margin:17px 0 7px;font-size:11px;font-weight:900;letter-spacing:.08em;color:#ffc2d0}
 .battle-result-actions{display:flex;gap:8px;margin-top:14px}.battle-result-actions button{flex:1}
 @media(max-width:360px){.battle-lobby-item{padding:10px}.battle-lobby-item button{min-width:76px!important;padding:9px!important}.battle-versus{gap:5px}}
+
+/* GiftsDrop fast navigation and lightweight panels */
+.tab-page.active{
+ animation:gd-page-enter .16s ease-out both !important;
+}
+@keyframes gd-page-enter{
+ from{opacity:.88;transform:translateY(4px)}
+ to{opacity:1;transform:translateY(0)}
+}
+.tab-page.active>.card,
+.tab-page.active>.prize-card{
+ animation:none !important;
+}
+.tab-page.active .card{
+ animation:none !important;
+}
+.bottom-nav{
+ -webkit-backdrop-filter:blur(12px) !important;
+ backdrop-filter:blur(12px) !important;
+ transform:translateZ(0);
+}
+.nav-button{
+ transition:color .12s ease,background .12s ease,box-shadow .12s ease,transform .12s ease !important;
+}
+
 </style>
 </head>
 <body>
@@ -2228,7 +2253,7 @@ function showTab(name) {
   }
  });
  target.classList.add('active');
- window.scrollTo({top:0,behavior:'smooth'});
+ window.scrollTo({top:0,behavior:'auto'});
  gdTabTransitionTimer=setTimeout(()=>{
   pages.forEach(page=>page.classList.remove('is-leaving'));
   gdTabTransitionTimer=null;
