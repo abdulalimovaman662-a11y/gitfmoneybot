@@ -1614,7 +1614,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 201, { battle: { ...created.rows[0], id: Number(created.rows[0].id), spins: Number(created.rows[0].spins) } });
     }
 
-    const battleJoinMatch = url.pathname.match(/^\\/api\\/battles\\/(\\d+)\\/join$/);
+    const battleJoinMatch = url.pathname.match(/^\/api\/battles\/(\d+)\/join$/);
     if (battleJoinMatch && req.method === 'POST') {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
@@ -1775,7 +1775,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    const battleCancelMatch = url.pathname.match(/^\\/api\\/battles\\/(\\d+)\\/cancel$/);
+    const battleCancelMatch = url.pathname.match(/^\/api\/battles\/(\d+)\/cancel$/);
     if (battleCancelMatch && req.method === 'POST') {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
@@ -1790,7 +1790,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { success: true });
     }
 
-    const battleDetailMatch = url.pathname.match(/^\\/api\\/battles\\/(\\d+)$/);
+    const battleDetailMatch = url.pathname.match(/^\/api\/battles\/(\d+)$/);
     if (battleDetailMatch && req.method === 'GET') {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
