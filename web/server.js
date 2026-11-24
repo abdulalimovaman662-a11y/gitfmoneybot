@@ -1178,11 +1178,11 @@ const server = http.createServer(async (req, res) => {
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
       const result = await pool.query(
-        \`SELECT id AS inventory_id, prize_type, prize_name, prize_stars,
+        `SELECT id AS inventory_id, prize_type, prize_name, prize_stars,
                 prize_image_url, status, created_at
          FROM user_inventory
          WHERE telegram_id = $1 AND status IN ('owned', 'withdraw_pending')
-         ORDER BY created_at DESC LIMIT 100\`,
+         ORDER BY created_at DESC LIMIT 100`,
         [String(user.id)]
       );
       return send(res, 200, { items: result.rows.map(row => ({
@@ -1212,13 +1212,13 @@ const server = http.createServer(async (req, res) => {
           return send(res, 409, { error: 'Предмет уже выведен или ожидает обработки' });
         }
         const request = await client.query(
-          \`INSERT INTO withdrawal_requests (inventory_id, telegram_id)
-           VALUES ($1, $2) RETURNING id, status, created_at\`,
+          `INSERT INTO withdrawal_requests (inventory_id, telegram_id)
+           VALUES ($1, $2) RETURNING id, status, created_at`,
           [inventoryId, String(user.id)]
         );
         await client.query(
-          \`UPDATE user_inventory SET status = 'withdraw_pending', updated_at = NOW()
-           WHERE id = $1\`, [inventoryId]
+          `UPDATE user_inventory SET status = 'withdraw_pending', updated_at = NOW()
+           WHERE id = $1`, [inventoryId]
         );
         await client.query('COMMIT');
         return send(res, 201, { success: true, request: request.rows[0] });
@@ -1233,13 +1233,13 @@ const server = http.createServer(async (req, res) => {
       const admin = await requireAdmin(req);
       if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
       const result = await pool.query(
-        \`SELECT r.id, r.telegram_id, u.username, u.first_name,
+        `SELECT r.id, r.telegram_id, u.username, u.first_name,
                 i.id AS inventory_id, i.prize_name, i.prize_stars,
                 i.prize_image_url, r.status, r.created_at
          FROM withdrawal_requests r
          JOIN users u ON u.telegram_id = r.telegram_id
          JOIN user_inventory i ON i.id = r.inventory_id
-         WHERE r.status = 'pending' ORDER BY r.created_at ASC LIMIT 100\`
+         WHERE r.status = 'pending' ORDER BY r.created_at ASC LIMIT 100`
       );
       return send(res, 200, { requests: result.rows });
     }
@@ -1254,9 +1254,9 @@ const server = http.createServer(async (req, res) => {
       try {
         await client.query('BEGIN');
         const locked = await client.query(
-          \`SELECT r.id, r.inventory_id, r.telegram_id, r.status, i.source_claim_id
+          `SELECT r.id, r.inventory_id, r.telegram_id, r.status, i.source_claim_id
            FROM withdrawal_requests r JOIN user_inventory i ON i.id = r.inventory_id
-           WHERE r.id = $1 FOR UPDATE OF r, i\`, [requestId]
+           WHERE r.id = $1 FOR UPDATE OF r, i`, [requestId]
         );
         if (!locked.rowCount || locked.rows[0].status !== 'pending') {
           await client.query('ROLLBACK');
@@ -1265,25 +1265,25 @@ const server = http.createServer(async (req, res) => {
         const row = locked.rows[0];
         if (action === 'complete') {
           await client.query(
-            \`UPDATE user_inventory SET status = 'withdrawn', updated_at = NOW()
-             WHERE id = $1 AND status = 'withdraw_pending'\`, [row.inventory_id]
+            `UPDATE user_inventory SET status = 'withdrawn', updated_at = NOW()
+             WHERE id = $1 AND status = 'withdraw_pending'`, [row.inventory_id]
           );
           await client.query(
-            \`UPDATE prize_claims SET status = 'done', processed_at = NOW()
-             WHERE id = $1 AND status = 'pending'\`, [row.source_claim_id]
+            `UPDATE prize_claims SET status = 'done', processed_at = NOW()
+             WHERE id = $1 AND status = 'pending'`, [row.source_claim_id]
           );
           await client.query(
-            \`UPDATE withdrawal_requests SET status = 'completed', processed_at = NOW()
-             WHERE id = $1\`, [requestId]
+            `UPDATE withdrawal_requests SET status = 'completed', processed_at = NOW()
+             WHERE id = $1`, [requestId]
           );
         } else {
           await client.query(
-            \`UPDATE user_inventory SET status = 'owned', updated_at = NOW()
-             WHERE id = $1 AND status = 'withdraw_pending'\`, [row.inventory_id]
+            `UPDATE user_inventory SET status = 'owned', updated_at = NOW()
+             WHERE id = $1 AND status = 'withdraw_pending'`, [row.inventory_id]
           );
           await client.query(
-            \`UPDATE withdrawal_requests SET status = 'rejected', processed_at = NOW()
-             WHERE id = $1\`, [requestId]
+            `UPDATE withdrawal_requests SET status = 'rejected', processed_at = NOW()
+             WHERE id = $1`, [requestId]
           );
         }
         await client.query('COMMIT');
