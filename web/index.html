@@ -232,6 +232,16 @@ input,select{
 }
 @media(prefers-reduced-motion:reduce){.win-message{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
+
+/* Нежное сообщение при проигрыше рулетки */
+.win-message.lose-message{
+ border-color:rgba(190,174,255,.58);
+ background:linear-gradient(135deg,rgba(38,24,67,.95),rgba(19,13,43,.97));
+ color:#eee6ff;
+ text-shadow:0 0 18px rgba(174,151,255,.7);
+ box-shadow:0 0 34px rgba(144,112,255,.28),inset 0 1px rgba(255,255,255,.18);
+}
+
 /* Win celebrations: light for ordinary, premium for expensive NFTs */
 .win-fx-layer{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden}
 .win-confetti{position:absolute;left:var(--x);top:-18px;width:7px;height:12px;border-radius:2px;background:var(--c);opacity:0;animation:confetti-fall var(--dur) cubic-bezier(.15,.65,.35,1) forwards;transform:rotate(var(--r))}
@@ -1796,6 +1806,28 @@ function triggerWinCelebration(tier) {
  setTimeout(()=>layer.remove(),4500);
 }
 
+
+function triggerLossCelebration() {
+ const layer=document.createElement('div');
+ layer.className='win-fx-layer';
+ layer.setAttribute('aria-hidden','true');
+ document.body.appendChild(layer);
+ const message=document.createElement('div');
+ message.className='win-message lose-message';
+ message.textContent='Повезёт в другой раз🥲';
+ message.setAttribute('role','status');
+ layer.appendChild(message);
+ // Более мягкая тактильная отдача для проигрыша.
+ try{
+  const haptic=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.HapticFeedback;
+  if(haptic&&typeof haptic.notificationOccurred==='function') haptic.notificationOccurred('error');
+ }catch(e){}
+ if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function'){
+  try{navigator.vibrate([35,45,35]);}catch(e){}
+ }
+ setTimeout(()=>layer.remove(),3600);
+}
+
 async function spin() {
  const button=document.getElementById('spinButton');
  const message=document.getElementById('message');
@@ -1811,6 +1843,7 @@ async function spin() {
   }
   await buildRoulette(data.result,data.gift||null);
   if(data.result!=='none') triggerWinCelebration(data.result);
+  else triggerLossCelebration();
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
   else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
   else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
