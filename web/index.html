@@ -1461,44 +1461,1407 @@ body{
 @media(prefers-reduced-motion:reduce){.home-tile-icon .gd-home-emoji{animation:none!important}}
 
 /* Lightweight smooth transitions — optimized for mobile WebViews */
-.tab-page.active{
- animation:gdPageEnter .38s cubic-bezier(.2,.75,.25,1) both!important;
+.tab-page.active{animation:gdPageEnter .32s ease-out both!important}
+.tab-page.is-leaving{display:block!important;pointer-events:none!important;animation:gdPageLeave .18s ease-in both!important}
+#tab-home.active .home-tile{animation:gdMenuTileEnter .36s ease-out both}
+#tab-home.active .home-tile:nth-child(2){animation-delay:.02s}
+#tab-home.active .home-tile:nth-child(3){animation-delay:.04s}
+#tab-home.active .home-tile:nth-child(4){animation-delay:.06s}
+#tab-home.active .home-tile:nth-child(5){animation-delay:.08s}
+#tab-home.active .home-tile:nth-child(6){animation-delay:.1s}
+#tab-home.active .home-tile:nth-child(7){animation-delay:.12s}
+#tab-home.active .home-tile:nth-child(8){animation-delay:.14s}
+#tab-home.active .home-tile:nth-child(9){animation-delay:.16s}
+#tab-home.is-leaving .home-tile{animation:gdMenuTileLeave .16s ease-in both!important}
+@keyframes gdPageEnter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gdPageLeave{from{opacity:1}to{opacity:0}}
+@keyframes gdMenuTileEnter{from{opacity:0;transform:translateY(7px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes gdMenuTileLeave{to{opacity:0;transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.tab-page.active,.tab-page.is-leaving,#tab-home.active .home-tile,#tab-home.is-leaving .home-tile{animation:none!important}}
+
+</style>
+</head>
+<body>
+
+<div id="gdSnowLayer" aria-hidden="true"></div>
+<header class="app-header">
+ <div class="header-brand">
+  <div class="brand-mark">✦</div>
+  <div class="brand-copy"><div class="logo">GIFTS<span>DROP</span></div><div class="subtitle">ИГРАЙ • ПОЛУЧАЙ • ПОБЕЖДАЙ</div></div>
+ </div>
+ <button class="help-button" onclick="openHelp()" aria-label="Помощь"><span>?</span> Помощь</button>
+ <div class="header-strip" aria-label="Текущий онлайн"><span class="live-dot"></span><span>Онлайн</span><strong class="activity-count" id="activityCount">123</strong></div>
+  <div class="wins-ticker" id="winsTicker" aria-label="Последние реальные выигрыши">
+   <div class="wins-ticker-label">✦ ПОСЛЕДНИЕ ВЫИГРЫШИ</div>
+   <div class="wins-ticker-track" id="winsTickerTrack"><span class="win-chip">Загружаем результаты…</span></div>
+  </div>
+</header>
+
+
+<section class="tab-page home-page active" id="tab-home">
+ <div class="home-intro">
+  <div class="home-kicker">GIFTSDROP • PREMIUM EXPERIENCE</div>
+  <h1 class="home-title">Выбери свой раздел</h1>
+  <p class="home-description">Всё самое интересное в GiftsDrop — каждый раздел отдельно.</p>
+ </div>
+ <div class="home-grid" aria-label="Разделы GiftsDrop">
+  <button class="home-tile home-tile-roulette" onclick="showTab('spin')" aria-label="Открыть рулетку">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🎰</span></span><span class="home-tile-copy"><span class="home-tile-title">РУЛЕТКА</span><span class="home-tile-subtitle">Испытай удачу и забери NFT</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-prizes" onclick="showTab('prizes')" aria-label="Открыть призы и шансы">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРИЗЫ</span><span class="home-tile-subtitle">Подарки и шансы выпадения</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-gifts" onclick="showTab('gifts')" aria-label="Открыть магазин подарков">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🎁</span></span><span class="home-tile-copy"><span class="home-tile-title">МАГАЗИН</span><span class="home-tile-subtitle">Каталог Telegram-подарков</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-balance" onclick="showTab('balance')" aria-label="Открыть баланс">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🪙</span></span><span class="home-tile-copy"><span class="home-tile-title">БАЛАНС</span><span class="home-tile-subtitle">Серебро и пополнение Stars</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-friends" onclick="showTab('friends')" aria-label="Открыть друзей">
+   <span class="home-tile-icon"><span class="gd-home-emoji">👥</span></span><span class="home-tile-copy"><span class="home-tile-title">ДРУЗЬЯ</span><span class="home-tile-subtitle">Приглашай и получай бонусы</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-profile" onclick="showTab('profile')" aria-label="Открыть профиль и коллекцию">
+   <span class="home-tile-icon"><span class="gd-home-emoji">👤</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОФИЛЬ</span><span class="home-tile-subtitle">Аккаунт и твоя NFT-коллекция</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-rocket" onclick="showTab('rocket')" aria-label="Открыть ракету">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🚀</span></span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile home-tile-upgrade" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
+   <span class="home-tile-icon"><span class="gd-home-emoji">⚡</span></span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+ </div>
+</section>
+
+<section class="tab-page" id="tab-spin">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>РУЛЕТКА</span></div>
+ <div class="card">
+  <div class="section-tag">YOUR BALANCE</div>
+  <div class="stats">
+   <div class="stat"><small>Серебро</small><strong id="silver">0</strong></div>
+   <div class="stat"><small>Бесплатные прокрутки</small><strong id="spins">0</strong></div>
+  </div>
+ </div>
+ <div class="card">
+  <div class="section-tag">THE MAIN EVENT</div>
+  <h2>Колесо удачи</h2>
+  <div class="roulette-wrap" aria-label="Горизонтальная рулетка подарков">
+   <div class="roulette-glow"></div>
+   <div class="roulette-pointer" aria-hidden="true"><span></span></div>
+   <div class="roulette-window">
+    <div class="roulette-track" id="rouletteTrack">
+     <div class="roulette-placeholder"><span>🎁</span><small>GIFT</small></div>
+     <div class="roulette-placeholder"><span>💎</span><small>DROP</small></div>
+     <div class="roulette-placeholder"><span>🎁</span><small>GIFT</small></div>
+    </div>
+   </div>
+   <div class="roulette-caption">ПРИЗ ОСТАНОВИТСЯ ПОД УКАЗАТЕЛЕМ</div>
+  </div>
+  <div class="wheel-legend" aria-label="Сектора рулетки">
+   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>79,999%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Обычный NFT</span><b>15%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot unusual-dot"></i><span>Необычный NFT</span><b>5%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>Редкий NFT</span><b>0,001%</b></div>
+  </div>
+  <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ ✦</button>
+  <div id="message"></div>
+  <div class="notice">
+   Первые 3 прокрутки бесплатные. Далее стоимость одной прокрутки — 20 серебра.
+   Выдача NFT осуществляется администратором после проверки результата.
+  </div>
+ </div>
+ <div class="card">
+  <div class="section-tag">WINNING PROBABILITIES</div>
+  <h2>Шансы выпадения</h2>
+  <div class="odds"><span>🫧 Без выигрыша</span><b>79,999%</b></div>
+  <div class="odds"><span>🎁 Обычный NFT · 15–100 ⭐</span><b>15%</b></div>
+  <div class="odds"><span>💜 Необычный NFT · 300–1000 ⭐</span><b>5%</b></div>
+  <div class="odds"><span>💎 Редкий NFT · 1000–10000 ⭐</span><b>0,001%</b></div>
+ </div>
+</section>
+
+<section class="tab-page" id="tab-prizes">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРИЗЫ И ШАНСЫ</span></div>
+ <div class="page-intro"><span class="eyebrow">GIFTSDROP • ПРАВИЛА</span><h1>Призы и шансы</h1><p>Все результаты определяются сервером. Здесь указаны действующие вероятности выпадения.</p></div>
+ <div class="prize-card prize-empty"><div class="prize-emoji">🫧</div><div><b>Без выигрыша</b><span>Попробуй удачу ещё раз</span></div><strong>79,999%</strong></div>
+ <div class="prize-card"><div class="prize-emoji">🎁</div><div><b>Обычный NFT</b><span>Коллекционные подарки стоимостью 15–100 ⭐</span></div><strong>15%</strong></div>
+ <div class="prize-card"><div class="prize-emoji">💜</div><div><b>Необычный NFT</b><span>Коллекционные подарки стоимостью 300–1000 ⭐</span></div><strong>5%</strong></div>
+ <div class="prize-card rare-prize"><div class="prize-emoji">💎</div><div><b>Редкий NFT</b><span>Коллекционные подарки стоимостью 1000–10000 ⭐</span></div><strong>0,001%</strong></div>
+ <div class="card"><div class="section-tag">КАК ЭТО РАБОТАЕТ</div><h2>Просто и прозрачно</h2><div class="rule-row"><span>🎟️</span><p><b>3 бесплатные попытки</b><br>Доступны при первом запуске.</p></div><div class="rule-row"><span>🪙</span><p><b>20 серебра за прокрутку</b><br>После использования бесплатных попыток.</p></div><div class="rule-row"><span>🛡️</span><p><b>Серверный результат</b><br>Анимация колеса не влияет на шанс выигрыша.</p></div></div>
+</section>
+
+<section class="tab-page" id="tab-profile">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРОФИЛЬ</span></div>
+ <div class="page-intro"><span class="eyebrow">ТВОЙ АККАУНТ</span><h1>Профиль</h1><p>Твоя статистика и игровой баланс в GiftsDrop.</p></div>
+ <div class="card profile-card">
+  <div class="profile-avatar" id="profileAvatar">✦</div>
+  <div class="profile-name" id="profileName">Игрок GiftsDrop</div>
+  <div class="profile-username" id="profileUsername">Открыто через Telegram</div>
+  <div class="profile-stats"><div><b id="profileSilver">0</b><span>Серебро 🪙</span></div><div><b id="profileSpins">0</b><span>Бесплатные</span></div><div><b id="profileRefs">0</b><span>Друзья</span></div></div>
+ </div>
+  <div class="card" id="profileWinHistoryCard">
+   <div class="section-tag">YOUR NFT COLLECTION</div>
+   <h2>Моя коллекция</h2>
+   <div id="profileWinHistory"><p class="muted">Загружаем историю…</p></div>
+  </div>
+  <div class="card"><div class="section-tag">БЫСТРЫЕ ДЕЙСТВИЯ</div><button onclick="showTab('balance')">ПОПОЛНИТЬ СЕРЕБРО</button><button class="secondary" onclick="showTab('friends')">ПРИГЛАСИТЬ ДРУЗЕЙ</button><button class="secondary" onclick="openHelp()">СВЯЗАТЬСЯ С ПОДДЕРЖКОЙ</button></div>
+</section>
+
+<section class="tab-page" id="tab-friends">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ДРУЗЬЯ</span></div>
+ <div class="card">
+  <div class="section-tag">INVITE & EARN</div>
+  <h2>Приглашай друзей</h2>
+  <p class="muted">За каждые 10 приглашённых пользователей получишь 3 бесплатные прокрутки.</p>
+  <div class="ref-stats"><span>Твои приглашения</span><b id="refCount">0</b></div>
+  <div class="progress"><div class="progress-fill" id="refProgress"></div></div>
+  <div class="ref-stats"><span id="refProgressText">0 из 10</span><span>✦ +3 прокрутки</span></div>
+  <div class="ref-link" id="refLink">Загружаем ссылку...</div>
+  <button class="secondary" onclick="copyReferral()">СКОПИРОВАТЬ ССЫЛКУ</button>
+  <button onclick="shareReferral()">ПРИГЛАСИТЬ ДРУЗЕЙ ✦</button>
+  <div id="refMessage"></div>
+ </div>
+ <div class="card">
+  <div class="section-tag">YOUR REWARDS</div>
+  <h2>Награды</h2>
+  <p class="muted">За каждые 10 новых приглашённых пользователей начисляются 3 дополнительные бесплатные прокрутки.</p>
+ </div>
+</section>
+
+<section class="tab-page" id="tab-balance">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>БАЛАНС</span></div>
+ <div class="card">
+  <div class="section-tag">ADD FUNDS</div>
+  <h2>Пополнить серебро</h2>
+  <p class="muted">Выбери получателя, отправь ему подарок и создай заявку. Серебро будет начислено после ручной проверки.</p>
+  <select id="recipient">
+   <option value="@traptrap4">@traptrap4</option>
+   <option value="@RichGues">@RichGues</option>
+  </select>
+  <button class="secondary" onclick="openRecipient()">ПЕРЕЙТИ К ПОЛУЧАТЕЛЮ</button>
+  <label class="currency-input-label" for="stars">⭐ TELEGRAM STARS — СУММА ПОПОЛНЕНИЯ</label>
+   <div class="currency-input-wrap"><span>⭐</span><input id="stars" type="number" min="1" max="100000" placeholder="Например, 100 Stars"></div>
+  <button onclick="createTopup()">СОЗДАТЬ ЗАЯВКУ ✦</button>
+  <div id="topupMessage"></div>
+  <div class="notice">Переход в профиль не отправляет подарок автоматически. После отправки создай заявку и дождись проверки.</div>
+ </div>
+ <div class="card">
+  <div class="section-tag">YOUR ACCOUNT</div>
+  <h2>Твой баланс</h2>
+  <div class="stats balance-stats">
+   <div class="stat silver-stat"><small>🪙 ИГРОВОЕ СЕРЕБРО</small><strong id="silverBalance">0</strong><span>Внутренний баланс GiftsDrop</span></div>
+   <div class="stat spins-stat"><small>🎟 БЕСПЛАТНЫЕ ПРОКРУТКИ</small><strong id="spinsBalance">0</strong><span>Доступно сейчас</span></div>
+  </div>
+  <div class="notice">1 Telegram Star соответствует 1 единице внутреннего серебра по правилам GiftsDrop.</div>
+ </div>
+ <div class="card" id="adminPanel">
+  <div class="section-tag">CONTROL CENTER</div>
+  <h2>Выигранные NFT</h2>
+  <button class="secondary" onclick="loadPrizeClaims()">ОБНОВИТЬ ВЫИГРЫШИ</button>
+  <div id="prizeAdminMessage"></div><div id="prizeAdminClaims"></div>
+  <hr style="border-color:rgba(255,255,255,.08);margin:18px 0">
+  <h2>Заявки на вывод NFT</h2>
+  <button class="secondary" onclick="loadWithdrawalRequests()">ОБНОВИТЬ ВЫВОДЫ</button>
+  <div id="withdrawalAdminMessage"></div><div id="withdrawalAdminRequests"></div>
+  <hr style="border-color:rgba(255,255,255,.08);margin:18px 0">
+  <h2>Заявки на пополнение</h2>
+  <button class="secondary" onclick="loadRequests()">ОБНОВИТЬ ЗАЯВКИ</button>
+  <div id="adminMessage"></div><div id="requests"></div>
+ </div>
+</section>
+
+<section class="tab-page" id="tab-gifts">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>МАГАЗИН</span></div>
+ <div class="card">
+  <div class="gift-hero">
+   <div class="section-tag">THE WORLD OF TELEGRAM GIFTS</div>
+   <div class="gift-icon">🎁</div>
+   <div class="market-title">GIFTSDROP MARKET</div>
+   <div class="market-subtitle">EXCLUSIVE TELEGRAM GIFTS</div>
+   <p class="muted" style="margin-top:15px">
+    Выбирай подарок, оплачивай Telegram Stars и получай его на свой аккаунт.
+   </p>
+   <div class="gift-soon">✦ РУЧНАЯ ВЫДАЧА ПОСЛЕ ОПЛАТЫ ✦</div>
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="section-tag">EXCLUSIVE CATALOG</div>
+  <h2>Каталог подарков</h2>
+  <p class="muted">Оплата проходит внутри Telegram. Цена указана в Stars.</p>
+  <div id="giftCatalog" class="gift-grid">
+   <div class="muted">Загружаем каталог...</div>
+  </div>
+  <div id="giftMessage"></div>
+ </div>
+
+ <div class="card">
+  <div class="section-tag">YOUR PURCHASES</div>
+  <h2>Мои заказы</h2>
+  <button class="secondary" onclick="loadGiftOrders()">ОБНОВИТЬ ИСТОРИЮ</button>
+  <div id="giftOrders"><p class="muted">Загружаем историю...</p></div>
+ </div>
+
+ <div class="card" id="giftAdminPanel">
+  <div class="section-tag">MARKET CONTROL CENTER</div>
+  <h2>Заказы магазина</h2>
+  <button class="secondary" onclick="loadGiftAdminOrders()">ОБНОВИТЬ ЗАКАЗЫ</button>
+  <div id="giftAdminMessage"></div>
+  <div id="giftAdminOrders"></div>
+ </div>
+
+ <div class="notice">
+  Важно: после успешной оплаты заказ поступает администратору.
+  Подарок отправляется вручную. Статус заказа обновляется после отметки администратора.
+ </div>
+</section>
+
+<section class="tab-page" id="tab-inventory">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ИНВЕНТАРЬ</span></div>
+ <div class="page-intro inventory-intro"><span class="eyebrow">YOUR TREASURE</span><h1>Твой инвентарь</h1><p>Здесь собраны выигранные NFT и подарки. Доступные NFT можно отправить на вывод. Серебро вывести нельзя.</p></div>
+ <div class="inventory-summary"><span>🎒 МОИ ПРЕДМЕТЫ</span><b id="inventoryCount">—</b></div>
+ <div class="card inventory-card"><div id="inventoryItems"><p class="muted">Загружаем инвентарь…</p></div></div>
+ <div class="notice">Серебро нельзя вывести. Выводятся только NFT и подарки. Вывод оформляется заявкой и подтверждается администратором после фактической отправки подарка.</div>
+</section>
+
+<section class="tab-page" id="tab-rocket">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ROCKET • LIVE GAME</span></div>
+ <div class="rocket-topline"><span class="rocket-live-dot"></span> ИГРА ИДЁТ <b id="rocketRoundLabel">РАУНД #001</b><span class="rocket-test-label">ТЕСТОВЫЙ РЕЖИМ</span></div>
+ <div class="rocket-stage" id="rocketStage">
+  <div class="rocket-stars"></div><div class="rocket-planet"></div>
+  <div class="rocket-cloud cloud-one"></div><div class="rocket-cloud cloud-two"></div>
+  <div class="rocket-flight-path"></div>
+  <div class="rocket-flame" id="rocketFlame">🔥</div>
+  <div class="rocket-ship" id="rocketShip">🚀</div>
+  <div class="rocket-status" id="rocketStatus">ГОТОВ К ЗАПУСКУ</div>
+  <div class="rocket-multiplier" id="rocketMultiplier">1.00<span>x</span></div>
+  <div class="rocket-stage-bottom"><span>1.01x</span><span>МАКС. 10.00x</span></div>
+ </div>
+ <div class="rocket-live-stats">
+  <div><small>ИГРОКОВ В РАУНДЕ</small><b id="rocketPlayers">12</b></div>
+  <div><small>ПОСЛЕДНИЙ КРАШ</small><b id="rocketLastCrash">2.48x</b></div>
+  <div><small>ТЕСТОВЫЙ БАЛАНС</small><b><span id="rocketDemoBalance">1 000</span> 🪙</b></div>
+ </div>
+ <div class="card rocket-bet-card">
+  <div class="rocket-card-heading"><div><div class="section-tag">ТВОЯ СТАВКА</div><h2>Врывайся в раунд</h2></div><span class="rocket-round-pill">ROUND LIVE</span></div>
+  <div class="rocket-mode"><button type="button" class="rocket-mode-btn active" id="rocketSilverMode" onclick="setRocketMode('silver')">🪙 СЕРЕБРО</button><button type="button" class="rocket-mode-btn" id="rocketNftMode" onclick="setRocketMode('nft')">🎁 NFT</button></div>
+  <div id="rocketSilverControls"><label class="currency-input-label" for="rocketStake">РАЗМЕР СТАВКИ</label><div class="rocket-input-wrap"><input id="rocketStake" type="number" min="1" max="1000" value="50"><span>🪙</span></div><div class="rocket-quick-bets"><button type="button" onclick="setRocketStake(25)">25</button><button type="button" onclick="setRocketStake(50)">50</button><button type="button" onclick="setRocketStake(100)">100</button><button type="button" onclick="setRocketStake(250)">250</button></div></div>
+  <div id="rocketNftControls" hidden><label class="currency-input-label" for="rocketNftSelect">ВЫБЕРИ NFT ДЛЯ СТАВКИ</label><select id="rocketNftSelect"><option value="">Загрузка инвентаря…</option></select><p class="rocket-hint">В тестовом режиме NFT не списывается и остаётся в инвентаре.</p></div>
+  <div class="rocket-actions"><button type="button" id="rocketLaunchButton" onclick="launchRocket()">🚀 ПОСТАВИТЬ И ВОЙТИ</button><button type="button" id="rocketCashoutButton" onclick="cashoutRocket()" disabled>ЗАБРАТЬ ВЫИГРЫШ</button></div>
+  <div class="rocket-result" id="rocketResult">Выбери ставку и заходи в следующий раунд.</div>
+  <div class="rocket-test-note">Тестовый игровой баланс — не реальные серебро или NFT. Ничего не списывается и не выводится.</div>
+ </div>
+ <div class="card rocket-players-card"><div class="rocket-list-head"><h2>УЧАСТНИКИ РАУНДА</h2><span>LIVE</span></div><div id="rocketPlayerList"></div></div>
+ <div class="rocket-history"><div class="rocket-list-head"><h2>ПОСЛЕДНИЕ РАУНДЫ</h2><span>HISTORY</span></div><div id="rocketHistory"></div></div>
+</section>
+
+<section class="tab-page" id="tab-upgrade">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>UPGRADE • WORKSHOP</span></div>
+ <div class="upgrade-hero upgrade-hero-pro"><div class="upgrade-wheel" aria-label="Круг апгрейда NFT"><div class="upgrade-wheel-ring"></div><div class="upgrade-wheel-track"><span>🎁</span><span>💎</span><span>🎀</span><span>⭐</span><span>🧸</span><span>💠</span><span>🎁</span><span>✨</span></div><div class="upgrade-wheel-pointer">▼</div><div class="upgrade-wheel-core"><div class="upgrade-wheel-icon">⚡</div><b> NFT </b><small>UPGRADE</small></div><div class="upgrade-wheel-glow"></div></div><div class="rocket-eyebrow">GIFT EVOLUTION SYSTEM</div><h1>ПОДНИМИ УРОВЕНЬ</h1><p>Выбери свой подарок, цель и испытай удачу. Чем дороже цель — тем ниже шанс успеха.</p><div class="upgrade-mini-stats"><span>🎁 ТВОЙ NFT</span><b>➜</b><span>💎 НОВЫЙ УРОВЕНЬ</span></div></div>
+ <div class="card upgrade-card upgrade-selector-card">
+  <div class="section-tag">ШАГ 01 • ИСХОДНЫЙ ПРЕДМЕТ</div><h2>Что улучшаем?</h2><p class="upgrade-subtext">Выбери NFT из своего инвентаря.</p>
+  <div id="upgradeSourceList" class="upgrade-source-list"><div class="upgrade-empty">Загружаем твой инвентарь…</div></div>
+  <div class="section-tag upgrade-step-two">ШАГ 02 • ЖЕЛАЕМЫЙ ПРИЗ</div><h2>На что меняем?</h2>
+  <div id="upgradeTargetList" class="upgrade-target-grid"><div class="upgrade-empty">Сначала выбери исходный предмет.</div></div>
+  <div class="upgrade-chance-panel"><div><small>ТВОЙ ШАНС УСПЕХА</small><b id="upgradeChance">—%</b></div><div class="upgrade-chance-track"><span id="upgradeChanceFill"></span></div><p id="upgradeChanceCaption">Выбери предмет и цель, чтобы увидеть шанс.</p></div>
+   <div class="upgrade-chance-control"><label for="upgradeChanceSlider"><span>НАСТРОЙ ШАНС ПОПАДАНИЯ</span><b><output id="upgradeChanceValue">30%</output></b></label><input id="upgradeChanceSlider" type="range" min="1" max="70" step="1" value="30"><div class="upgrade-range-labels"><span>1% · РИСК</span><span>70% · ВЫШЕ ШАНС</span></div></div>
+  <button type="button" id="upgradeTryButton" onclick="runUpgrade()" disabled>⚡ ПОПРОБОВАТЬ АПГРЕЙД</button>
+  <div class="upgrade-result" id="upgradeResult">Демонстрационный раунд: результат не меняет реальные NFT или баланс.</div>
+ </div>
+ <div class="upgrade-how"><div><b>01</b><span>Выбери NFT из инвентаря</span></div><div><b>02</b><span>Выбери цель подороже</span></div><div><b>03</b><span>Запусти анимацию и узнай результат</span></div></div>
+ <div class="upgrade-test-note">Демонстрационный режим. До подключения серверной проверки вероятности и транзакций реальные NFT и серебро не участвуют.</div>
+</section>
+
+<div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
+
+
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+let referralLink = '';
+let spinning = false;
+let catalogLoaded = false;
+
+(function initChristmasDecor(){
+ const layer=document.getElementById('gdSnowLayer');if(!layer)return;
+ for(let i=0;i<38;i++){
+  const flake=document.createElement('i');flake.className='gd-snowflake';
+  flake.style.setProperty('--x',(Math.random()*100)+'%');
+  flake.style.setProperty('--size',(3+Math.random()*6)+'px');
+  flake.style.setProperty('--opacity',(0.35+Math.random()*0.58).toFixed(2));
+  flake.style.setProperty('--duration',(8+Math.random()*13)+'s');
+  flake.style.setProperty('--delay',(-Math.random()*20)+'s');
+  flake.style.setProperty('--drift',(-35+Math.random()*70)+'px');layer.appendChild(flake);
+ }
+})();
+
+
+loadRecentWins();
+setInterval(loadRecentWins, 60000);
+
+// Декоративный счётчик онлайна: число меняется раз в секунду.
+let displayedOnline = 123;
+const activityCount = document.getElementById('activityCount');
+if (activityCount) {
+ setInterval(() => {
+  displayedOnline = Math.max(100, Math.min(199, displayedOnline + Math.floor(Math.random()*13)-6));
+  activityCount.textContent = displayedOnline;
+ }, 1000);
 }
-.tab-page.is-leaving{
- display:block!important;
- pointer-events:none!important;
- animation:gdPageLeave .22s ease-in both!important;
+
+async function loadRecentWins() {
+ const track=document.getElementById('winsTickerTrack');
+ if(!track)return;
+ try {
+  const data=await api('/api/wins/recent');
+  const wins=Array.isArray(data.wins)?data.wins:[];
+  track.replaceChildren();
+  if(!wins.length) {
+   const empty=document.createElement('span');
+   empty.className='win-chip';
+   empty.textContent='Пока нет выигрышей — будь первым!';
+   track.appendChild(empty);
+   track.style.animation='none';
+   return;
+  }
+
+  // Это случайные анонимные псевдонимы для приватности, не реальные Telegram-ники.
+  const nickRoots=['NeonFox','LunaByte','PixelWolf','StarNinja','MangoCat','CyberBee','Frosty','RubyFox','SkyDrop','NovaKid','TurboBear','MiniBoss','GhostPlay','LuckyRay','VioletX','KiraMoon','DarkPixel','SunnyFox','BlueComet','FirePanda','Cloudy','MegaMew','NightOwl','GoldRush','TinyTiger','EchoStar','Minty','ZeroCool','PinkStorm','CosmoCat','RapidFox','IceNova','Dreamer','WildBerry','ByteKing','MoonDust'];
+  const palettes=[
+   'linear-gradient(135deg,#ffcf5a,#ff72b6)','linear-gradient(135deg,#74e5ff,#8d83ff)',
+   'linear-gradient(135deg,#9ef0bd,#42b8a5)','linear-gradient(135deg,#ff9d76,#ffcf5a)',
+   'linear-gradient(135deg,#c7a2ff,#74b8ff)','linear-gradient(135deg,#ff8fbd,#b99aff)'
+  ];
+  for(let i=nickRoots.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [nickRoots[i],nickRoots[j]]=[nickRoots[j],nickRoots[i]];
+  }
+  const addBatch=()=>{
+   wins.forEach((win,index)=>{
+    const chip=document.createElement('span');
+    chip.className='win-chip';
+    const avatar=document.createElement('span');
+    avatar.className='win-avatar';
+    const nick=nickRoots[index%nickRoots.length]+(index>=nickRoots.length?String(Math.floor(index/nickRoots.length)+1):'');
+    avatar.textContent=nick.slice(0,2).toUpperCase();
+    avatar.style.background=palettes[index%palettes.length];
+
+    const player=document.createElement('span');
+    player.className='win-player';
+    player.textContent=nick;
+
+    const icon=document.createElement('span');
+    icon.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';
+
+    const prize=document.createElement('b');
+    prize.className='win-prize';
+    prize.textContent=String(win.prize_name||'NFT-подарок');
+
+    chip.append(avatar,player,icon,prize);
+    if(Number(win.prize_stars)>0){
+     const value=document.createElement('span');
+     value.className='win-value';
+     value.textContent=Number(win.prize_stars)+' ⭐';
+     chip.appendChild(value);
+    }
+    track.appendChild(chip);
+   });
+  };
+  addBatch();
+  const duplicate=track.cloneNode(true);
+  duplicate.setAttribute('aria-hidden','true');
+  track.append(...Array.from(duplicate.children));
+  // Держим скорость движения примерно одинаковой при разном числе карточек.
+  const halfWidth=track.scrollWidth/2;
+  track.style.animationDuration=Math.max(14,halfWidth/135)+'s';
+  track.style.animation='none';
+  void track.offsetWidth;
+  track.style.animation='';
+ } catch(error) {
+  track.replaceChildren();
+  const unavailable=document.createElement('span');
+  unavailable.className='win-chip';
+  unavailable.textContent='Лента выигрышей временно недоступна';
+  track.appendChild(unavailable);
+  track.style.animation='none';
+ }
 }
-#tab-home.active .home-tile{
- animation:gdMenuTileEnter .44s cubic-bezier(.2,.75,.25,1) both;
+
+let gdTabTransitionTimer = null;
+function showTab(name) {
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade'];
+ const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
+ const targetId = 'tab-'+name;
+ const target = document.getElementById(targetId);
+ if(!target) return;
+ if(gdTabTransitionTimer){clearTimeout(gdTabTransitionTimer);gdTabTransitionTimer=null;}
+ pages.forEach(page=>{
+  page.classList.remove('is-leaving');
+  if(page!==target && page.classList.contains('active')){
+   page.classList.remove('active');
+   page.classList.add('is-leaving');
+  }
+ });
+ target.classList.add('active');
+ window.scrollTo({top:0,behavior:'smooth'});
+ gdTabTransitionTimer=setTimeout(()=>{
+  pages.forEach(page=>page.classList.remove('is-leaving'));
+  gdTabTransitionTimer=null;
+ },440);
+ if(name==='home') return;
+ if(name==='friends') loadReferrals();
+ if(name==='balance') loadAccount();
+ if(name==='profile') loadProfile();
+ if(name==='inventory') loadInventory();
+ if(name==='rocket') {loadRocketInventory();renderRocketPlayers();renderRocketHistory();}
+ if(name==='upgrade') loadUpgradeData();
+ if(name==='gifts') {
+  loadGiftCatalog();
+  loadGiftOrders();
+  loadGiftAdminOrders();
+ }
 }
-#tab-home.active .home-tile:nth-child(2){animation-delay:.025s}
-#tab-home.active .home-tile:nth-child(3){animation-delay:.05s}
-#tab-home.active .home-tile:nth-child(4){animation-delay:.075s}
-#tab-home.active .home-tile:nth-child(5){animation-delay:.1s}
-#tab-home.active .home-tile:nth-child(6){animation-delay:.125s}
-#tab-home.active .home-tile:nth-child(7){animation-delay:.15s}
-#tab-home.active .home-tile:nth-child(8){animation-delay:.175s}
-#tab-home.active .home-tile:nth-child(9){animation-delay:.2s}
-#tab-home.is-leaving .home-tile{
- animation:gdMenuTileLeave .2s ease-in both!important;
+
+function openHelp() {
+ tg.openTelegramLink('https://t.me/traptrap4');
 }
-@keyframes gdPageEnter{
- from{opacity:0;transform:translateY(8px) scale(.995)}
- to{opacity:1;transform:translateY(0) scale(1)}
+
+async function loadInventory() {
+ const container=document.getElementById('inventoryItems');
+ const count=document.getElementById('inventoryCount');
+ if(!container)return;
+ container.replaceChildren();
+ try {
+  const data=await api('/api/me/inventory');
+  const items=Array.isArray(data.items)?data.items:[];
+  count.textContent=String(items.length);
+  if(!items.length) {
+   const empty=document.createElement('p');empty.className='muted';
+   empty.textContent='Пока здесь пусто. Выигранные NFT появятся здесь.';
+   container.appendChild(empty);return;
+  }
+  const grid=document.createElement('div');grid.className='inventory-grid';
+  items.forEach(itemData=>{
+   const item=document.createElement('article');item.className='inventory-item';
+   const art=document.createElement('div');art.className='inventory-art';
+   const url=typeof itemData.prize_image_url==='string'?itemData.prize_image_url:'';
+   try {
+    const parsed=new URL(url,window.location.origin);
+    if(parsed.protocol==='https:'||parsed.protocol==='http:') {
+     const img=document.createElement('img');img.src=parsed.href;img.alt=String(itemData.prize_name||'NFT-подарок');img.loading='lazy';
+     img.onerror=()=>{img.remove();art.textContent='🎁';};art.appendChild(img);
+    } else art.textContent='🎁';
+   } catch {art.textContent='🎁';}
+   const name=document.createElement('b');name.className='inventory-name';name.textContent=String(itemData.prize_name||'NFT-подарок');
+   const meta=document.createElement('span');meta.className='inventory-meta';
+   meta.textContent=(Number(itemData.prize_stars)>0?Number(itemData.prize_stars)+' ⭐ · ':'')+(itemData.created_at?new Date(itemData.created_at).toLocaleDateString('ru-RU'):'');
+   const status=document.createElement('span');status.className='inventory-status';
+   status.textContent=itemData.status==='withdraw_pending'?'ЗАЯВКА НА ВЫВОД': 'В ИНВЕНТАРЕ';
+   item.append(art,name,meta,status);
+   if(itemData.status==='owned') {
+    const withdraw=document.createElement('button');
+    withdraw.type='button';withdraw.className='inventory-withdraw-btn';withdraw.textContent='ВЫВЕСТИ NFT';
+    withdraw.addEventListener('click',async()=>{
+     withdraw.disabled=true;withdraw.textContent='ОТПРАВКА...';
+     try {
+      await api('/api/me/withdrawals',{method:'POST',body:JSON.stringify({inventory_id:itemData.inventory_id})});
+      await loadInventory();
+     } catch(error) {
+      withdraw.disabled=false;withdraw.textContent='ВЫВЕСТИ NFT';
+      status.textContent=error.message;
+     }
+    });
+    item.appendChild(withdraw);
+   }
+   grid.appendChild(item);
+  });
+  container.appendChild(grid);
+ } catch(error) {
+  count.textContent='—';const failed=document.createElement('p');failed.className='muted';
+  failed.textContent='Не удалось загрузить инвентарь. Открой раздел позже.';container.appendChild(failed);
+ }
 }
-@keyframes gdPageLeave{
- from{opacity:1;transform:translateY(0)}
- to{opacity:0;transform:translateY(-4px)}
+
+async function loadProfile() {
+ try {
+  const user = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : {};
+  const name = [user.first_name,user.last_name].filter(Boolean).join(' ') || 'Игрок GiftsDrop';
+  document.getElementById('profileName').textContent=name;
+  document.getElementById('profileUsername').textContent=user.username?'@'+user.username:'Аккаунт Telegram';
+  const avatar=document.getElementById('profileAvatar');
+  if(user.photo_url) {
+   avatar.innerHTML='';
+   const img=document.createElement('img'); img.src=user.photo_url; img.alt='Аватар Telegram'; avatar.appendChild(img);
+  }
+  const data=await api('/api/me');
+  document.getElementById('profileSilver').textContent=data.silver ?? 0;
+  document.getElementById('profileSpins').textContent=data.free_spins ?? 0;
+  const refs=await api('/api/referrals');
+  document.getElementById('profileRefs').textContent=refs.referral_count ?? 0;
+  await loadProfileWinHistory();
+ } catch(error) {
+  document.getElementById('profileUsername').textContent='Не удалось загрузить статистику';
+ }
 }
-@keyframes gdMenuTileEnter{
- 0%{opacity:0;transform:translateY(10px) scale(.97)}
- 75%{opacity:1;transform:translateY(-1px) scale(1.005)}
- 100%{opacity:1;transform:translateY(0) scale(1)}
+
+async function loadProfileWinHistory() {
+ const container=document.getElementById('profileWinHistory');
+ if(!container)return;
+ try {
+  const data=await api('/api/me/wins');
+  const wins=Array.isArray(data.wins)?data.wins:[];
+  container.replaceChildren();
+  if(!wins.length) {
+   const empty=document.createElement('p');
+   empty.className='muted';
+   empty.textContent='Коллекция пока пуста. Попробуй удачу в рулетке!';
+   container.appendChild(empty);
+   return;
+  }
+  const gallery=document.createElement('div');
+  gallery.className='profile-win-gallery';
+  wins.forEach(win=>{
+   const item=document.createElement('div');
+   item.className='profile-win-item';
+   const art=document.createElement('div');
+   art.className='profile-win-art';
+   const imageUrl=typeof win.prize_image_url==='string'?win.prize_image_url:'';
+   let safeImageUrl='';
+   try {
+    const parsed=new URL(imageUrl,window.location.origin);
+    if(parsed.protocol==='https:'||parsed.protocol==='http:')safeImageUrl=parsed.href;
+   } catch {}
+   if(safeImageUrl) {
+    const img=document.createElement('img');
+    img.src=safeImageUrl;
+    img.alt=String(win.prize_name||'NFT-подарок');
+    img.loading='lazy';
+    img.onerror=()=>{img.remove();art.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';};
+    art.appendChild(img);
+   } else {
+    art.textContent=win.prize_type==='rare'?'💎':win.prize_type==='unusual'?'💜':'🎁';
+   }
+   const details=document.createElement('div');
+   details.className='profile-win-details';
+   const name=document.createElement('b');
+   name.textContent=String(win.prize_name||'NFT-подарок');
+   const meta=document.createElement('span');
+   const date=win.created_at?new Date(win.created_at).toLocaleDateString('ru-RU'):'Дата неизвестна';
+   meta.textContent=(Number(win.prize_stars)>0?Number(win.prize_stars)+' ⭐ · ':'')+date;
+   details.append(name,meta);
+   const status=document.createElement('strong');
+   status.className=win.status==='done'?'profile-win-status is-done':'profile-win-status';
+   status.textContent=win.status==='done'?'Выдан':'Ожидает выдачи';
+   details.appendChild(status);
+   item.append(art,details);
+   gallery.appendChild(item);
+  });
+  container.appendChild(gallery);
+ } catch(error) {
+  container.textContent='Не удалось загрузить коллекцию.';
+ }
 }
-@keyframes gdMenuTileLeave{
- to{opacity:0;transform:translateY(-6px) scale(.98)}
+
+async function api(url, options={}) {
+ const response = await fetch(url,{
+  ...options,
+  headers:{
+   'Content-Type':'application/json',
+   'X-Telegram-Init-Data':tg.initData,
+   ...(options.headers||{})
+  }
+ });
+ const data = await response.json().catch(()=>({}));
+ if(!response.ok) throw new Error(data.error||'Ошибка сервера');
+ return data;
 }
-@media(prefers-reduced-motion:reduce){
- .tab-page.active,.tab-page.is-leaving,#tab-home.active .home-tile,#tab-home.is-leaving .home-tile{animation:none!important}
+
+function openRecipient() {
+ const username=document.getElementById('recipient').value.replace('@','');
+ tg.openTelegramLink('https://t.me/'+username);
 }
+
+async function loadAccount() {
+ try {
+  const data=await api('/api/me');
+  document.getElementById('silver').textContent=data.silver;
+  document.getElementById('spins').textContent=data.free_spins;
+  document.getElementById('silverBalance').textContent=data.silver;
+  document.getElementById('spinsBalance').textContent=data.free_spins;
+  await loadReferrals();
+  await checkAdmin();
+ } catch(error) {
+  document.getElementById('message').textContent=error.message;
+ }
+}
+
+async function loadReferrals() {
+ try {
+  const data=await api('/api/referrals');
+  referralLink=data.referral_link;
+  document.getElementById('refCount').textContent=data.referral_count;
+  document.getElementById('refProgress').style.width=(data.progress*10)+'%';
+  document.getElementById('refProgressText').textContent=
+   data.progress+' из 10 — осталось '+data.remaining;
+  document.getElementById('refLink').textContent=referralLink;
+ } catch(error) {
+  document.getElementById('refMessage').textContent=error.message;
+ }
+}
+
+async function copyReferral() {
+ if(!referralLink) {
+  document.getElementById('refMessage').textContent='Ссылка ещё загружается.';
+  return;
+ }
+ try {
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+   await navigator.clipboard.writeText(referralLink);
+  } else {
+   const input=document.createElement('textarea');
+   input.value=referralLink;
+   document.body.appendChild(input);
+   input.select();
+   document.execCommand('copy');
+   input.remove();
+  }
+  document.getElementById('refMessage').textContent='Ссылка скопирована!';
+ } catch(error) {
+  document.getElementById('refMessage').textContent='Не удалось скопировать ссылку.';
+ }
+}
+
+function shareReferral() {
+ if(!referralLink)return;
+ tg.openTelegramLink(
+  'https://t.me/share/url?url='+encodeURIComponent(referralLink)+
+  '&text='+encodeURIComponent('Заходи в GiftsDrop и попробуй выиграть NFT!')
+ );
+}
+
+const ORDINARY_NFT_GIFTS = [
+ {name:'Love Heart',stars:15,slug:'loveheart'},
+ {name:'Teddy Bear',stars:15,slug:'toybear'},
+ {name:'Gift Box',stars:25,slug:'giftbox'},
+ {name:'Red Rose',stars:25,slug:'redrose'},
+ {name:'Birthday Cake',stars:50,slug:'birthdaycake'},
+ {name:'Bouquet of Flowers',stars:50,slug:'bouquetofflowers'},
+ {name:'Rocket',stars:50,slug:'rocket'},
+ {name:'Champagne Bottle',stars:50,slug:'champagnebottle'},
+ {name:'Trophy',stars:100,slug:'trophy'},
+ {name:'Diamond Ring',stars:100,slug:'diamondring'},
+ {name:'Gem',stars:100,slug:'gem'}
+].map(g=>({...g,image_url:'https://fragment.com/file/gifts/'+g.slug+'/thumb.webp'}));
+
+let rouletteCatalog = null;
+async function getRouletteCatalog() {
+ if(rouletteCatalog)return rouletteCatalog;
+ try {
+  const data=await api('/api/store/catalog');
+  rouletteCatalog=data.products||[];
+ } catch(error) {
+  rouletteCatalog=[];
+ }
+ return rouletteCatalog;
+}
+
+function rouletteGiftCard(product) {
+ return {
+  name:product.name,
+  stars:Number(product.stars)||0,
+  image_url:product.image_url||'',
+  emoji:product.emoji||'🎁'
+ };
+}
+
+async function buildRoulette(result,winningGift=null) {
+ const track=document.getElementById('rouletteTrack');
+ const viewport=track.parentElement;
+ const catalog=await getRouletteCatalog();
+ const unusual=catalog.filter(p=>Number(p.stars)>=300&&Number(p.stars)<=1000).map(rouletteGiftCard);
+ const rare=catalog.filter(p=>Number(p.stars)>=1000&&Number(p.stars)<=10000).map(rouletteGiftCard);
+ const pools={
+  ordinary:ORDINARY_NFT_GIFTS,
+  unusual:unusual.length?unusual:catalog.slice(0,8).map(rouletteGiftCard),
+  rare:rare.length?rare:catalog.slice(-8).map(rouletteGiftCard)
+ };
+ const labels={none:'Без выигрыша',ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'};
+ const targetIndex=25;
+ const allGifts=[...pools.ordinary,...pools.unusual,...pools.rare];
+ const randomGift=type=>{
+  const pool=pools[type]||[];
+  return pool.length?pool[Math.floor(Math.random()*pool.length)]:{name:labels[type]||'Подарок',emoji:'🎁'};
+ };
+ track.innerHTML='';
+ track.style.transition='none';
+ track.style.transform='translateX(0px)';
+ let targetCard=null;
+ for(let i=0;i<33;i++) {
+  const type=i===targetIndex?result:(Math.random()<.34?'none':Math.random()<.58?'ordinary':Math.random()<.78?'unusual':'rare');
+  const gift=type==='none'?null:(i===targetIndex&&winningGift?winningGift:randomGift(type));
+  const card=document.createElement('div');
+  card.className='roulette-item';
+  const art=document.createElement('div');
+  art.className='roulette-item-art';
+  if(gift&&gift.image_url) {
+   const img=document.createElement('img');
+   img.src=gift.image_url;
+   img.alt=gift.name;
+   img.loading='eager';
+   img.onerror=()=>{img.remove();art.textContent=gift.emoji||'🎁';};
+   art.appendChild(img);
+  } else {
+   art.textContent=gift?gift.emoji:'🫧';
+  }
+  const name=document.createElement('b');
+  name.textContent=gift?gift.name:'Без выигрыша';
+  const sub=document.createElement('small');
+  sub.textContent=gift?(gift.stars?gift.stars+' ⭐':'NFT GIFT'):'TRY AGAIN';
+  card.append(art,name,sub);
+  track.appendChild(card);
+  if(i===targetIndex)targetCard=card;
+ }
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const center=viewport.clientWidth/2;
+  const cardCenter=targetCard.offsetLeft+targetCard.offsetWidth/2;
+  track.style.transition='transform 5.2s cubic-bezier(.10,.72,.08,1)';
+  track.style.transform='translateX('+(center-cardCenter)+'px)';
+ }));
+ return new Promise(resolve=>setTimeout(()=>{ targetCard.classList.add('roulette-item-winner',result==='rare'?'is-rare':result==='unusual'?'is-unusual':result==='ordinary'?'is-ordinary':'is-empty'); resolve(); },5400));
+}
+
+
+function triggerWinCelebration(tier) {
+ const layer=document.createElement('div');
+ layer.className='win-fx-layer';
+ layer.setAttribute('aria-hidden','true');
+ document.body.appendChild(layer);
+ const message=document.createElement('div');
+ message.className='win-message';
+ message.textContent='Ты смог🩷🏆';
+ message.setAttribute('role','status');
+ layer.appendChild(message);
+ const colors=['#ffe69a','#ff72b6','#74e5ff','#b99aff','#ffffff'];
+ const expensive=tier==='unusual'||tier==='rare';
+ const count=tier==='rare'?90:tier==='unusual'?64:24;
+ for(let i=0;i<count;i++) {
+  const bit=document.createElement('i');
+  bit.className=expensive?'win-particle':'win-confetti';
+  bit.style.setProperty('--c',colors[Math.floor(Math.random()*colors.length)]);
+  if(expensive) {
+   const angle=(Math.PI*2*i)/count+(Math.random()-.5)*.25;
+   const distance=130+Math.random()*(tier==='rare'?260:190);
+   bit.style.setProperty('--dx',Math.cos(angle)*distance+'px');
+   bit.style.setProperty('--dy',Math.sin(angle)*distance+'px');
+  } else {
+   bit.style.setProperty('--x',Math.random()*100+'vw');
+   bit.style.setProperty('--dx',(Math.random()-.5)*180+'px');
+   bit.style.setProperty('--r',Math.random()*360+'deg');
+   bit.style.setProperty('--dur',(2+Math.random()*1.7)+'s');
+   bit.style.animationDelay=(Math.random()*.45)+'s';
+  }
+  layer.appendChild(bit);
+ }
+ if(expensive) {
+  const flash=document.createElement('i'); flash.className='win-burst'; layer.appendChild(flash);
+  const ring=document.createElement('i'); ring.className='win-ring'; layer.appendChild(ring);
+  document.body.classList.add('win-shake');
+  setTimeout(()=>document.body.classList.remove('win-shake'),1000);
+ }
+ // Тактильный отклик для всех выигрышей: Telegram HapticFeedback + поддерживаемые браузеры.
+ try{
+  const haptic=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.HapticFeedback;
+  if(haptic&&typeof haptic.notificationOccurred==='function') haptic.notificationOccurred('success');
+ }catch(e){}
+ if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function'){
+  try{navigator.vibrate(tier==='rare'?[90,45,140,40,220]:tier==='unusual'?[65,35,110]:[45,25,70]);}catch(e){}
+ }
+ setTimeout(()=>layer.remove(),4500);
+}
+
+
+function triggerLossCelebration() {
+ const layer=document.createElement('div');
+ layer.className='win-fx-layer';
+ layer.setAttribute('aria-hidden','true');
+ document.body.appendChild(layer);
+ const message=document.createElement('div');
+ message.className='win-message lose-message';
+ message.textContent='Повезёт в другой раз🥲';
+ message.setAttribute('role','status');
+ layer.appendChild(message);
+ // Более мягкая тактильная отдача для проигрыша.
+ try{
+  const haptic=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.HapticFeedback;
+  if(haptic&&typeof haptic.notificationOccurred==='function') haptic.notificationOccurred('error');
+ }catch(e){}
+ if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function'){
+  try{navigator.vibrate([35,45,35]);}catch(e){}
+ }
+ setTimeout(()=>layer.remove(),3600);
+}
+
+async function spin() {
+ const button=document.getElementById('spinButton');
+ const message=document.getElementById('message');
+ if(spinning)return;
+
+ spinning=true;
+ button.disabled=true;
+ message.textContent='🎰 Лента подарков запускается...';
+ try {
+  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({})});
+  if(!['none','ordinary','unusual','rare'].includes(data.result)) {
+   throw new Error('Сервер вернул неизвестный результат прокрутки.');
+  }
+  await buildRoulette(data.result,data.gift||null);
+  if(data.result!=='none') triggerWinCelebration(data.result);
+  else triggerLossCelebration();
+  if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
+  else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
+  else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
+  else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
+  await loadAccount();
+ } catch(error) {
+  message.textContent=error.message;
+ } finally {
+  spinning=false;
+  button.disabled=false;
+ }
+}
+
+async function createTopup() {
+ const stars=Number(document.getElementById('stars').value);
+ const recipient=document.getElementById('recipient').value;
+ const output=document.getElementById('topupMessage');
+
+ if(!Number.isInteger(stars)||stars<1||stars>100000) {
+  output.textContent='Укажи количество Stars от 1 до 100000.';
+  return;
+ }
+ output.textContent='Создаём заявку...';
+ try {
+  const data=await api('/api/topup',{
+   method:'POST',
+   body:JSON.stringify({stars,recipient})
+  });
+  output.textContent='Заявка №'+data.request.id+
+   ' создана. Отправь подарок получателю '+recipient+
+   ' и дождись проверки.';
+  document.getElementById('stars').value='';
+ } catch(error) {
+  output.textContent=error.message;
+ }
+}
+
+async function checkAdmin() {
+ try {
+  await api('/api/admin/topups');
+  document.getElementById('adminPanel').style.display='block';
+  document.getElementById('giftAdminPanel').style.display='block';
+  await loadRequests();
+  await loadPrizeClaims();
+  await loadWithdrawalRequests();
+  await loadGiftAdminOrders();
+ } catch(error) {
+  document.getElementById('adminPanel').style.display='none';
+  document.getElementById('giftAdminPanel').style.display='none';
+ }
+}
+
+async function loadWithdrawalRequests() {
+ const output=document.getElementById('withdrawalAdminRequests');
+ const message=document.getElementById('withdrawalAdminMessage');
+ if(!output||!message)return;
+ output.replaceChildren();message.textContent='Загружаем заявки...';
+ try {
+  const data=await api('/api/admin/withdrawals');
+  const requests=Array.isArray(data.requests)?data.requests:[];
+  message.textContent='Ожидают обработки: '+requests.length;
+  if(!requests.length){output.textContent='Новых заявок на вывод нет.';return;}
+  requests.forEach(request=>{
+   const card=document.createElement('div');card.className='request';
+   const title=document.createElement('b');title.textContent='Вывод NFT №'+request.id+' — '+(request.prize_name||'Подарок');
+   const info=document.createElement('div');
+   info.textContent='Игрок: '+(request.first_name||'Без имени')+
+    (request.username?' (@'+request.username+')':'')+
+    '\nTelegram ID: '+request.telegram_id+
+    '\nСтоимость: '+(request.prize_stars||'—')+' ⭐'+
+    '\nЗаявка: '+new Date(request.created_at).toLocaleString('ru-RU');
+   card.append(title,info);
+   if(request.prize_image_url){
+    const img=document.createElement('img');img.src=request.prize_image_url;img.alt=request.prize_name||'NFT';
+    img.style.cssText='width:72px;height:72px;object-fit:contain;display:block;margin:8px 0';card.append(img);
+   }
+   const complete=document.createElement('button');complete.textContent='ПОДАРОК ОТПРАВЛЕН';
+   complete.onclick=()=>processWithdrawal(request.id,'complete',complete);
+   const reject=document.createElement('button');reject.className='secondary';reject.textContent='ОТКЛОНИТЬ';
+   reject.onclick=()=>processWithdrawal(request.id,'reject',reject);
+   card.append(complete,reject);output.append(card);
+  });
+ } catch(error){message.textContent=error.message;}
+}
+async function processWithdrawal(id,action,button) {
+ const promptText=action==='complete'?'Подтверди: ты уже реально отправил NFT игроку?':'Отклонить заявку и вернуть NFT в инвентарь игрока?';
+ if(!confirm(promptText))return;
+ button.disabled=true;
+ try{
+  await api('/api/admin/withdrawals/'+id+'/'+action,{method:'POST',body:JSON.stringify({})});
+  await loadWithdrawalRequests();
+ }catch(error){button.disabled=false;document.getElementById('withdrawalAdminMessage').textContent=error.message;}
+}
+
+async function loadPrizeClaims() {
+ const output=document.getElementById('prizeAdminClaims');
+ const message=document.getElementById('prizeAdminMessage');
+ if(!output||!message)return;
+ output.innerHTML='';
+ message.textContent='Загружаем выигрыши...';
+ try {
+  const data=await api('/api/admin/prizes');
+  const claims=data.claims||[];
+  const pending=claims.filter(claim=>claim.status==='pending').length;
+  message.textContent='Всего заявок: '+claims.length+' · Ожидают выдачи: '+pending;
+  if(!claims.length){output.textContent='Выигрышей пока нет.';return;}
+  claims.forEach(claim=>{
+   const item=document.createElement('div');
+   item.className='request';
+   const title=document.createElement('b');
+   title.textContent='Заявка на NFT №'+claim.id;
+   const info=document.createElement('div');
+   const category={ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'}[claim.prize_type]||claim.prize_type;
+   info.textContent='Игрок: '+(claim.first_name||'Без имени')+
+    (claim.username?' (@'+claim.username+')':'')+
+    '\nTelegram ID: '+claim.telegram_id+
+    '\nПодарок: '+(claim.prize_name||category)+
+    '\nКатегория: '+category+
+    '\nСтоимость: '+(claim.prize_stars||'—')+' ⭐'+
+    '\nСтатус: '+(claim.status==='pending'?'ОЖИДАЕТ ВЫДАЧИ':'ВЫДАН');
+   item.append(title,info);
+   if(claim.prize_image_url){
+    const image=document.createElement('img');
+    image.src=claim.prize_image_url;image.alt=claim.prize_name||'NFT';
+    image.style.cssText='width:76px;height:76px;object-fit:contain;display:block;margin:8px 0';
+    item.append(image);
+   }
+   if(claim.status==='pending'){
+    const done=document.createElement('button');
+    done.textContent='ОТМЕТИТЬ КАК ВЫДАННЫЙ';
+    done.onclick=()=>completePrizeClaim(claim.id,done);
+    item.append(done);
+   }
+   output.append(item);
+  });
+ } catch(error){message.textContent=error.message;}
+}
+
+async function completePrizeClaim(id,button) {
+ if(!confirm('Ты уже отправил этот NFT игроку?'))return;
+ button.disabled=true;
+ const message=document.getElementById('prizeAdminMessage');
+ try{
+  await api('/api/admin/prizes/'+id+'/done',{method:'POST',body:JSON.stringify({})});
+  message.textContent='Заявка №'+id+' отмечена как выполненная.';
+  await loadPrizeClaims();
+ }catch(error){message.textContent=error.message;button.disabled=false;}
+}
+
+async function loadRequests() {
+ const output=document.getElementById('requests');
+ const message=document.getElementById('adminMessage');
+ output.innerHTML='';
+ message.textContent='Загружаем заявки...';
+ try {
+  const data=await api('/api/admin/topups');
+  const requests=data.requests||[];
+  if(!requests.length) {
+   message.textContent='Новых заявок пока нет.';
+   return;
+  }
+  message.textContent='Заявок: '+requests.length;
+  requests.forEach(request=>{
+   const item=document.createElement('div');
+   item.className='request';
+   const info=document.createElement('div');
+   info.textContent='Заявка №'+request.id+
+    ' | Telegram ID: '+request.telegram_id+
+    ' | Stars: '+request.stars+
+    ' | Получатель: '+request.recipient;
+   const approve=document.createElement('button');
+   approve.textContent='ПОДТВЕРДИТЬ';
+   approve.onclick=()=>processRequest(request.id,'approve');
+   const reject=document.createElement('button');
+   reject.textContent='ОТКЛОНИТЬ';
+   reject.className='danger';
+   reject.onclick=()=>processRequest(request.id,'reject');
+   item.append(info,approve,reject);
+   output.appendChild(item);
+  });
+ } catch(error) {
+  message.textContent=error.message;
+ }
+}
+
+async function processRequest(id,action) {
+ const question=action==='approve'
+  ?'Подтвердить получение подарка и начислить серебро?'
+  :'Отклонить заявку?';
+ if(!confirm(question))return;
+ const message=document.getElementById('adminMessage');
+ message.textContent='Обрабатываем заявку...';
+ try {
+  await api('/api/admin/topups/'+id+'/'+action,{
+   method:'POST',body:JSON.stringify({})
+  });
+  message.textContent=action==='approve'
+   ?'Заявка подтверждена, серебро начислено.'
+   :'Заявка отклонена.';
+  await loadRequests();
+  await loadAccount();
+ } catch(error) {
+  message.textContent=error.message;
+ }
+}
+
+async function loadGiftCatalog() {
+ const output=document.getElementById('giftCatalog');
+ if(catalogLoaded)return;
+ output.innerHTML='<p class="muted">Загружаем каталог...</p>';
+ try {
+  const data=await api('/api/store/catalog');
+  output.innerHTML='';
+  (data.products||[]).forEach(product=>{
+   const card=document.createElement('div');
+   card.className='gift-product';
+
+   const art=document.createElement('div');
+art.className='gift-art';
+
+if (product.image_url) {
+  const img = document.createElement('img');
+  img.src = product.image_url;
+  img.alt = product.name;
+  img.loading = 'lazy';
+  img.onerror = () => {
+    img.remove();
+    art.textContent = product.emoji || '🎁';
+  };
+  art.appendChild(img);
+} else {
+  art.textContent = product.emoji || '🎁';
+}
+
+   const name=document.createElement('div');
+   name.className='gift-name';
+   name.textContent=product.name;
+
+   const price=document.createElement('div');
+   price.className='gift-price';
+   price.textContent=product.stars+' ⭐';
+
+   const old=document.createElement('div');
+   old.className='gift-old';
+   old.textContent=product.old_stars+' ⭐';
+
+   const discount=document.createElement('div');
+   discount.className='gift-discount';
+   discount.textContent='ВЫГОДА '+product.discount+' ⭐';
+
+   const buy=document.createElement('button');
+   buy.textContent='КУПИТЬ';
+   buy.onclick=()=>buyGift(product.id,buy);
+
+   card.append(art,name,price,old,discount,buy);
+   output.appendChild(card);
+  });
+  catalogLoaded=true;
+ } catch(error) {
+  output.innerHTML='';
+  document.getElementById('giftMessage').textContent=error.message;
+ }
+}
+
+async function buyGift(productId,button) {
+ const output=document.getElementById('giftMessage');
+ if(!tg.initData) {
+  output.textContent='Открой магазин через Telegram-бота.';
+  return;
+ }
+ button.disabled=true;
+ output.textContent='Создаём защищённый счёт Telegram...';
+
+ try {
+  const data=await api('/api/store/invoice',{
+   method:'POST',
+   body:JSON.stringify({product_id:productId})
+  });
+
+  if(!data.invoice_link)throw new Error('Не удалось получить ссылку на оплату.');
+
+  tg.openInvoice(data.invoice_link,async status=>{
+   if(status==='paid') {
+    output.textContent='Оплата прошла! Проверяем заказ...';
+    await loadGiftOrders();
+    setTimeout(loadGiftOrders,1500);
+    setTimeout(loadGiftOrders,4000);
+   } else if(status==='cancelled') {
+    output.textContent='Оплата отменена. Заказ можно оформить снова.';
+   } else if(status==='failed') {
+    output.textContent='Не удалось провести оплату. Попробуй ещё раз.';
+   }
+   button.disabled=false;
+  });
+ } catch(error) {
+  output.textContent=error.message;
+  button.disabled=false;
+ }
+}
+
+function giftStatus(status) {
+ const labels={
+  pending_payment:'Ожидает оплаты',
+  paid:'Оплачен — ожидает отправки',
+  completed:'Подарок отправлен',
+  cancelled:'Отменён'
+ };
+ return labels[status]||status;
+}
+
+async function loadGiftOrders() {
+ const output=document.getElementById('giftOrders');
+ if(!output)return;
+ output.innerHTML='<p class="muted">Загружаем историю...</p>';
+ try {
+  const data=await api('/api/store/orders');
+  const orders=data.orders||[];
+  output.innerHTML='';
+  if(!orders.length) {
+   output.innerHTML='<p class="muted">Покупок пока нет.</p>';
+   return;
+  }
+  orders.forEach(order=>{
+   const item=document.createElement('div');
+   item.className='order-card';
+   item.textContent='Заказ №'+order.id+
+    '\n'+order.product_name+
+    '\n'+order.stars+' ⭐'+
+    '\nСтатус: '+giftStatus(order.status);
+   output.appendChild(item);
+  });
+ } catch(error) {
+  output.innerHTML='<p class="muted">'+error.message+'</p>';
+ }
+}
+
+async function loadGiftAdminOrders() {
+ const output=document.getElementById('giftAdminOrders');
+ const message=document.getElementById('giftAdminMessage');
+ if(!output)return;
+ try {
+  const data=await api('/api/admin/store/orders');
+  const orders=data.orders||[];
+  output.innerHTML='';
+  if(!orders.length) {
+   message.textContent='Оплаченных заказов пока нет.';
+   return;
+  }
+  message.textContent='Заказов: '+orders.length;
+  orders.forEach(order=>{
+   const item=document.createElement('div');
+   item.className='order-card';
+
+   const info=document.createElement('div');
+   info.textContent='Заказ №'+order.id+
+    '\nПокупатель: '+order.telegram_id+
+    '\nUsername: '+(order.username?'@'+order.username:'не указан')+
+    '\nПодарок: '+order.product_name+
+    '\nОплата: '+order.stars+' ⭐'+
+    '\nСтатус: '+giftStatus(order.status);
+
+   item.appendChild(info);
+
+   if(order.status==='paid') {
+    const done=document.createElement('button');
+    done.textContent='ОТМЕТИТЬ КАК ВЫПОЛНЕННЫЙ';
+    done.onclick=()=>completeGiftOrder(order.id,done);
+    item.appendChild(done);
+   }
+
+   output.appendChild(item);
+  });
+ } catch(error) {
+  message.textContent=error.message;
+ }
+}
+
+async function completeGiftOrder(id,button) {
+ if(!confirm('Ты уже отправил подарок покупателю?'))return;
+ button.disabled=true;
+ const message=document.getElementById('giftAdminMessage');
+ message.textContent='Обновляем заказ...';
+ try {
+  await api('/api/admin/store/orders/'+id+'/done',{
+   method:'POST',body:JSON.stringify({})
+  });
+  message.textContent='Заказ №'+id+' отмечен как выполненный.';
+  await loadGiftAdminOrders();
+ } catch(error) {
+  message.textContent=error.message;
+  button.disabled=false;
+ }
+}
+
+
+loadAccount();
+loadGiftCatalog();
+
+// Interactive Rocket and Upgrade presentation. All results below use temporary test credits only.
+let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketCrashAt=2.48,rocketStake=0,rocketBetKind='silver',rocketRound=1,rocketDemoBalance=1000,rocketPlayerNames=['NeonFox','LunaByte','PixelWolf','StarNinja','MangoCat','CyberBee','Frosty','RubyFox'];
+let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
+const rocketHistoryValues=[2.48,1.37,5.62,1.08,3.14,8.21,1.91];
+function setRocketMode(mode){
+ rocketMode=mode;
+ document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
+ document.getElementById('rocketNftMode').classList.toggle('active',mode==='nft');
+ document.getElementById('rocketSilverControls').hidden=mode!=='silver';
+ document.getElementById('rocketNftControls').hidden=mode!=='nft';
+ document.getElementById('rocketResult').textContent=mode==='silver'?'Тестовая ставка списывается только с виртуального баланса.':'Выбери предмет из инвентаря. Реальный NFT останется на месте.';
+}
+function setRocketStake(value){document.getElementById('rocketStake').value=value;}
+function renderRocketPlayers(){
+ const host=document.getElementById('rocketPlayerList');if(!host)return;host.replaceChildren();
+ const rows=rocketPlayerNames.slice(0,5).map((name,i)=>({name,bet:[25,50,100,75,150][i],state:['ЗАБРАЛ 1.42x','В ИГРЕ','ЗАБРАЛ 2.16x','В ИГРЕ','ЗАБРАЛ 1.18x'][i]}));
+ rows.forEach(row=>{const el=document.createElement('div');el.className='rocket-player-row';const avatar=document.createElement('span');avatar.className='rocket-player-avatar';avatar.textContent=row.name.slice(0,2).toUpperCase();const name=document.createElement('span');name.className='rocket-player-name';name.textContent=row.name;const bet=document.createElement('span');bet.className='rocket-player-bet';bet.textContent=row.bet+' 🪙';const state=document.createElement('span');state.className='rocket-player-state';state.textContent=row.state;el.append(avatar,name,bet,state);host.appendChild(el);});
+}
+function renderRocketHistory(){
+ const host=document.getElementById('rocketHistory');if(!host)return;host.replaceChildren();
+ rocketHistoryValues.slice(0,7).forEach((value,i)=>{const row=document.createElement('div');row.className='rocket-history-row'+(value<1.5?' crash-low':'');const left=document.createElement('span');left.textContent='РАУНД #'+String(rocketRound-i-1).padStart(3,'0');const right=document.createElement('b');right.textContent=value.toFixed(2)+'x';row.append(left,right);host.appendChild(row);});
+}
+async function loadRocketInventory(){
+ const select=document.getElementById('rocketNftSelect');if(!select)return;
+ select.innerHTML='<option value="">Загрузка инвентаря…</option>';
+ try{const data=await api('/api/me/wins');const wins=Array.isArray(data.wins)?data.wins:[];select.replaceChildren();wins.forEach((win,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=String(win.prize_name||'NFT')+' · '+(Number(win.prize_stars)||0)+' ⭐';select.appendChild(option);});if(!wins.length){const option=document.createElement('option');option.value='';option.textContent='В инвентаре пока нет NFT';select.appendChild(option);}select.dataset.items=JSON.stringify(wins);}catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
+}
+function launchRocket(){
+ if(rocketRunning)return;
+ if(rocketMode==='silver'){
+  const amount=Number(document.getElementById('rocketStake').value);
+  if(!Number.isInteger(amount)||amount<1||amount>rocketDemoBalance){document.getElementById('rocketResult').textContent='Укажи ставку от 1 до '+rocketDemoBalance+' тестовых монет.';return;}
+  rocketStake=amount;rocketDemoBalance-=amount;rocketBetKind='silver';
+ }else{
+  const select=document.getElementById('rocketNftSelect');
+  if(!select||select.value===''){document.getElementById('rocketResult').textContent='Сначала выбери NFT из инвентаря.';return;}
+  const items=JSON.parse(select.dataset.items||'[]');const picked=items[Number(select.value)];
+  if(!picked){document.getElementById('rocketResult').textContent='Не удалось прочитать выбранный предмет.';return;}
+  rocketStake=Number(picked.prize_stars)||100;rocketBetKind='nft';
+ }
+ rocketRunning=true;rocketMultiplier=1;rocketCrashAt=Number((1.01+Math.random()*8.99).toFixed(2));
+ document.getElementById('rocketStage').classList.remove('is-crashed');document.getElementById('rocketStage').classList.add('is-flying');
+ document.getElementById('rocketShip').style.left='17%';document.getElementById('rocketShip').style.top='47%';
+ document.getElementById('rocketStatus').textContent='РАКЕТА ВЗЛЕТЕЛА!';document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';
+ document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketCashoutButton').disabled=false;
+ document.getElementById('rocketResult').textContent='Ты в раунде! Забирай до '+rocketCrashAt.toFixed(2)+'x — краш может произойти в любой момент.';
+ document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
+ const started=Date.now();
+ rocketInterval=setInterval(()=>{
+  const elapsed=(Date.now()-started)/1000;rocketMultiplier=Number(Math.min(10,Math.pow(1.18,elapsed)).toFixed(2));
+  document.getElementById('rocketMultiplier').innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
+  const progress=Math.min(1,(rocketMultiplier-1)/9);document.getElementById('rocketShip').style.left=(17+progress*58)+'%';document.getElementById('rocketShip').style.top=(47-progress*29)+'%';
+  if(rocketMultiplier>=rocketCrashAt){crashRocket();}
+ },70);
+}
+function cashoutRocket(){
+ if(!rocketRunning)return;
+ const winnings=Math.floor(rocketStake*rocketMultiplier);
+ rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
+ if(rocketBetKind==='silver')rocketDemoBalance+=winnings;
+ document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
+ document.getElementById('rocketResult').textContent='🎉 Забрано на '+rocketMultiplier.toFixed(2)+'x! '+(rocketBetKind==='silver'?'Тестовый выигрыш: '+winnings+' 🪙.':'NFT-ставка успешно возвращена в тестовом раунде.');
+ document.getElementById('rocketDemoBalance').textContent=rocketDemoBalance.toLocaleString('ru-RU');
+}
+function crashRocket(){
+ if(!rocketRunning)return;
+ rocketRunning=false;clearInterval(rocketInterval);rocketInterval=null;
+ document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStage').classList.add('is-crashed');document.getElementById('rocketStatus').textContent='💥 РАКЕТА УПАЛА';document.getElementById('rocketMultiplier').innerHTML=rocketCrashAt.toFixed(2)+'<span>x</span>';
+ document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
+ document.getElementById('rocketResult').textContent='💥 Краш на '+rocketCrashAt.toFixed(2)+'x. Тестовая ставка сгорела. Настоящий баланс и инвентарь не затронуты.';
+ rocketHistoryValues.unshift(rocketCrashAt);rocketHistoryValues.length=Math.min(rocketHistoryValues.length,12);rocketRound++;document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(rocketRound).padStart(3,'0');document.getElementById('rocketLastCrash').textContent=rocketCrashAt.toFixed(2)+'x';document.getElementById('rocketPlayers').textContent=String(10+Math.floor(Math.random()*12));renderRocketHistory();
+}
+function loadUpgradeData(){
+ const host=document.getElementById('upgradeSourceList');if(!host)return;
+ host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
+ Promise.all([api('/api/me/wins'),api('/api/store/catalog')]).then(([winsData,catalogData])=>{
+  upgradeInventory=Array.isArray(winsData.wins)?winsData.wins:[];upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
+  if(!upgradeInventory.length)upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];
+  renderUpgradeSources();
+ }).catch(()=>{upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];upgradeCatalog=[];renderUpgradeSources();});
+}
+function renderUpgradeSources(){
+ const host=document.getElementById('upgradeSourceList');host.replaceChildren();
+ upgradeInventory.forEach((item,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upgrade-source-item'+(upgradeSource===index?' selected':'');button.onclick=()=>selectUpgradeSource(index);
+  const art=document.createElement('div');art.className='upgrade-source-art';art.textContent=item.prize_type==='rare'?'💎':item.prize_type==='unusual'?'💜':'🎁';
+  const name=document.createElement('b');name.textContent=String(item.prize_name||'NFT-подарок');
+  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐'+(item.preview?' · ПРИМЕР':'');
+  button.append(art,name,value);host.appendChild(button);
+ });
+ if(upgradeSource===null)document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Выбери предмет выше, чтобы увидеть доступные цели.</div>';
+}
+function selectUpgradeSource(index){
+ upgradeSource=index;upgradeTarget=null;renderUpgradeSources();
+ const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||100;
+ const targets=upgradeCatalog.filter(item=>Number(item.stars)>sourceValue).sort((a,b)=>Number(a.stars)-Number(b.stars)).slice(0,8);
+ if(!targets.length){upgradeTarget=null;document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Нет подарков дороже этого предмета в каталоге. Попробуй другой NFT.</div>';updateUpgradeChance();return;}
+ const host=document.getElementById('upgradeTargetList');host.replaceChildren();
+ targets.forEach((item,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upgrade-target-item';button.onclick=()=>selectUpgradeTarget(index,targets);
+  const art=document.createElement('div');art.className='upgrade-target-art';art.textContent=item.emoji||'🎁';
+  if(item.image_url){const img=document.createElement('img');img.src=item.image_url;img.alt=item.name||'Подарок';img.onerror=()=>{img.remove();art.textContent=item.emoji||'🎁';};art.replaceChildren(img);}
+  const name=document.createElement('b');name.textContent=String(item.name||'NFT-подарок');
+  const value=document.createElement('small');value.textContent=(Number(item.stars)||0)+' ⭐';
+  button.append(art,name,value);button.dataset.target=String(index);host.appendChild(button);
+ });
+ host.dataset.items=JSON.stringify(targets);updateUpgradeChance();
+}
+function selectUpgradeTarget(index,targets){
+ upgradeTarget=targets[index];document.querySelectorAll('.upgrade-target-item').forEach((el,i)=>el.classList.toggle('selected',i===index));updateUpgradeChance();
+}
+let upgradeSelectedChance=30;
+function getUpgradeChance(){
+ if(upgradeSource===null||!upgradeTarget)return 0;
+ return upgradeSelectedChance;
+}
+function updateUpgradeChance(){
+ const chance=getUpgradeChance();
+ document.getElementById('upgradeChance').textContent=chance?chance+'%':'—%';
+ document.getElementById('upgradeChanceFill').style.width=chance+'%';
+ const value=document.getElementById('upgradeChanceValue');if(value)value.textContent=chance+'%';
+ const slider=document.getElementById('upgradeChanceSlider');if(slider)slider.value=String(upgradeSelectedChance);
+ const ring=document.querySelector('.upgrade-wheel-ring');
+ if(ring)ring.style.background='conic-gradient(from -90deg,rgba(74,232,255,.95) 0deg '+(chance*3.6)+'deg,rgba(255,255,255,.075) '+(chance*3.6)+'deg 360deg),radial-gradient(circle,rgba(75,218,255,.08) 0 56%,rgba(78,109,255,.08) 57% 70%,rgba(36,22,84,.35) 71%)';
+ document.getElementById('upgradeChanceCaption').textContent=chance?'Цветной сектор круга показывает выбранную вероятность попадания.':'Выбери предмет и цель, чтобы увидеть шанс.';
+ document.getElementById('upgradeTryButton').disabled=!chance||upgradeBusy;
+}
+const upgradeChanceSlider=document.getElementById('upgradeChanceSlider');
+if(upgradeChanceSlider)upgradeChanceSlider.addEventListener('input',()=>{upgradeSelectedChance=Number(upgradeChanceSlider.value);updateUpgradeChance();});
+function runUpgrade(){
+ if(upgradeBusy||!upgradeTarget||upgradeSource===null)return;
+ upgradeBusy=true;const button=document.getElementById('upgradeTryButton'),result=document.getElementById('upgradeResult');button.disabled=true;result.className='upgrade-result';result.textContent='⚡ ЭНЕРГИЯ НАКАПЛИВАЕТСЯ…';
+ const chance=getUpgradeChance(),won=Math.random()*100<chance;button.textContent='ИДЁТ АПГРЕЙД…';
+ const orb=document.querySelector('.upgrade-orb');if(orb)orb.classList.add('is-upgrading');
+ setTimeout(()=>{
+  upgradeBusy=false;button.textContent='⚡ ПОПРОБОВАТЬ ЕЩЁ РАЗ';if(orb)orb.classList.remove('is-upgrading');
+  if(won){result.className='upgrade-result is-win';result.textContent='✨ УСПЕХ! В тестовом раунде цель «'+String(upgradeTarget.name)+'» получена. Реальный инвентарь не изменён.';}
+  else{result.className='upgrade-result is-lose';result.textContent='💥 НЕ ПОВЕЗЛО! Тестовая попытка не удалась. Настоящий NFT остался в инвентаре.';}
+  button.disabled=false;
+ },1900);
+}
+
+</script>
+</body>
+</html>
