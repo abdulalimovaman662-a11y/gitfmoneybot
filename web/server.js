@@ -152,6 +152,14 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS referred_by BIGINT,
       ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0;
 
+    CREATE TABLE IF NOT EXISTS seasonal_bonus_claims (
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      campaign TEXT NOT NULL,
+      spins_awarded INTEGER NOT NULL DEFAULT 2,
+      claimed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (telegram_id, campaign)
+    );
+
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -1345,6 +1353,46 @@ const server = http.createServer(async (req, res) => {
         referral_link:
           `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
       });
+    }
+
+    // Одноразовый новогодний подарок: +2 бесплатные прокрутки на аккаунт.
+    if (url.pathname === '/api/christmas/claim' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const claim = await client.query(
+          `INSERT INTO seasonal_bonus_claims (telegram_id, campaign, spins_awarded)
+           VALUES ($1, 'newyear_2027', 2)
+           ON CONFLICT (telegram_id, campaign) DO NOTHING
+           RETURNING spins_awarded`,
+          [String(user.id)]
+        );
+        if (claim.rowCount === 1) {
+          await client.query(
+            'UPDATE users SET free_spins = free_spins + 2 WHERE telegram_id = $1',
+            [String(user.id)]
+          );
+        }
+        const account = await client.query(
+          'SELECT free_spins FROM users WHERE telegram_id = $1',
+          [String(user.id)]
+        );
+        await client.query('COMMIT');
+        return send(res, 200, {
+          success: true,
+          already_claimed: claim.rowCount === 0,
+          credited_spins: claim.rowCount === 1 ? 2 : 0,
+          free_spins: Number(account.rows[0].free_spins)
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     }
 
     // Рулетка
