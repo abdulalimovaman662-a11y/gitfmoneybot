@@ -213,6 +213,25 @@ input,select{
  .bottom-nav{max-width:480px;left:50%;transform:translateX(-50%);border-left:1px solid var(--line);border-right:1px solid var(--line)}
 }
 
+/* Плавное поздравление при любом выигрыше рулетки */
+.win-message{
+ position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.96);
+ max-width:calc(100vw - 36px);white-space:nowrap;
+ padding:15px 23px;border:1px solid rgba(255,173,214,.62);border-radius:20px;
+ background:linear-gradient(135deg,rgba(87,17,57,.94),rgba(37,9,37,.96));
+ color:#fff;font-size:clamp(20px,5.8vw,28px);font-weight:900;letter-spacing:.2px;
+ text-shadow:0 0 18px rgba(255,105,180,.8);
+ box-shadow:0 0 34px rgba(255,72,155,.38),inset 0 1px rgba(255,255,255,.2);
+ opacity:0;animation:win-message-inout 3.1s cubic-bezier(.22,.75,.25,1) forwards;
+}
+@keyframes win-message-inout{
+ 0%{opacity:0;transform:translate(-50%,-42%) scale(.94);filter:blur(5px)}
+ 24%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}
+ 72%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}
+ 100%{opacity:0;transform:translate(-50%,-58%) scale(.98);filter:blur(4px)}
+}
+@media(prefers-reduced-motion:reduce){.win-message{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
 /* Win celebrations: light for ordinary, premium for expensive NFTs */
 .win-fx-layer{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden}
 .win-confetti{position:absolute;left:var(--x);top:-18px;width:7px;height:12px;border-radius:2px;background:var(--c);opacity:0;animation:confetti-fall var(--dur) cubic-bezier(.15,.65,.35,1) forwards;transform:rotate(var(--r))}
@@ -1596,6 +1615,11 @@ function triggerWinCelebration(tier) {
  layer.className='win-fx-layer';
  layer.setAttribute('aria-hidden','true');
  document.body.appendChild(layer);
+ const message=document.createElement('div');
+ message.className='win-message';
+ message.textContent='Ты смог🩷🏆';
+ message.setAttribute('role','status');
+ layer.appendChild(message);
  const colors=['#ffe69a','#ff72b6','#74e5ff','#b99aff','#ffffff'];
  const expensive=tier==='unusual'||tier==='rare';
  const count=tier==='rare'?90:tier==='unusual'?64:24;
@@ -1622,11 +1646,16 @@ function triggerWinCelebration(tier) {
   const ring=document.createElement('i'); ring.className='win-ring'; layer.appendChild(ring);
   document.body.classList.add('win-shake');
   setTimeout(()=>document.body.classList.remove('win-shake'),1000);
-  if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function') {
-   try{navigator.vibrate(tier==='rare'?[90,45,140,40,220]:[65,35,110]);}catch(e){}
-  }
  }
- setTimeout(()=>layer.remove(),tier==='ordinary'?4500:1800);
+ // Тактильный отклик для всех выигрышей: Telegram HapticFeedback + поддерживаемые браузеры.
+ try{
+  const haptic=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.HapticFeedback;
+  if(haptic&&typeof haptic.notificationOccurred==='function') haptic.notificationOccurred('success');
+ }catch(e){}
+ if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function'){
+  try{navigator.vibrate(tier==='rare'?[90,45,140,40,220]:tier==='unusual'?[65,35,110]:[45,25,70]);}catch(e){}
+ }
+ setTimeout(()=>layer.remove(),4500);
 }
 
 async function spin() {
