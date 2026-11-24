@@ -1600,6 +1600,35 @@ body{
 .level-progress-fill{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#8154ff,#d5a7ff);box-shadow:0 0 14px rgba(160,112,255,.5);transition:width .65s cubic-bezier(.2,.8,.2,1)}
 .level-hint{margin:12px 0 0;font-size:12px;line-height:1.45}
 
+/* Симметричные крылья обрамляют аватарку Telegram. */
+.profile-emblem{position:relative;width:min(100%,286px);height:112px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;isolation:isolate}
+.profile-avatar{position:relative;z-index:2;flex:0 0 82px;width:82px;height:82px;margin:0;border-radius:25px}
+.profile-wing{position:absolute;z-index:1;top:25px;width:102px;height:62px;pointer-events:none;filter:drop-shadow(0 5px 9px rgba(0,0,0,.3))}
+.profile-wing-left{left:2px;transform:scaleX(-1)}
+.profile-wing-right{right:2px}
+.profile-wing:before{content:"";position:absolute;inset:0;background:linear-gradient(155deg,var(--wing-light,#e6c28a),var(--wing-mid,#a66a36) 48%,var(--wing-dark,#57331f));clip-path:polygon(0 52%,12% 35%,25% 22%,39% 10%,53% 0,67% 12%,79% 31%,100% 57%,78% 50%,61% 58%,43% 72%,22% 80%);border-radius:50%}
+.profile-wing:after{content:"";position:absolute;inset:7px 7px 10px 15px;background:repeating-linear-gradient(155deg,transparent 0 8px,rgba(255,255,255,.36) 9px 11px,rgba(0,0,0,.14) 12px 14px);clip-path:polygon(0 53%,18% 28%,39% 9%,58% 0,76% 24%,100% 67%,70% 55%,48% 73%,23% 83%);opacity:.85}
+.profile-rank-line{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:5px}
+.profile-rank-name{font-size:13px;font-weight:950;letter-spacing:.07em;color:#f4d9a5;text-shadow:0 0 14px rgba(245,197,111,.28)}
+.profile-rank-count{font-size:10px;color:#aaa8c7}
+.profile-rank-progress-wrap{margin:15px auto 0;max-width:320px}
+.profile-rank-progress{height:7px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.09)}
+.profile-rank-progress>div{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#b7783e,#f1d39a);box-shadow:0 0 12px rgba(232,183,105,.35);transition:width .7s ease}
+.profile-rank-next{margin-top:7px;font-size:10px;color:#aaa8c7}
+#profileEmblem[data-rank="rookie"] .profile-wing{opacity:.12;filter:grayscale(1)}
+#profileEmblem[data-rank="copper"]{--wing-light:#ffd4a0;--wing-mid:#b8733e;--wing-dark:#603318}
+#profileEmblem[data-rank="metal"]{--wing-light:#f2f4f8;--wing-mid:#9299a8;--wing-dark:#454b59}
+#profileEmblem[data-rank="gold"]{--wing-light:#fff0a3;--wing-mid:#d69a25;--wing-dark:#80500c}
+#profileEmblem[data-rank="silver"]{--wing-light:#fff;--wing-mid:#b9c7d7;--wing-dark:#68788d}
+#profileEmblem[data-rank="green-diamond"]{--wing-light:#aaffd0;--wing-mid:#18c982;--wing-dark:#075f50}
+#profileEmblem[data-rank="blue-diamond"]{--wing-light:#c4f4ff;--wing-mid:#36a9ed;--wing-dark:#164caa}
+#profileEmblem[data-rank="legend"]{--wing-light:#fff0f2;--wing-mid:#ff263f;--wing-dark:#790019}
+#profileEmblem[data-rank="legend"] .profile-wing{width:122px;height:76px;top:18px;filter:drop-shadow(0 0 8px rgba(255,25,62,.72)) drop-shadow(0 0 18px rgba(255,25,62,.35))}
+#profileEmblem[data-rank="legend"] .profile-wing:before{background:linear-gradient(145deg,#fff4f5 0%,#ff304c 32%,#c5002c 64%,#520014 100%)}
+#profileEmblem[data-rank="legend"] .profile-wing:after{background:repeating-linear-gradient(150deg,transparent 0 7px,rgba(255,255,255,.65) 8px 10px,rgba(75,0,15,.35) 11px 13px)}
+#profileEmblem[data-rank="legend"]+.profile-rank-line .profile-rank-name{font-size:14px;color:#ff9ba9;text-shadow:0 0 7px #ff173f,0 0 20px rgba(255,23,63,.7)}
+@media(max-width:360px){.profile-wing{width:88px}.profile-wing-left{left:0}.profile-wing-right{right:0}#profileEmblem[data-rank="legend"] .profile-wing{width:104px}}
+
 </style>
 </head>
 <body>
@@ -1717,7 +1746,16 @@ body{
  <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРОФИЛЬ</span></div>
  <div class="page-intro"><span class="eyebrow">ТВОЙ АККАУНТ</span><h1>Профиль</h1><p>Твоя статистика и игровой баланс в GiftsDrop.</p></div>
  <div class="card profile-card">
-  <div class="profile-avatar" id="profileAvatar">✦</div>
+  <div class="profile-emblem" id="profileEmblem" data-rank="rookie">
+   <div class="profile-wing profile-wing-left" aria-hidden="true"></div>
+   <div class="profile-avatar" id="profileAvatar">✦</div>
+   <div class="profile-wing profile-wing-right" aria-hidden="true"></div>
+  </div>
+  <div class="profile-rank-line"><span class="profile-rank-name" id="profileRank">Новичок</span><span class="profile-rank-count" id="profileOpenings">0 открытий</span></div>
+  <div class="profile-rank-progress-wrap" id="profileRankProgressWrap">
+   <div class="profile-rank-progress"><div id="profileRankProgress"></div></div>
+   <div class="profile-rank-next" id="profileRankNext">До медных крыльев: 50 открытий</div>
+  </div>
   <div class="profile-name" id="profileName">Игрок GiftsDrop</div>
   <div class="profile-username" id="profileUsername">Открыто через Telegram</div>
   <div class="profile-stats"><div><b id="profileSilver">0</b><span>Серебро 🪙</span></div><div><b id="profileSpins">0</b><span>Бесплатные</span></div><div><b id="profileRefs">0</b><span>Друзья</span></div></div>
@@ -2177,9 +2215,21 @@ async function loadProfile() {
   document.getElementById('profileSpins').textContent=data.free_spins ?? 0;
   document.getElementById('profileRefs').textContent=data.referral_count ?? 0;
   document.getElementById('profileLevel').textContent='УРОВЕНЬ '+(data.level ?? 1);
-  document.getElementById('profileXp').textContent=(data.xp_progress ?? 0)+' / 100 XP';
+  document.getElementById('profileXp').textContent=(data.xp_progress ?? 0)+' / '+(data.xp_required ?? 100)+' XP';
   document.getElementById('profileXpNext').textContent='До следующего: '+(data.xp_to_next ?? 100)+' XP';
-  document.getElementById('profileLevelProgress').style.width=(data.xp_progress ?? 0)+'%';
+  document.getElementById('profileLevelProgress').style.width=Math.min(100,((data.xp_progress ?? 0)/(data.xp_required ?? 100))*100)+'%';
+  const emblem=document.getElementById('profileEmblem');
+  emblem.dataset.rank=data.rank_key||'rookie';
+  document.getElementById('profileRank').textContent=data.is_legend?'✦ LEGEND GiftsMoney ✦':(data.rank||'Новичок');
+  document.getElementById('profileOpenings').textContent=Number(data.total_openings||0).toLocaleString('ru-RU')+' открытий';
+  const rankWrap=document.getElementById('profileRankProgressWrap');
+  if(data.next_rank){
+   rankWrap.hidden=false;
+   document.getElementById('profileRankProgress').style.width=(data.rank_progress||0)+'%';
+   document.getElementById('profileRankNext').textContent='До ранга «'+data.next_rank+'»: '+Number(data.openings_to_next_rank||0).toLocaleString('ru-RU')+' открытий';
+  }else{
+   rankWrap.hidden=true;
+  }
  } catch(error) {
   document.getElementById('profileUsername').textContent='Не удалось загрузить статистику';
  }
