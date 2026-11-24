@@ -464,12 +464,12 @@ async function ensureUser(user, req) {
   // Разовая стартовая выдача только аккаунту с точным username @RichGues.
   await pool.query(`
     UPDATE users
-    SET xp = GREATEST(xp, 624625050),
+    SET xp = GREATEST(xp, 625124950),
         rank_bonus_openings = GREATEST(rank_bonus_openings, 5000),
         admin_profile_grant_applied = TRUE
     WHERE telegram_id = $1
       AND LOWER(COALESCE(username, '')) = 'richgues'
-      AND admin_profile_grant_applied = FALSE
+      AND (admin_profile_grant_applied = FALSE OR xp < 625124950 OR rank_bonus_openings < 5000)
   `, [telegramId]);
 
   // Реферальные начисления нужны только при первом создании аккаунта.
