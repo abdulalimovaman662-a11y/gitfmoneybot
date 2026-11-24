@@ -1858,22 +1858,28 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-function initHomeProfileTile() {
+async function initHomeProfileTile() {
  const tile=document.getElementById('homeProfileArt');
  if(!tile)return;
  const user=tg.initDataUnsafe&&tg.initDataUnsafe.user?tg.initDataUnsafe.user:{};
  const displayName=user.username?'@'+user.username:[user.first_name,user.last_name].filter(Boolean).join(' ')||'Профиль Telegram';
  tile.replaceChildren();
- if(user.photo_url){
-  const img=document.createElement('img');
-  img.src=user.photo_url;img.alt='Аватар пользователя';img.loading='eager';
-  img.onerror=()=>{img.remove();const fallback=document.createElement('span');fallback.className='profile-tile-avatar-fallback';fallback.textContent=(user.first_name||'👤').slice(0,1).toUpperCase();tile.prepend(fallback);};
-  tile.appendChild(img);
- }else{
-  const fallback=document.createElement('span');fallback.className='profile-tile-avatar-fallback';
-  fallback.textContent=(user.first_name||'👤').slice(0,1).toUpperCase();tile.appendChild(fallback);
- }
+ const fallback=document.createElement('span');fallback.className='profile-tile-avatar-fallback';
+ fallback.textContent=(user.first_name||'👤').slice(0,1).toUpperCase();
+ tile.appendChild(fallback);
  const name=document.createElement('span');name.className='profile-tile-name';name.textContent=displayName;tile.appendChild(name);
+ if(user.photo_url){
+  const img=document.createElement('img');img.src=user.photo_url;img.alt='Аватар пользователя';img.loading='eager';
+  img.onerror=()=>img.remove();tile.replaceChild(img,fallback);
+ }else{
+  try{
+   const avatar=await api('/api/me/avatar');
+   if(avatar.photo_url){
+    const img=document.createElement('img');img.src=avatar.photo_url;img.alt='Аватар пользователя';img.loading='eager';
+    img.onerror=()=>img.remove();tile.replaceChild(img,fallback);
+   }
+  }catch(error){console.warn('Не удалось загрузить аватар Telegram:',error);}
+ }
 }
 initHomeProfileTile();
 
