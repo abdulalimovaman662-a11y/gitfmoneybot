@@ -150,7 +150,9 @@ async function initDatabase() {
 
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS referred_by BIGINT,
-      ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0;
+      ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS xp INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS last_xp_date DATE;
 
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
@@ -1199,16 +1201,31 @@ const server = http.createServer(async (req, res) => {
 
       await ensureUser(user, req);
 
+      // Ежедневный опыт за вход: один раз в сутки, независимо от числа обновлений.
+      await pool.query(`
+        UPDATE users
+        SET xp = xp + 20,
+            last_xp_date = CURRENT_DATE
+        WHERE telegram_id = $1
+          AND last_xp_date IS DISTINCT FROM CURRENT_DATE
+      `, [String(user.id)]);
+
       const result = await pool.query(`
-        SELECT silver, free_spins, referral_count
+        SELECT silver, free_spins, referral_count, xp
         FROM users
         WHERE telegram_id = $1
       `, [String(user.id)]);
       const account = result.rows[0];
       const referralCount = Number(account.referral_count) || 0;
+      const experience = Math.max(0, Number(account.xp) || 0);
+      const level = Math.floor(experience / 100) + 1;
 
       return send(res, 200, {
         ...account,
+        level,
+        xp: experience,
+        xp_progress: experience % 100,
+        xp_to_next: 100 - (experience % 100),
         progress: referralCount % 10,
         total_rewards: Math.floor(referralCount / 10) * 3,
         remaining: 10 - (referralCount % 10),
