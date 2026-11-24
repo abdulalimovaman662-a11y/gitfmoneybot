@@ -1268,6 +1268,92 @@ button.danger:not(.nav-button){
 @media(max-width:380px){.home-tile{min-height:158px}.home-tile-icon{width:58px;height:58px}}
 @media(prefers-reduced-motion:reduce){.home-tile:after{animation:none}}
 
+
+
+/* GIFTSDROP — FULL SITE PRISMATIC LUXURY GLOW */
+:root{--gd-pink:#ff4fa8;--gd-cyan:#42eaff;--gd-violet:#a875ff;--gd-gold:#ffd66e}
+body{
+ background:
+  radial-gradient(ellipse at 8% 8%,rgba(255,40,145,.38),transparent 36%),
+  radial-gradient(ellipse at 94% 18%,rgba(80,95,255,.34),transparent 38%),
+  radial-gradient(ellipse at 50% 58%,rgba(160,45,255,.2),transparent 44%),
+  radial-gradient(ellipse at 4% 92%,rgba(0,215,255,.2),transparent 36%),
+  radial-gradient(ellipse at 98% 90%,rgba(255,175,55,.18),transparent 36%),
+  linear-gradient(160deg,#230514 0%,#10091e 48%,#080b19 100%)!important;
+ background-attachment:fixed!important;
+}
+.app-header{
+ background:linear-gradient(110deg,rgba(53,5,34,.97),rgba(17,15,48,.97),rgba(5,37,54,.97))!important;
+ border-bottom:1px solid rgba(255,166,224,.65)!important;
+ box-shadow:0 7px 34px rgba(255,45,163,.3),0 0 24px rgba(69,218,255,.2),inset 0 -1px 0 rgba(255,255,255,.14)!important;
+}
+.tab-page.active{animation:gdPageRadiance .65s ease both}
+.tab-page.active h1,.tab-page.active h2,.tab-page.active h3,.tab-page.active .section-tag{
+ text-shadow:0 0 8px rgba(255,255,255,.2),0 0 20px rgba(255,80,180,.38),0 0 34px rgba(96,160,255,.22);
+}
+.tab-page.active .card,
+.tab-page.active .prize-card,
+.tab-page.active .stat,
+.tab-page.active .notice,
+.tab-page.active .odds,
+.tab-page.active .order-card,
+.tab-page.active .inventory-item,
+.tab-page.active .rocket-player-row,
+.tab-page.active .rocket-history-row,
+.tab-page.active .roulette-window,
+.tab-page.active .upgrade-wheel,
+.tab-page.active .upgrade-orb,
+.tab-page.active .section-back{
+ border-color:rgba(255,164,222,.52)!important;
+ box-shadow:
+  0 0 0 1px rgba(255,255,255,.055),
+  0 0 18px rgba(255,54,164,.22),
+  0 0 36px rgba(108,105,255,.13),
+  0 12px 34px rgba(0,0,0,.34),
+  inset 0 1px 0 rgba(255,255,255,.18)!important;
+}
+.tab-page.active .card{
+ background:
+  radial-gradient(ellipse at 0% 0%,rgba(255,75,178,.15),transparent 46%),
+  radial-gradient(ellipse at 100% 100%,rgba(68,204,255,.10),transparent 45%),
+  linear-gradient(145deg,rgba(49,13,43,.96),rgba(14,12,34,.98))!important;
+ animation:gdSurfacePulse 4.8s ease-in-out infinite alternate;
+}
+.tab-page.active button:not(.nav-button):not(.home-tile){
+ border-color:rgba(255,203,235,.7)!important;
+ box-shadow:
+  0 0 0 1px rgba(255,255,255,.12),
+  0 0 18px rgba(255,63,163,.34),
+  0 0 30px rgba(119,100,255,.17),
+  0 8px 24px rgba(0,0,0,.34),
+  inset 0 1px 0 rgba(255,255,255,.52)!important;
+}
+.tab-page.active input,.tab-page.active select,.tab-page.active textarea{
+ border-color:rgba(112,218,255,.62)!important;
+ box-shadow:0 0 0 1px rgba(255,255,255,.05),0 0 17px rgba(63,203,255,.22),inset 0 1px 8px rgba(0,0,0,.28)!important;
+}
+.tab-page.active .stat strong,.tab-page.active .balance-value,.tab-page.active .prize-value{
+ text-shadow:0 0 9px rgba(255,255,255,.38),0 0 20px rgba(255,185,91,.36);
+}
+.header-brand,.header-strip,.wins-ticker{
+ filter:drop-shadow(0 0 9px rgba(255,96,187,.2));
+}
+.live-dot{box-shadow:0 0 8px #63ffad,0 0 18px rgba(99,255,173,.9)!important}
+.home-intro .home-kicker{text-shadow:0 0 12px rgba(255,111,200,.8),0 0 25px rgba(86,201,255,.35)}
+.home-intro .home-title{filter:drop-shadow(0 0 12px rgba(255,88,185,.3))}
+.home-intro .home-description{text-shadow:0 0 12px rgba(120,180,255,.32)}
+@keyframes gdSurfacePulse{
+ 0%{filter:drop-shadow(0 0 3px rgba(255,62,166,.08))}
+ 100%{filter:drop-shadow(0 0 11px rgba(255,62,166,.2)) drop-shadow(0 0 7px rgba(65,196,255,.12))}
+}
+@keyframes gdPageRadiance{
+ from{opacity:.82;filter:saturate(1.08)}
+ to{opacity:1;filter:saturate(1.24)}
+}
+@media(prefers-reduced-motion:reduce){
+ .tab-page.active,.tab-page.active .card{animation:none!important}
+}
+
 </style>
 </head>
 <body>
