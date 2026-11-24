@@ -242,6 +242,16 @@ async function initDatabase() {
     WHERE prize_type IN ('ordinary', 'unusual', 'rare')
     ON CONFLICT (spin_history_id) DO NOTHING;
 
+    INSERT INTO user_inventory
+      (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url, status, created_at)
+    SELECT c.id, c.telegram_id, c.prize_type, c.prize_name,
+           COALESCE(c.prize_stars, 0), c.prize_image_url,
+           CASE WHEN c.status = 'done' THEN 'withdrawn' ELSE 'owned' END,
+           c.created_at
+    FROM prize_claims c
+    WHERE c.prize_name IS NOT NULL AND c.prize_name <> ''
+    ON CONFLICT (source_claim_id) DO NOTHING;
+
     CREATE TABLE IF NOT EXISTS topup_requests (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -1443,6 +1453,12 @@ const server = http.createServer(async (req, res) => {
             RETURNING id
           `, [history.rows[0].id, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
           claimId = claim.rows[0].id;
+          await client.query(`
+            INSERT INTO user_inventory
+              (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (source_claim_id) DO NOTHING
+          `, [claimId, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
         }
 
         const updated = await client.query(`
