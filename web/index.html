@@ -1029,6 +1029,86 @@ button.danger:not(.nav-button){
  .tab-page.active button,.nav-button{transition:none !important}
 }
 
+
+/* GIFTSDROP — premium glass tiles */
+.home-grid{gap:14px}
+.home-tile{
+  min-height:174px;
+  aspect-ratio:1.04/1;
+  padding:17px 15px 15px;
+  border:1px solid var(--tile-border);
+  border-radius:25px;
+  background:
+    radial-gradient(circle at 88% 12%,var(--tile-glow),transparent 39%),
+    linear-gradient(145deg,rgba(255,255,255,.13),transparent 34%),
+    var(--tile-bg);
+  box-shadow:
+    0 17px 34px rgba(0,0,0,.34),
+    0 0 24px color-mix(in srgb,var(--tile-glow) 24%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.34),
+    inset 0 -22px 35px rgba(0,0,0,.18);
+  -webkit-tap-highlight-color:transparent;
+  transform:translateZ(0);
+}
+.home-tile:before{
+  z-index:0;right:-46px;top:-76px;width:190px;height:190px;
+  border:1px solid rgba(255,255,255,.22);
+  background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.24),var(--tile-glow) 32%,transparent 70%);
+  filter:blur(1px);opacity:.9;
+  box-shadow:0 0 55px var(--tile-glow);
+}
+.home-tile:after{
+  z-index:1;inset:0;border-radius:inherit;pointer-events:none;
+  background:
+    linear-gradient(112deg,transparent 0%,rgba(255,255,255,0) 35%,rgba(255,255,255,.19) 47%,rgba(255,255,255,0) 59%,transparent 100%),
+    linear-gradient(155deg,rgba(255,255,255,.12),transparent 38%,rgba(4,5,22,.26));
+  background-size:240% 100%,100% 100%;
+  background-position:130% 0,0 0;
+  animation:tileLuxurySheen 8s ease-in-out infinite;
+}
+.home-tile-icon,.home-tile-copy,.home-tile-arrow{position:relative;z-index:2}
+.home-tile-icon{
+  width:62px;height:62px;border-radius:21px;font-size:33px;
+  background:linear-gradient(145deg,rgba(255,255,255,.27),rgba(255,255,255,.075));
+  border:1px solid rgba(255,255,255,.38);
+  box-shadow:0 9px 24px rgba(0,0,0,.2),0 0 24px color-mix(in srgb,var(--tile-glow) 42%,transparent),inset 0 1px 0 rgba(255,255,255,.42);
+  backdrop-filter:blur(8px);
+  text-shadow:0 4px 12px rgba(0,0,0,.24);
+}
+.home-tile-copy{padding-right:22px}
+.home-tile-title{font-size:16px;font-weight:900;letter-spacing:.65px;text-shadow:0 2px 14px rgba(0,0,0,.34)}
+.home-tile-subtitle{font-size:9px;line-height:1.45;color:rgba(255,255,255,.86);text-shadow:0 1px 8px rgba(0,0,0,.28)}
+.home-tile-arrow{
+  right:13px;bottom:13px;width:27px;height:27px;
+  border:1px solid rgba(255,255,255,.24);
+  background:rgba(255,255,255,.16);backdrop-filter:blur(8px);
+  box-shadow:0 4px 12px rgba(0,0,0,.18);font-size:17px;
+}
+.home-tile-roulette{--tile-bg:linear-gradient(145deg,#5525a8 0%,#25124f 72%,#130d30 100%);--tile-border:rgba(215,184,255,.72);--tile-glow:rgba(169,111,255,.8)}
+.home-tile-prizes{--tile-bg:linear-gradient(145deg,#087fa9 0%,#123d70 68%,#101b42 100%);--tile-border:rgba(139,235,255,.72);--tile-glow:rgba(67,213,255,.8)}
+.home-tile-gifts{--tile-bg:linear-gradient(145deg,#c52b83 0%,#65205f 68%,#30123e 100%);--tile-border:rgba(255,174,220,.75);--tile-glow:rgba(255,91,180,.82)}
+.home-tile-balance{--tile-bg:linear-gradient(145deg,#c18a27 0%,#75501b 65%,#38251b 100%);--tile-border:rgba(255,230,151,.78);--tile-glow:rgba(255,198,73,.82)}
+.home-tile-friends{--tile-bg:linear-gradient(145deg,#159c78 0%,#155c61 66%,#102d3c 100%);--tile-border:rgba(155,255,210,.72);--tile-glow:rgba(69,239,177,.8)}
+.home-tile-profile{--tile-bg:linear-gradient(145deg,#536fe0 0%,#303b91 68%,#1c1c4c 100%);--tile-border:rgba(183,199,255,.75);--tile-glow:rgba(117,151,255,.82)}
+.home-tile-inventory{--tile-bg:linear-gradient(145deg,#a34be4 0%,#6530a9 66%,#32175f 100%);--tile-border:rgba(232,191,255,.78);--tile-glow:rgba(199,116,255,.85)}
+.home-tile-rocket{--tile-bg:linear-gradient(145deg,#f06a3e 0%,#a92f50 66%,#4b193f 100%);--tile-border:rgba(255,193,155,.78);--tile-glow:rgba(255,112,76,.86)}
+.home-tile-upgrade{--tile-bg:linear-gradient(145deg,#27c9c2 0%,#167f9d 66%,#153b67 100%);--tile-border:rgba(173,255,249,.8);--tile-glow:rgba(68,235,239,.86)}
+@keyframes tileLuxurySheen{
+  0%,58%{background-position:130% 0,0 0}
+  78%,100%{background-position:-130% 0,0 0}
+}
+@media(hover:hover){
+ .home-tile:hover{transform:translateY(-4px) scale(1.012);filter:brightness(1.12);box-shadow:0 22px 42px rgba(0,0,0,.4),0 0 34px color-mix(in srgb,var(--tile-glow) 42%,transparent),inset 0 1px 0 rgba(255,255,255,.4)}
+}
+.home-tile:active{transform:scale(.975);filter:brightness(1.16)}
+@media(max-width:380px){
+ .home-grid{gap:10px}
+ .home-tile{min-height:154px;padding:14px 12px 13px;border-radius:22px}
+ .home-tile-icon{width:54px;height:54px;font-size:29px;border-radius:18px}
+ .home-tile-title{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){.home-tile:after{animation:none}.home-tile{transition:none}}
+
 </style>
 </head>
 <body>
