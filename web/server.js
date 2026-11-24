@@ -344,6 +344,28 @@ async function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS gift_orders_status_idx
       ON gift_orders(status, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS nft_battles (
+      id BIGSERIAL PRIMARY KEY,
+      creator_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      opponent_id BIGINT REFERENCES users(telegram_id),
+      spins INTEGER NOT NULL CHECK (spins BETWEEN 5 AND 15),
+      status TEXT NOT NULL DEFAULT 'waiting'
+        CHECK (status IN ('waiting', 'finished', 'cancelled')),
+      creator_result JSONB,
+      opponent_result JSONB,
+      creator_score BIGINT NOT NULL DEFAULT 0,
+      opponent_score BIGINT NOT NULL DEFAULT 0,
+      winner_id BIGINT REFERENCES users(telegram_id),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      finished_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS nft_battles_lobby_idx
+      ON nft_battles(status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS nft_battles_creator_idx
+      ON nft_battles(creator_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS nft_battles_opponent_idx
+      ON nft_battles(opponent_id, created_at DESC);
   `);
 }
 
@@ -1544,6 +1566,255 @@ const server = http.createServer(async (req, res) => {
         referral_link:
           `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
       });
+    }
+
+    // NFT battles: two players open the same number of roulette spins.
+    if (url.pathname === '/api/battles' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const result = await pool.query(`
+        SELECT b.id, b.spins, b.status, b.created_at,
+               b.creator_id, b.opponent_id, b.creator_score, b.opponent_score, b.winner_id,
+               c.username AS creator_username, c.first_name AS creator_first_name,
+               o.username AS opponent_username, o.first_name AS opponent_first_name
+        FROM nft_battles b
+        JOIN users c ON c.telegram_id = b.creator_id
+        LEFT JOIN users o ON o.telegram_id = b.opponent_id
+        WHERE b.status = 'waiting' OR b.status = 'finished'
+        ORDER BY CASE WHEN b.status = 'waiting' THEN 0 ELSE 1 END, b.created_at DESC
+        LIMIT 30
+      `);
+      return send(res, 200, { battles: result.rows.map(row => ({
+        ...row,
+        id: Number(row.id),
+        spins: Number(row.spins),
+        creator_score: Number(row.creator_score || 0),
+        opponent_score: Number(row.opponent_score || 0),
+        creator_id: String(row.creator_id),
+        opponent_id: row.opponent_id ? String(row.opponent_id) : null,
+        winner_id: row.winner_id ? String(row.winner_id) : null
+      })) });
+    }
+
+    if (url.pathname === '/api/battles' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const body = await readBody(req);
+      const spins = Number(body.spins);
+      if (!Number.isInteger(spins) || spins < 5 || spins > 15) {
+        return send(res, 400, { error: 'Выбери от 5 до 15 прокруток' });
+      }
+      await ensureUser(user, req);
+      const created = await pool.query(`
+        INSERT INTO nft_battles (creator_id, spins)
+        VALUES ($1, $2)
+        RETURNING id, spins, status, created_at
+      `, [String(user.id), spins]);
+      return send(res, 201, { battle: { ...created.rows[0], id: Number(created.rows[0].id), spins: Number(created.rows[0].spins) } });
+    }
+
+    const battleJoinMatch = url.pathname.match(/^\\/api\\/battles\\/(\\d+)\\/join$/);
+    if (battleJoinMatch && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const battleId = Number(battleJoinMatch[1]);
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const lockedBattle = await client.query(
+          'SELECT * FROM nft_battles WHERE id = $1 FOR UPDATE', [battleId]
+        );
+        if (!lockedBattle.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 404, { error: 'Баттл не найден' });
+        }
+        const battle = lockedBattle.rows[0];
+        if (battle.status !== 'waiting' || battle.opponent_id) {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Этот баттл уже начался или завершён' });
+        }
+        if (String(battle.creator_id) === String(user.id)) {
+          await client.query('ROLLBACK');
+          return send(res, 400, { error: 'Нельзя вступить в собственный баттл' });
+        }
+
+        const ids = [String(battle.creator_id), String(user.id)].sort();
+        const lockedUsers = await client.query(
+          'SELECT * FROM users WHERE telegram_id = ANY($1::bigint[]) ORDER BY telegram_id FOR UPDATE',
+          [ids]
+        );
+        const accounts = new Map(lockedUsers.rows.map(row => [String(row.telegram_id), row]));
+        const spins = Number(battle.spins);
+        for (const id of ids) {
+          const account = accounts.get(id);
+          if (!account) throw new Error('Не удалось загрузить аккаунт участника');
+          const freeUsed = Math.min(spins, Number(account.free_spins));
+          const paidSpins = spins - freeUsed;
+          const silverCost = paidSpins * 20;
+          if (Number(account.silver) < silverCost) {
+            await client.query('ROLLBACK');
+            return send(res, 400, {
+              error: id === String(battle.creator_id)
+                ? 'У создателя недостаточно прокруток или серебра для этого баттла'
+                : 'Недостаточно прокруток или серебра. Нужно по 20 серебра за каждую платную прокрутку.'
+            });
+          }
+          await client.query(
+            'UPDATE users SET free_spins = free_spins - $1, silver = silver - $2 WHERE telegram_id = $3',
+            [freeUsed, silverCost, id]
+          );
+        }
+
+        const ordinaryGifts = [
+          { id:'love_heart', name:'Love Heart', stars:15, emoji:'❤️', image_url:giftImage('loveheart') },
+          { id:'teddy_bear', name:'Teddy Bear', stars:15, emoji:'🧸', image_url:giftImage('toybear') },
+          { id:'gift_box', name:'Gift Box', stars:25, emoji:'🎁', image_url:giftImage('giftbox') },
+          { id:'red_rose', name:'Red Rose', stars:25, emoji:'🌹', image_url:giftImage('redrose') },
+          { id:'birthday_cake', name:'Birthday Cake', stars:50, emoji:'🎂', image_url:giftImage('birthdaycake') },
+          { id:'bouquet', name:'Bouquet of Flowers', stars:50, emoji:'💐', image_url:giftImage('bouquetofflowers') },
+          { id:'rocket', name:'Rocket', stars:50, emoji:'🚀', image_url:giftImage('rocket') },
+          { id:'champagne', name:'Champagne Bottle', stars:50, emoji:'🍾', image_url:giftImage('champagne') },
+          { id:'trophy', name:'Trophy', stars:100, emoji:'🏆', image_url:giftImage('trophy') },
+          { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
+          { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
+        ];
+        const runPlayerSpins = async (telegramId) => {
+          const drops = [];
+          let score = 0;
+          for (let i = 0; i < spins; i++) {
+            const chance = crypto.randomInt(100000);
+            let prize = 'nothing';
+            if (chance >= 99999) prize = 'rare';
+            else if (chance >= 94999) prize = 'unusual';
+            else if (chance >= 79999) prize = 'ordinary';
+
+            const history = await client.query(
+              'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
+              [telegramId, prize]
+            );
+            let winningGift = null;
+            if (prize !== 'nothing') {
+              const giftPool = prize === 'ordinary'
+                ? ordinaryGifts
+                : PRODUCTS.filter(product => prize === 'unusual'
+                  ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
+                  : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+              if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
+              const selected = giftPool[crypto.randomInt(giftPool.length)];
+              winningGift = {
+                id: selected.id,
+                name: selected.name,
+                stars: Number(selected.stars),
+                emoji: selected.emoji || '🎁',
+                image_url: selected.image_url || ''
+              };
+              const claim = await client.query(`
+                INSERT INTO prize_claims
+                  (spin_history_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id
+              `, [history.rows[0].id, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
+              await client.query(`
+                INSERT INTO user_inventory
+                  (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (source_claim_id) DO NOTHING
+              `, [claim.rows[0].id, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
+              score += winningGift.stars;
+            }
+            drops.push({ prize, gift: winningGift, value: winningGift ? winningGift.stars : 0 });
+          }
+          await client.query('UPDATE users SET xp = xp + $1 WHERE telegram_id = $2', [spins * 10, telegramId]);
+          return { drops, score };
+        };
+
+        const creatorId = String(battle.creator_id);
+        const opponentId = String(user.id);
+        const creatorResult = await runPlayerSpins(creatorId);
+        const opponentResult = await runPlayerSpins(opponentId);
+        const winnerId = creatorResult.score === opponentResult.score
+          ? null
+          : (creatorResult.score > opponentResult.score ? creatorId : opponentId);
+
+        await client.query(`
+          UPDATE nft_battles
+          SET opponent_id = $1, status = 'finished',
+              creator_result = $2::jsonb, opponent_result = $3::jsonb,
+              creator_score = $4, opponent_score = $5, winner_id = $6,
+              finished_at = NOW()
+          WHERE id = $7
+        `, [
+          opponentId, JSON.stringify(creatorResult.drops), JSON.stringify(opponentResult.drops),
+          creatorResult.score, opponentResult.score, winnerId, battleId
+        ]);
+        const balances = await client.query(
+          'SELECT telegram_id, silver, free_spins FROM users WHERE telegram_id = ANY($1::bigint[])',
+          [ids]
+        );
+        await client.query('COMMIT');
+        return send(res, 200, {
+          success: true,
+          battle: {
+            id: battleId, spins, status: 'finished',
+            creator_id: creatorId, opponent_id: opponentId, winner_id: winnerId,
+            creator_score: creatorResult.score, opponent_score: opponentResult.score,
+            creator_result: creatorResult.drops, opponent_result: opponentResult.drops
+          },
+          balances: balances.rows.map(row => ({
+            telegram_id: String(row.telegram_id),
+            silver: Number(row.silver), free_spins: Number(row.free_spins)
+          }))
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    const battleCancelMatch = url.pathname.match(/^\\/api\\/battles\\/(\\d+)\\/cancel$/);
+    if (battleCancelMatch && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const battleId = Number(battleCancelMatch[1]);
+      const result = await pool.query(
+        `UPDATE nft_battles SET status = 'cancelled'
+         WHERE id = $1 AND creator_id = $2 AND status = 'waiting'
+         RETURNING id`,
+        [battleId, String(user.id)]
+      );
+      if (!result.rowCount) return send(res, 409, { error: 'Нельзя отменить этот баттл' });
+      return send(res, 200, { success: true });
+    }
+
+    const battleDetailMatch = url.pathname.match(/^\\/api\\/battles\\/(\\d+)$/);
+    if (battleDetailMatch && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const battleId = Number(battleDetailMatch[1]);
+      const result = await pool.query(`
+        SELECT b.*, c.username AS creator_username, c.first_name AS creator_first_name,
+               o.username AS opponent_username, o.first_name AS opponent_first_name
+        FROM nft_battles b
+        JOIN users c ON c.telegram_id = b.creator_id
+        LEFT JOIN users o ON o.telegram_id = b.opponent_id
+        WHERE b.id = $1
+      `, [battleId]);
+      if (!result.rowCount) return send(res, 404, { error: 'Баттл не найден' });
+      const row = result.rows[0];
+      return send(res, 200, { battle: {
+        id: Number(row.id), spins: Number(row.spins), status: row.status,
+        creator_id: String(row.creator_id), opponent_id: row.opponent_id ? String(row.opponent_id) : null,
+        creator_username: row.creator_username, creator_first_name: row.creator_first_name,
+        opponent_username: row.opponent_username, opponent_first_name: row.opponent_first_name,
+        creator_score: Number(row.creator_score || 0), opponent_score: Number(row.opponent_score || 0),
+        winner_id: row.winner_id ? String(row.winner_id) : null,
+        creator_result: row.creator_result || [], opponent_result: row.opponent_result || [],
+        created_at: row.created_at, finished_at: row.finished_at
+      }});
     }
 
     // Рулетка
