@@ -2110,12 +2110,26 @@ let catalogLoaded = false;
 loadRecentWins();
 setInterval(loadRecentWins, 60000);
 
-// Декоративный счётчик онлайна: число меняется раз в секунду.
-let displayedOnline = 123;
+// Динамический счётчик: диапазон зависит от времени суток, значение плавно меняется каждую секунду.
 const activityCount = document.getElementById('activityCount');
 if (activityCount) {
+ const getOnlineRange = () => {
+  const hour = new Date().getHours();
+  return hour >= 18
+   ? { min: 1000, max: 2500 }
+   : { min: 100, max: 300 };
+ };
+ let onlineRange = getOnlineRange();
+ let displayedOnline = onlineRange.min + Math.floor(Math.random() * (onlineRange.max - onlineRange.min + 1));
+ activityCount.textContent = displayedOnline;
  setInterval(() => {
-  displayedOnline = Math.max(100, Math.min(199, displayedOnline + Math.floor(Math.random()*13)-6));
+  const nextRange = getOnlineRange();
+  if (nextRange.min !== onlineRange.min || nextRange.max !== onlineRange.max) {
+   onlineRange = nextRange;
+   displayedOnline = Math.max(onlineRange.min, Math.min(onlineRange.max, displayedOnline));
+  }
+  const step = Math.floor(Math.random() * 19) - 9;
+  displayedOnline = Math.max(onlineRange.min, Math.min(onlineRange.max, displayedOnline + step));
   activityCount.textContent = displayedOnline;
  }, 1000);
 }
