@@ -1151,6 +1151,44 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // Аватар текущего пользователя: Telegram Bot API, только для владельца initData.
+    if (url.pathname === '/api/me/avatar' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+
+      const photosResponse = await fetch(
+        `https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${encodeURIComponent(user.id)}&limit=1`
+      );
+      const photosData = await photosResponse.json();
+      if (!photosResponse.ok || !photosData.ok) {
+        return send(res, 502, { error: 'Не удалось получить аватар Telegram' });
+      }
+      const sizes = photosData.result && photosData.result.photos && photosData.result.photos[0];
+      if (!sizes || !sizes.length) return send(res, 200, { photo_url: null });
+
+      const photo = sizes[sizes.length - 1];
+      const fileResponse = await fetch(
+        `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${encodeURIComponent(photo.file_id)}`
+      );
+      const fileData = await fileResponse.json();
+      if (!fileResponse.ok || !fileData.ok || !fileData.result || !fileData.result.file_path) {
+        return send(res, 502, { error: 'Не удалось загрузить аватар Telegram' });
+      }
+
+      const imageResponse = await fetch(
+        `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`
+      );
+      if (!imageResponse.ok) return send(res, 502, { error: 'Аватар Telegram временно недоступен' });
+      const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      if (imageBuffer.length > 2 * 1024 * 1024) {
+        return send(res, 413, { error: 'Файл аватара слишком большой' });
+      }
+      return send(res, 200, {
+        photo_url: `data:${contentType};base64,${imageBuffer.toString('base64')}`
+      });
+    }
+
     // Аккаунт
     if (url.pathname === '/api/me' && req.method === 'GET') {
       const user = getTelegramUser(req);
