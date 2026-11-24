@@ -1185,6 +1185,89 @@ button.danger:not(.nav-button){
 @media(max-width:380px){.home-grid{gap:10px}.home-tile{padding:14px 12px 13px!important}.home-tile-icon{width:53px;height:53px}}
 @media(prefers-reduced-motion:reduce){.home-tile:after{animation:none}}
 
+
+
+/* GIFTSDROP — ROYAL GEMSTONE / HIGH-JEWELRY EDITION */
+.home-grid{gap:14px!important}
+.home-tile{
+  isolation:isolate;overflow:hidden;
+  min-height:168px;
+  border:1px solid var(--royal-rim)!important;
+  border-radius:25px!important;
+  background:
+    radial-gradient(ellipse at 14% 0%,rgba(255,255,255,.25),transparent 34%),
+    radial-gradient(ellipse at 100% 100%,var(--royal-glow),transparent 62%),
+    linear-gradient(135deg,var(--royal-top) 0%,var(--royal-mid) 38%,#090910 100%)!important;
+  box-shadow:
+    0 18px 38px rgba(0,0,0,.56),
+    0 0 22px var(--royal-aura),
+    0 0 2px 1px var(--royal-rim),
+    inset 0 1px 0 rgba(255,255,255,.62),
+    inset 0 -2px 0 rgba(0,0,0,.65),
+    inset 0 0 28px rgba(255,255,255,.035)!important;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),filter .32s ease,box-shadow .32s ease!important;
+}
+.home-tile:before{
+  content:"";position:absolute;inset:1px;z-index:0;border-radius:24px;
+  width:auto;height:auto;right:1px;top:1px;opacity:1;filter:none;
+  background:
+    linear-gradient(125deg,rgba(255,255,255,.22),transparent 24% 67%,rgba(255,255,255,.08)),
+    radial-gradient(circle at 88% 12%,var(--royal-glow),transparent 52%);
+  pointer-events:none;
+}
+.home-tile:after{
+  z-index:2;inset:-35% -70%;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.02) 43%,rgba(255,255,255,.48) 49%,rgba(255,255,255,.07) 53%,transparent 59%);
+  background-size:200% 100%;background-position:150% 0;
+  animation:royalDiamondSweep 5.4s ease-in-out infinite;
+}
+.home-tile-icon{
+  position:relative;z-index:3;width:64px;height:64px;border-radius:20px;
+  background:
+    radial-gradient(circle at 30% 18%,rgba(255,255,255,.6),transparent 35%),
+    linear-gradient(145deg,var(--royal-icon1),var(--royal-icon2) 58%,#101018);
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,.7),
+    inset 0 -7px 13px rgba(0,0,0,.38),
+    0 9px 20px rgba(0,0,0,.5),
+    0 0 22px var(--royal-aura);
+  font-size:33px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.48));
+}
+.home-tile-copy{position:relative;z-index:3}
+.home-tile-title{
+  color:#fff!important;font-size:15px;font-weight:950;letter-spacing:1.35px;
+  text-shadow:0 1px 1px rgba(0,0,0,.8),0 0 13px var(--royal-glow),0 2px 9px rgba(0,0,0,.8);
+}
+.home-tile-subtitle{color:rgba(255,255,255,.88)!important;font-size:9px;font-weight:650;text-shadow:0 1px 5px #000}
+.home-tile-arrow{
+  z-index:4;color:#fff!important;border:1px solid rgba(255,255,255,.48)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.28),rgba(0,0,0,.24))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(0,0,0,.4),0 0 12px var(--royal-aura);
+}
+.home-tile-roulette{--royal-top:#54218c;--royal-mid:#21113d;--royal-glow:rgba(205,132,255,.68);--royal-aura:rgba(177,91,255,.55);--royal-rim:#e0baff;--royal-icon1:#e5b8ff;--royal-icon2:#6c28b7}
+.home-tile-prizes{--royal-top:#075c85;--royal-mid:#102d50;--royal-glow:rgba(83,221,255,.65);--royal-aura:rgba(49,195,255,.5);--royal-rim:#a7f0ff;--royal-icon1:#c5f8ff;--royal-icon2:#0875a8}
+.home-tile-gifts{--royal-top:#98285e;--royal-mid:#45152f;--royal-glow:rgba(255,119,187,.66);--royal-aura:rgba(255,74,159,.48);--royal-rim:#ffc0df;--royal-icon1:#ffd1e9;--royal-icon2:#b52b70}
+.home-tile-balance{--royal-top:#98620b;--royal-mid:#49300d;--royal-glow:rgba(255,218,112,.72);--royal-aura:rgba(255,190,54,.55);--royal-rim:#fff0ad;--royal-icon1:#fff2b7;--royal-icon2:#a86c0b}
+.home-tile-friends{--royal-top:#08775c;--royal-mid:#103a36;--royal-glow:rgba(98,255,194,.62);--royal-aura:rgba(55,224,159,.45);--royal-rim:#b6ffe2;--royal-icon1:#caffea;--royal-icon2:#07805c}
+.home-tile-profile{--royal-top:#354d9c;--royal-mid:#1b244c;--royal-glow:rgba(145,171,255,.68);--royal-aura:rgba(102,136,255,.5);--royal-rim:#c8d5ff;--royal-icon1:#e0e8ff;--royal-icon2:#344fae}
+.home-tile-inventory{--royal-top:#6b5734;--royal-mid:#33291d;--royal-glow:rgba(255,222,157,.64);--royal-aura:rgba(224,182,105,.48);--royal-rim:#fff0cb;--royal-icon1:#fff0ce;--royal-icon2:#8c6831}
+.home-tile-rocket{--royal-top:#a83c1c;--royal-mid:#4a1c20;--royal-glow:rgba(255,143,92,.68);--royal-aura:rgba(255,94,57,.5);--royal-rim:#ffd0a9;--royal-icon1:#ffe0c7;--royal-icon2:#bd421d}
+.home-tile-upgrade{--royal-top:#82710b;--royal-mid:#3b3210;--royal-glow:rgba(255,246,112,.7);--royal-aura:rgba(255,223,57,.5);--royal-rim:#fff9b3;--royal-icon1:#fffbd0;--royal-icon2:#a18b09}
+@keyframes royalDiamondSweep{
+  0%,58%,100%{transform:translateX(0);opacity:.55}
+  78%{transform:translateX(58%);opacity:1}
+}
+@media(hover:hover){
+ .home-tile:hover{
+  transform:translateY(-6px) scale(1.025);filter:brightness(1.2) saturate(1.2);
+  box-shadow:0 25px 48px rgba(0,0,0,.62),0 0 34px var(--royal-aura),inset 0 1px 0 rgba(255,255,255,.75)!important;
+ }
+}
+.home-tile:active{transform:scale(.965);filter:brightness(1.25) saturate(1.3)}
+@media(max-width:380px){.home-tile{min-height:158px}.home-tile-icon{width:58px;height:58px}}
+@media(prefers-reduced-motion:reduce){.home-tile:after{animation:none}}
+
 </style>
 </head>
 <body>
