@@ -1615,20 +1615,25 @@ body{
 .profile-rank-progress{height:7px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.09)}
 .profile-rank-progress>div{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#b7783e,#f1d39a);box-shadow:0 0 12px rgba(232,183,105,.35);transition:width .7s ease}
 .profile-rank-next{margin-top:7px;font-size:10px;color:#aaa8c7}
-#profileEmblem[data-rank="rookie"] .profile-wing{opacity:.12;filter:grayscale(1)}
-#profileEmblem[data-rank="copper"]{--wing-light:#ffd4a0;--wing-mid:#b8733e;--wing-dark:#603318}
-#profileEmblem[data-rank="metal"]{--wing-light:#f2f4f8;--wing-mid:#9299a8;--wing-dark:#454b59}
-#profileEmblem[data-rank="gold"]{--wing-light:#fff0a3;--wing-mid:#d69a25;--wing-dark:#80500c}
-#profileEmblem[data-rank="silver"]{--wing-light:#fff;--wing-mid:#b9c7d7;--wing-dark:#68788d}
-#profileEmblem[data-rank="green-diamond"]{--wing-light:#aaffd0;--wing-mid:#18c982;--wing-dark:#075f50}
-#profileEmblem[data-rank="blue-diamond"]{--wing-light:#c4f4ff;--wing-mid:#36a9ed;--wing-dark:#164caa}
-#profileEmblem[data-rank="legend"]{--wing-light:#fff0f2;--wing-mid:#ff263f;--wing-dark:#790019}
-#profileEmblem[data-rank="legend"] .profile-wing{width:122px;height:76px;top:18px;filter:drop-shadow(0 0 8px rgba(255,25,62,.72)) drop-shadow(0 0 18px rgba(255,25,62,.35))}
-#profileEmblem[data-rank="legend"] .profile-wing:before{background:linear-gradient(145deg,#fff4f5 0%,#ff304c 32%,#c5002c 64%,#520014 100%)}
-#profileEmblem[data-rank="legend"] .profile-wing:after{background:repeating-linear-gradient(150deg,transparent 0 7px,rgba(255,255,255,.65) 8px 10px,rgba(75,0,15,.35) 11px 13px)}
-#profileEmblem[data-rank="legend"]+.profile-rank-line .profile-rank-name{font-size:14px;color:#ff9ba9;text-shadow:0 0 7px #ff173f,0 0 20px rgba(255,23,63,.7)}
-@media(max-width:360px){.profile-wing{width:88px}.profile-wing-left{left:0}.profile-wing-right{right:0}#profileEmblem[data-rank="legend"] .profile-wing{width:104px}}
-
+/* Цвет и эффекты крыльев зависят только от выбранного стиля, а не от текущего ранга. */
+#profileEmblem[data-wing-style="none"] .profile-wing{opacity:0;filter:none}
+#profileEmblem[data-wing-style="copper"]{--wing-light:#ffe0b5;--wing-mid:#c47a43;--wing-dark:#63351b}
+#profileEmblem[data-wing-style="metal"]{--wing-light:#f8fbff;--wing-mid:#aeb7c5;--wing-dark:#515b6a}
+#profileEmblem[data-wing-style="gold"]{--wing-light:#fff4ad;--wing-mid:#e3a72d;--wing-dark:#80500c}
+#profileEmblem[data-wing-style="silver"]{--wing-light:#ffffff;--wing-mid:#c5d1df;--wing-dark:#68788d}
+#profileEmblem[data-wing-style="green-diamond"]{--wing-light:#c0ffe0;--wing-mid:#20d58c;--wing-dark:#075c45}
+#profileEmblem[data-wing-style="blue-diamond"]{--wing-light:#d4f8ff;--wing-mid:#48baff;--wing-dark:#164caa}
+#profileEmblem[data-wing-style="legend"]{--wing-light:#fff0f2;--wing-mid:#ff263f;--wing-dark:#790019}
+#profileEmblem[data-wing-style="legend"] .profile-wing{width:122px;height:76px;top:18px;filter:drop-shadow(0 0 8px rgba(255,25,62,.72)) drop-shadow(0 0 18px rgba(255,23,63,.45))}
+#profileEmblem[data-wing-style="legend"] .profile-wing:before{background:linear-gradient(145deg,var(--wing-light) 0%,var(--wing-mid) 38%,#c5002c 68%,var(--wing-dark) 100%)}
+#profileEmblem[data-wing-style="legend"] .profile-wing:after{background:repeating-linear-gradient(150deg,transparent 0 7px,rgba(255,255,255,.72) 8px 10px,rgba(75,0,15,.35) 11px 13px)}
+#profileEmblem[data-wing-style="legend"]+.profile-rank-line .profile-rank-name{font-size:14px;color:#ff9ba9;text-shadow:0 0 7px #ff173f,0 0 20px rgba(255,23,63,.7)}
+#profileEmblem[data-wing-style="copper"] .profile-wing,
+#profileEmblem[data-wing-style="metal"] .profile-wing,
+#profileEmblem[data-wing-style="gold"] .profile-wing,
+#profileEmblem[data-wing-style="silver"] .profile-wing,
+#profileEmblem[data-wing-style="green-diamond"] .profile-wing,
+#profileEmblem[data-wing-style="blue-diamond"] .profile-wing{opacity:1;filter:drop-shadow(0 5px 9px rgba(0,0,0,.3))}
 /* Выбор любого уже открытого стиля крыльев. */
 .profile-wing-picker{margin:15px auto 0;max-width:340px}
 .profile-wing-picker-title{font-size:9px;font-weight:900;letter-spacing:.13em;color:#aaa8c7;margin-bottom:9px}
