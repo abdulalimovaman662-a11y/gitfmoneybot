@@ -1554,6 +1554,23 @@ body{
 @media(prefers-reduced-motion:reduce){.tile-art,.tile-art *{animation:none!important}}
 @media(max-width:360px){.tile-art{transform:scale(.88);transform-origin:top right}.profile-art{width:66px;height:66px}}
 
+
+/* Crisp home cubes: remove emoji badges and all blur from cube artwork */
+#tab-home .home-grid .home-tile:not(.home-tile-rocket):not(.home-tile-upgrade) > .home-tile-icon{
+ display:none!important;
+}
+#tab-home .home-grid .home-tile:not(.home-tile-rocket):not(.home-tile-upgrade)::before{
+ filter:none!important;
+}
+#tab-home .home-grid .home-tile:not(.home-tile-rocket):not(.home-tile-upgrade) .home-tile-copy{
+ backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;
+}
+#tab-home .home-grid .home-tile:not(.home-tile-rocket):not(.home-tile-upgrade) .tile-art,
+#tab-home .home-grid .home-tile:not(.home-tile-rocket):not(.home-tile-upgrade) .tile-art *{
+ filter:none;
+}
+
 </style>
 </head>
 <body>
