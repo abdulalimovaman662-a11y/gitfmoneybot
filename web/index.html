@@ -1460,47 +1460,52 @@ body{
 }
 @media(prefers-reduced-motion:reduce){.home-tile-icon .gd-home-emoji{animation:none!important}}
 
-/* Smooth menu/page enter and exit transitions */
+/* Ultra-smooth premium menu/page transitions */
 .tab-page.active{
- animation:gdPageEnter .34s cubic-bezier(.2,.75,.25,1) both!important;
+ animation:gdPageEnter .62s cubic-bezier(.16,1,.3,1) both!important;
+ will-change:opacity,transform,filter;
 }
 .tab-page.is-leaving{
  display:block!important;
  pointer-events:none!important;
- animation:gdPageLeave .24s cubic-bezier(.4,0,.8,.35) both!important;
+ animation:gdPageLeave .42s cubic-bezier(.4,0,.2,1) both!important;
+ will-change:opacity,transform,filter;
 }
 #tab-home.active .home-tile{
- animation:gdMenuTileEnter .48s cubic-bezier(.18,.78,.25,1) both;
+ animation:gdMenuTileEnter .72s cubic-bezier(.16,1,.3,1) both;
+ will-change:opacity,transform,filter;
 }
-#tab-home.active .home-tile:nth-child(2){animation-delay:.035s}
-#tab-home.active .home-tile:nth-child(3){animation-delay:.07s}
-#tab-home.active .home-tile:nth-child(4){animation-delay:.105s}
-#tab-home.active .home-tile:nth-child(5){animation-delay:.14s}
-#tab-home.active .home-tile:nth-child(6){animation-delay:.175s}
-#tab-home.active .home-tile:nth-child(7){animation-delay:.21s}
-#tab-home.active .home-tile:nth-child(8){animation-delay:.245s}
-#tab-home.active .home-tile:nth-child(9){animation-delay:.28s}
+#tab-home.active .home-tile:nth-child(2){animation-delay:.045s}
+#tab-home.active .home-tile:nth-child(3){animation-delay:.09s}
+#tab-home.active .home-tile:nth-child(4){animation-delay:.135s}
+#tab-home.active .home-tile:nth-child(5){animation-delay:.18s}
+#tab-home.active .home-tile:nth-child(6){animation-delay:.225s}
+#tab-home.active .home-tile:nth-child(7){animation-delay:.27s}
+#tab-home.active .home-tile:nth-child(8){animation-delay:.315s}
+#tab-home.active .home-tile:nth-child(9){animation-delay:.36s}
 #tab-home.is-leaving .home-tile{
- animation:gdMenuTileLeave .2s ease-in both!important;
+ animation:gdMenuTileLeave .38s cubic-bezier(.4,0,.2,1) both!important;
 }
 @keyframes gdPageEnter{
- from{opacity:0;transform:translateY(10px) scale(.992);filter:brightness(.82)}
- to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
+ 0%{opacity:0;transform:translate3d(0,18px,0) scale(.985);filter:blur(5px) brightness(.78)}
+ 65%{opacity:1;filter:blur(.4px) brightness(1.06)}
+ 100%{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0) brightness(1)}
 }
 @keyframes gdPageLeave{
- from{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
- to{opacity:0;transform:translateY(-5px) scale(.985);filter:brightness(.8)}
+ 0%{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0) brightness(1)}
+ 100%{opacity:0;transform:translate3d(0,-10px,0) scale(.985);filter:blur(4px) brightness(.82)}
 }
 @keyframes gdMenuTileEnter{
- 0%{opacity:0;transform:translateY(15px) scale(.9);filter:brightness(.7)}
- 70%{opacity:1;transform:translateY(-2px) scale(1.015);filter:brightness(1.13)}
- 100%{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
+ 0%{opacity:0;transform:translate3d(0,22px,0) scale(.94);filter:blur(4px) brightness(.72)}
+ 72%{opacity:1;transform:translate3d(0,-1px,0) scale(1.008);filter:blur(.2px) brightness(1.12)}
+ 100%{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0) brightness(1)}
 }
 @keyframes gdMenuTileLeave{
- to{opacity:0;transform:translateY(-8px) scale(.94);filter:brightness(.75)}
+ 0%{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}
+ 100%{opacity:0;transform:translate3d(0,-12px,0) scale(.96);filter:blur(3px) brightness(.78)}
 }
 @media(prefers-reduced-motion:reduce){
- .tab-page.active,.tab-page.is-leaving,#tab-home.active .home-tile,#tab-home.is-leaving .home-tile{animation:none!important}
+ .tab-page.active,.tab-page.is-leaving,#tab-home.active .home-tile,#tab-home.is-leaving .home-tile{animation:none!important;filter:none!important}
 }
 
 </style>
@@ -1936,7 +1941,7 @@ function showTab(name) {
  gdTabTransitionTimer=setTimeout(()=>{
   pages.forEach(page=>page.classList.remove('is-leaving'));
   gdTabTransitionTimer=null;
- },260);
+ },440);
  if(name==='home') return;
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
