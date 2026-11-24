@@ -1629,6 +1629,29 @@ body{
 #profileEmblem[data-rank="legend"]+.profile-rank-line .profile-rank-name{font-size:14px;color:#ff9ba9;text-shadow:0 0 7px #ff173f,0 0 20px rgba(255,23,63,.7)}
 @media(max-width:360px){.profile-wing{width:88px}.profile-wing-left{left:0}.profile-wing-right{right:0}#profileEmblem[data-rank="legend"] .profile-wing{width:104px}}
 
+/* Выбор любого уже открытого стиля крыльев. */
+.profile-wing-picker{margin:15px auto 0;max-width:340px}
+.profile-wing-picker-title{font-size:9px;font-weight:900;letter-spacing:.13em;color:#aaa8c7;margin-bottom:9px}
+.profile-wing-options{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.profile-wing-option{width:auto;margin:0;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:#c9c6df;border-radius:10px;padding:7px 9px;font-size:9px;font-weight:800;letter-spacing:0;cursor:pointer;transition:transform .18s,border-color .18s,background .18s}
+.profile-wing-option:active{transform:scale(.96)}
+.profile-wing-option.active{border-color:rgba(180,150,255,.75);background:rgba(145,105,255,.18);color:#fff;box-shadow:0 0 14px rgba(145,105,255,.16)}
+.profile-wing-option:disabled{opacity:.35;cursor:not-allowed}
+.profile-wing-picker-note{margin-top:7px;color:#85829f;font-size:9px;min-height:12px}
+#profileEmblem[data-wing-style="copper"]{--wing-light:#ffd4a0;--wing-mid:#b8733e;--wing-dark:#603318}
+#profileEmblem[data-wing-style="metal"]{--wing-light:#f2f4f8;--wing-mid:#9299a8;--wing-dark:#454b59}
+#profileEmblem[data-wing-style="gold"]{--wing-light:#fff0a3;--wing-mid:#d69a25;--wing-dark:#80500c}
+#profileEmblem[data-wing-style="silver"]{--wing-light:#fff;--wing-mid:#b9c7d7;--wing-dark:#68788d}
+#profileEmblem[data-wing-style="green-diamond"]{--wing-light:#aaffd0;--wing-mid:#18c982;--wing-dark:#075f50}
+#profileEmblem[data-wing-style="blue-diamond"]{--wing-light:#c4f4ff;--wing-mid:#36a9ed;--wing-dark:#164caa}
+#profileEmblem[data-wing-style="legend"]{--wing-light:#fff0f2;--wing-mid:#ff263f;--wing-dark:#790019}
+#profileEmblem[data-wing-style="legend"] .profile-wing{width:122px;height:76px;top:18px;filter:drop-shadow(0 0 8px rgba(255,25,62,.72)) drop-shadow(0 0 18px rgba(255,25,62,.35))}
+#profileEmblem[data-wing-style="legend"] .profile-wing:before{background:linear-gradient(145deg,#fff4f5 0%,#ff304c 32%,#c5002c 64%,#520014 100%)}
+#profileEmblem[data-wing-style="legend"] .profile-wing:after{background:repeating-linear-gradient(150deg,transparent 0 7px,rgba(255,255,255,.65) 8px 10px,rgba(75,0,15,.35) 11px 13px)}
+#profileEmblem[data-wing-style="legend"]+.profile-rank-line .profile-rank-name{font-size:14px;color:#ff9ba9;text-shadow:0 0 7px #ff173f,0 0 20px rgba(255,23,63,.7)}
+.profile-wing-option[data-wing="legend"]{color:#ff9ba9}
+.profile-wing-option[data-wing="green-diamond"]{color:#75e8b4}
+.profile-wing-option[data-wing="blue-diamond"]{color:#85d9ff}
 </style>
 </head>
 <body>
@@ -1755,6 +1778,11 @@ body{
   <div class="profile-rank-progress-wrap" id="profileRankProgressWrap">
    <div class="profile-rank-progress"><div id="profileRankProgress"></div></div>
    <div class="profile-rank-next" id="profileRankNext">До медных крыльев: 50 открытий</div>
+  </div>
+  <div class="profile-wing-picker">
+   <div class="profile-wing-picker-title">ВЫБЕРИ ОТКРЫТЫЕ КРЫЛЬЯ</div>
+   <div class="profile-wing-options" id="profileWingOptions"></div>
+   <div class="profile-wing-picker-note" id="profileWingNote">Новые крылья открываются вместе с рангами.</div>
   </div>
   <div class="profile-name" id="profileName">Игрок GiftsDrop</div>
   <div class="profile-username" id="profileUsername">Открыто через Telegram</div>
@@ -2220,6 +2248,39 @@ async function loadProfile() {
   document.getElementById('profileLevelProgress').style.width=Math.min(100,((data.xp_progress ?? 0)/(data.xp_required ?? 100))*100)+'%';
   const emblem=document.getElementById('profileEmblem');
   emblem.dataset.rank=data.rank_key||'rookie';
+  const wingRanks=[
+   {key:'copper',label:'Медные',min:50},
+   {key:'metal',label:'Металл',min:500},
+   {key:'gold',label:'Золото',min:1000},
+   {key:'silver',label:'Серебро',min:2000},
+   {key:'green-diamond',label:'Зелёные',min:3000},
+   {key:'blue-diamond',label:'Голубые',min:4000},
+   {key:'legend',label:'Легенда',min:5000}
+  ];
+  const openings=Number(data.total_openings||0);
+  const chosen=data.selected_wings||'auto';
+  const activeWing=chosen==='auto'?(data.rank_key==='rookie'?'none':data.rank_key):chosen;
+  emblem.dataset.wingStyle=activeWing;
+  const wingOptions=document.getElementById('profileWingOptions');
+  wingOptions.replaceChildren();
+  const autoButton=document.createElement('button');
+  autoButton.type='button';autoButton.className='profile-wing-option'+(chosen==='auto'?' active':'');
+  autoButton.textContent='По рангу';
+  autoButton.onclick=()=>selectProfileWings('auto',autoButton);
+  wingOptions.appendChild(autoButton);
+  wingRanks.forEach(rank=>{
+   const unlocked=openings>=rank.min;
+   const button=document.createElement('button');
+   button.type='button';button.className='profile-wing-option'+(chosen===rank.key?' active':'');
+   button.dataset.wing=rank.key;button.textContent=rank.label;button.disabled=!unlocked;
+   button.title=unlocked?'Нажми, чтобы надеть эти крылья':'Откроется на '+rank.min+' открытиях';
+   button.onclick=()=>selectProfileWings(rank.key,button);
+   wingOptions.appendChild(button);
+  });
+  document.getElementById('profileWingNote').textContent=
+   openings<50?'Открой 50 кубиков, чтобы получить первые крылья.':
+   'Открыто вариантов: '+wingRanks.filter(rank=>openings>=rank.min).length+'. Твой ранг не изменится от выбора.';
+
   document.getElementById('profileRank').textContent=data.is_legend?'✦ LEGEND GiftsMoney ✦':(data.rank||'Новичок');
   document.getElementById('profileOpenings').textContent=Number(data.total_openings||0).toLocaleString('ru-RU')+' открытий';
   const rankWrap=document.getElementById('profileRankProgressWrap');
@@ -2232,6 +2293,27 @@ async function loadProfile() {
   }
  } catch(error) {
   document.getElementById('profileUsername').textContent='Не удалось загрузить статистику';
+ }
+}
+
+async function selectProfileWings(wingKey,clickedButton) {
+ const note=document.getElementById('profileWingNote');
+ const buttons=[...document.querySelectorAll('.profile-wing-option')];
+ buttons.forEach(button=>button.disabled=true);
+ note.textContent='Сохраняем выбор…';
+ try {
+  const data=await api('/api/me/wings',{method:'POST',body:JSON.stringify({wing_key:wingKey})});
+  const emblem=document.getElementById('profileEmblem');
+  const rank=emblem.dataset.rank||'rookie';
+  emblem.dataset.wingStyle=data.selected_wings==='auto'?(rank==='rookie'?'none':rank):data.selected_wings;
+  buttons.forEach(button=>{
+   button.classList.toggle('active',button===clickedButton);
+   button.disabled=false;
+  });
+  note.textContent='Крылья обновлены. Настоящий ранг сохранён.';
+ } catch(error) {
+  buttons.forEach(button=>button.disabled=false);
+  note.textContent=error.message;
  }
 }
 
