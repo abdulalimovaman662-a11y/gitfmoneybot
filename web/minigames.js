@@ -249,7 +249,9 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       const elapsed = Date.now() - new Date(session.created_at).getTime();
       // Expire the round server-side even if the player closed the Mini App
       // and the browser timer never got a chance to send the finish action.
-      if (elapsed >= GAME_CONFIG.reaction.durationMs) {
+      if (elapsed >= GAME_CONFIG.reaction.durationMs && body.action === 'finish') {
+        session.status = 'completed';
+      } else if (elapsed >= GAME_CONFIG.reaction.durationMs) {
         session.status = 'expired';
         message = 'Время раунда закончилось';
       } else if (body.action === 'hit') {
