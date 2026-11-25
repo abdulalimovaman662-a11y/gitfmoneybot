@@ -1845,6 +1845,30 @@ const server = http.createServer(async (req, res) => {
           return send(res, 404, { error: 'Баттл не найден' });
         }
         const battle = lockedBattle.rows[0];
+        if (battle.status === 'finished' && String(battle.opponent_id) === String(user.id)) {
+          const balances = await client.query(
+            'SELECT telegram_id, silver, free_spins FROM users WHERE telegram_id = ANY($1::bigint[])',
+            [[String(battle.creator_id), String(user.id)]]
+          );
+          await client.query('COMMIT');
+          return send(res, 200, {
+            success: true,
+            replayed: true,
+            battle: {
+              id: Number(battle.id), spins: Number(battle.spins), status: 'finished',
+              creator_id: String(battle.creator_id), opponent_id: String(battle.opponent_id),
+              winner_id: battle.winner_id ? String(battle.winner_id) : null,
+              creator_score: Number(battle.creator_score || 0),
+              opponent_score: Number(battle.opponent_score || 0),
+              creator_result: battle.creator_result || [],
+              opponent_result: battle.opponent_result || []
+            },
+            balances: balances.rows.map(row => ({
+              telegram_id: String(row.telegram_id),
+              silver: Number(row.silver), free_spins: Number(row.free_spins)
+            }))
+          });
+        }
         if (battle.status !== 'waiting' || battle.opponent_id) {
           await client.query('ROLLBACK');
           return send(res, 409, { error: 'Этот баттл уже начался или завершён' });
