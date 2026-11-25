@@ -193,6 +193,16 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Serialize this player's game actions so daily XP-cap checks cannot race
+    // across two different sessions owned by the same Telegram account.
+    const owner = await client.query(
+      'SELECT telegram_id FROM users WHERE telegram_id = $1 FOR UPDATE',
+      [String(telegramId)]
+    );
+    if (!owner.rowCount) {
+      await client.query('ROLLBACK');
+      return { status: 404, error: 'Аккаунт не найден' };
+    }
     const result = await client.query(
       'SELECT * FROM minigame_sessions WHERE id = $1 AND telegram_id = $2 FOR UPDATE',
       [sessionId, String(telegramId)]
