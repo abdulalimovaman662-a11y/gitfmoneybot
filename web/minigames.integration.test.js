@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { Pool } = require('pg');
+const { initProgressionDatabase } = require('./progression');
 const { initMiniGamesDatabase, startMiniGame, performMiniGameAction } = require('./minigames');
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
@@ -33,6 +34,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
     )
   `);
   await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100)");
+  await initProgressionDatabase(pool);
   await initMiniGamesDatabase(pool);
 
   const first = await startMiniGame(pool, '101', 'reaction', 'reaction_request_0001');
@@ -53,6 +55,8 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   const safe = await startMiniGame(pool, '102', 'safe', 'safe_request_000001');
   assert.equal(safe.status, 201);
   const safeRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [safe.session.id])).rows[0];
+  const invalidGuess = await performMiniGameAction(pool, '102', safe.session.id, { action: 'guess', guess: '12x4' });
+  assert.equal(invalidGuess.status, 400);
   const solved = await performMiniGameAction(pool, '102', safe.session.id, {
     action: 'guess',
     guess: safeRow.state.secret
