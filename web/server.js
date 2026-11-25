@@ -186,7 +186,7 @@ async function initDatabase() {
     );
 
     ALTER TABLE users
-      ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ,
       ADD COLUMN IF NOT EXISTS referred_by BIGINT,
       ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS xp BIGINT NOT NULL DEFAULT 0,
@@ -525,8 +525,8 @@ async function ensureUser(user, req) {
   // Для существующего пользователя — один SQL-запрос вместо
   // подключения, транзакции и отдельных INSERT/UPDATE.
   const upsert = await pool.query(`
-    INSERT INTO users (telegram_id, username, first_name)
-    VALUES ($1, $2, $3)
+    INSERT INTO users (telegram_id, username, first_name, last_seen_at)
+    VALUES ($1, $2, $3, NOW())
     ON CONFLICT (telegram_id) DO UPDATE
       SET username = EXCLUDED.username,
           first_name = EXCLUDED.first_name,
