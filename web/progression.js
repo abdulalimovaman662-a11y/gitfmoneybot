@@ -208,11 +208,12 @@ async function recordDailyVisit(pool, telegramId) {
         AND last_xp_date IS DISTINCT FROM ${utcDateSql()}
       RETURNING telegram_id
     `, [String(telegramId)]);
+    const date = await client.query(`SELECT ${utcDateSql()}::text AS day`);
     if (updated.rowCount) {
-      const date = await client.query(`SELECT ${utcDateSql()}::text AS day`);
       await awardXp(client, telegramId, 20, 'daily_visit', `daily-visit:${telegramId}:${date.rows[0].day}`);
-      await recordActivity(client, telegramId, 'daily_visit', `daily-visit:${date.rows[0].day}`);
     }
+    // Backfill today's visit event even for users whose legacy daily XP was already granted.
+    await recordActivity(client, telegramId, 'daily_visit', `daily-visit:${date.rows[0].day}`);
     await ensureUserMissions(client, telegramId);
     await client.query('COMMIT');
   } catch (error) {
