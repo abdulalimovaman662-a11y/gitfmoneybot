@@ -69,6 +69,18 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
 
   assert.equal(solved.session.xp_awarded, 5);
 
+  const solvedRetry = await performMiniGameAction(pool, '102', safe.session.id, {
+    action: 'guess',
+    guess: safeRow.state.secret,
+    action_id: 'safe_solve_00001'
+  });
+  assert.deepEqual(solvedRetry, solved, 'replaying the same action ID must return the original receipt');
+  assert.equal(Number((await pool.query(
+    "SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 102 AND source_type = 'minigame'"
+  )).rows[0].total), 5, 'replaying a completed action must not award XP twice');
+  assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 102')).rows[0].silver), 85,
+    'replaying a completed action must not charge silver again');
+
   const memory = await startMiniGame(pool, '102', 'memory', 'memory_request_0001');
   assert.equal(memory.status, 201);
   const memoryRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [memory.session.id])).rows[0];
