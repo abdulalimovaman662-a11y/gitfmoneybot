@@ -1593,6 +1593,14 @@ const server = http.createServer(async (req, res) => {
           "SELECT * FROM rocket_rounds WHERE status IN ('betting','running') ORDER BY id DESC LIMIT 1 FOR UPDATE"
         )).rows[0];
         const now = Date.now();
+        // Бесплатные автоматические раунды: ожидание второго игрока не требуется.
+        if (!round) {
+          const crash = Number(((101 + crypto.randomInt(900)) / 100).toFixed(2));
+          round = (await client.query(
+            "INSERT INTO rocket_rounds(crash_at,starts_at) VALUES($1,NOW()+INTERVAL '10 seconds') RETURNING *",
+            [crash]
+          )).rows[0];
+        }
         if (round && now >= new Date(round.starts_at).getTime()) {
           const elapsed = (now - new Date(round.starts_at).getTime()) / 1000;
           const current = Math.min(10, Math.pow(1.18, Math.max(0, elapsed)));
@@ -1624,7 +1632,7 @@ const server = http.createServer(async (req, res) => {
         const current = round && now >= startMs && round.status !== 'crashed'
           ? Math.min(10, Number((Math.pow(1.18, (now-startMs)/1000)).toFixed(2))) : 1;
         return send(res, 200, {
-          round: round ? { id:Number(round.id), status:round.status, starts_at:round.starts_at, multiplier:current } : null,
+          round: round ? { id:Number(round.id), status:round.status, starts_at:round.starts_at, seconds_to_start:round.status==='betting'?Math.max(0,Math.ceil((new Date(round.starts_at).getTime()-now)/1000)):0, multiplier:current } : null,
           balance: Number(balance.rows[0]?.silver || 0),
           my_bet: myBet.rows[0] ? { ...myBet.rows[0], id:Number(myBet.rows[0].id), stake_amount:Number(myBet.rows[0].stake_amount), payout_silver:Number(myBet.rows[0].payout_silver) } : null,
           players: players.rows.map(p=>({ name:p.name, kind:p.stake_kind, amount:Number(p.stake_amount), status:p.status, multiplier:p.cashout_multiplier ? Number(p.cashout_multiplier) : null })),
@@ -1635,6 +1643,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === '/api/rocket/bet' && req.method === 'POST') {
+      return send(res, 403, { error: 'В тестовом режиме раунды бесплатные: серебро и NFT не принимаются.' });
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
@@ -1695,6 +1704,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === '/api/rocket/cashout' && req.method === 'POST') {
+      return send(res, 403, { error: 'В бесплатном тестовом режиме вывод и начисление серебра отключены.' });
       const user=getTelegramUser(req);
       if(!user) return send(res,401,{error:'Ошибка авторизации Telegram'});
       await ensureUser(user,req);
