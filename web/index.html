@@ -1719,6 +1719,18 @@ body{
 .tab-page.active .card{
  animation:none !important;
 }
+.gd-core-xp{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:5px 0 12px;color:#ffe69a;font-weight:900}
+.gd-core-xp strong{font-size:19px}.gd-core-xp span{font-size:13px}
+.gd-core-item{padding:13px 0;border-bottom:1px solid rgba(255,255,255,.075)}
+.gd-core-item:last-child{border-bottom:0}
+.gd-core-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.gd-core-item-head b{font-size:12px;color:#fff}.gd-core-item-head small{color:#ffe69a;font-size:10px;white-space:nowrap}
+.gd-core-item p{margin:5px 0 9px;color:#aaa8c7;font-size:10px;line-height:1.5}
+.gd-core-track{height:7px;border-radius:10px;background:rgba(255,255,255,.09);overflow:hidden}
+.gd-core-track span{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#74e5ff,#b99aff,#ff72b6)}
+.gd-core-status{display:block;margin-top:7px;color:#a9f4d1;font-size:9px;font-weight:800}
+.gd-core-item button{width:100%;margin-top:9px;min-height:39px;padding:10px;font-size:10px}
+.gd-core-empty{color:#aaa8c7;font-size:11px;padding:10px 0}
 .bottom-nav{
  -webkit-backdrop-filter:blur(12px) !important;
  backdrop-filter:blur(12px) !important;
@@ -1747,6 +1759,80 @@ body{
 #gdLegalGate .gd-legal-actions button{flex:1;margin-top:8px}
 #gdLegalGate .gd-legal-foot{margin-top:12px;color:#8985aa;font-size:9px;line-height:1.55}
 body.gd-legal-locked{overflow:hidden}
+
+
+/* GiftsDrop visual upgrade — cinematic game tiles */
+.home-grid .gd-art-tile{position:relative;min-height:164px;overflow:hidden;isolation:isolate}
+.home-grid .gd-art-tile:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.95}
+.home-grid .gd-art-tile:after{z-index:1;background:linear-gradient(180deg,rgba(8,7,20,.02) 0%,rgba(8,7,20,.06) 34%,rgba(7,6,18,.88) 100%)}
+.gd-art-tile .tile-art{z-index:0;inset:0;opacity:1}
+.gd-art-tile .home-tile-icon{z-index:4}
+.gd-art-tile .home-tile-copy{z-index:4;background:rgba(7,8,24,.48);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(9px);box-shadow:0 7px 20px rgba(0,0,0,.2)}
+.gd-art-tile .home-tile-arrow{z-index:5}
+.rocket-tile-art{background:radial-gradient(ellipse at 72% 38%,rgba(255,177,96,.4),transparent 34%),radial-gradient(ellipse at 22% 20%,rgba(255,87,114,.28),transparent 40%),linear-gradient(135deg,#4b163e 0%,#24133f 52%,#101b39 100%)}
+.rocket-tile-art:before{content:"";position:absolute;inset:-30%;background:repeating-linear-gradient(118deg,transparent 0 24px,rgba(255,255,255,.06) 25px 26px,transparent 27px 52px);transform:rotate(-12deg);animation:rocketSkyDrift 12s linear infinite}
+.rocket-tile-art .tile-art-orbit{position:absolute;width:130px;height:130px;right:12px;top:-20px;border:1px solid rgba(255,194,153,.36);border-radius:50%;box-shadow:0 0 28px rgba(255,108,91,.18),inset 0 0 25px rgba(255,108,91,.1)}
+.rocket-tile-art .tile-art-orbit:before,.rocket-tile-art .tile-art-orbit:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.18);border-radius:50%;inset:13px;transform:rotate(52deg) scaleX(.42)}
+.rocket-tile-art .tile-art-orbit:after{inset:-12px 28px;transform:rotate(-38deg) scaleX(.5)}
+.rocket-tile-art .tile-art-object{position:absolute;right:31px;top:12px;font-size:66px;line-height:1;filter:drop-shadow(0 0 18px rgba(255,145,99,.72));transform:rotate(-17deg);animation:rocketTileFloat 3.2s ease-in-out infinite}
+.upgrade-tile-art{background:radial-gradient(ellipse at 68% 34%,rgba(82,239,255,.34),transparent 34%),radial-gradient(ellipse at 18% 15%,rgba(180,129,255,.25),transparent 42%),linear-gradient(135deg,#103b63 0%,#17204c 55%,#31154e 100%)}
+.upgrade-tile-art:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 15%,rgba(255,255,255,.12) 16%,transparent 17% 42%,rgba(116,229,255,.1) 43%,transparent 44%);animation:upgradeShine 5s ease-in-out infinite}
+.upgrade-tile-art .tile-art-orbit{position:absolute;right:12px;top:-23px;width:132px;height:132px;border:2px solid rgba(116,229,255,.42);border-radius:50%;transform:rotate(-24deg) scaleY(.42);box-shadow:0 0 20px rgba(116,229,255,.22)}
+.upgrade-tile-art .tile-art-orbit:after{content:"";position:absolute;inset:-12px;border:1px solid rgba(255,207,90,.42);border-radius:50%;transform:rotate(55deg) scaleY(1.8)}
+.upgrade-tile-art .tile-art-object{position:absolute;right:39px;top:20px;font-size:62px;filter:drop-shadow(0 0 19px rgba(116,229,255,.8));animation:gemTileFloat 3.5s ease-in-out infinite}
+.players-tile-art{background:radial-gradient(ellipse at 72% 35%,rgba(73,173,255,.38),transparent 37%),radial-gradient(ellipse at 20% 22%,rgba(134,112,255,.22),transparent 42%),linear-gradient(135deg,#102d55 0%,#111b3f 60%,#12152d 100%)}
+.players-tile-art:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(190,228,255,.7) 1px,transparent 1.5px);background-size:19px 19px;opacity:.3}
+.tile-player-orb{position:absolute;display:grid;place-items:center;border-radius:50%;font-weight:900;color:#fff;border:1px solid rgba(255,255,255,.65);box-shadow:0 0 24px rgba(84,174,255,.4),inset 0 0 14px rgba(255,255,255,.18)}
+.tile-player-orb.orb-one{width:49px;height:49px;right:56px;top:14px;background:linear-gradient(145deg,#65d8ff,#5547bb);font-size:20px}
+.tile-player-orb.orb-two{width:35px;height:35px;right:17px;top:51px;background:linear-gradient(145deg,#ff8bc8,#8044bf);font-size:15px}
+.tile-player-orb.orb-three{width:25px;height:25px;right:103px;top:62px;background:linear-gradient(145deg,#9cf5d1,#168b9a);font-size:10px}
+.tile-art-caption{position:absolute;right:13px;top:12px;color:rgba(255,255,255,.72);font-size:7px;font-weight:900;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.players-tile-art .tile-art-caption{top:105px;right:15px}
+@keyframes rocketTileFloat{0%,100%{transform:translateY(0) rotate(-17deg)}50%{transform:translateY(-8px) rotate(-12deg)}}
+@keyframes gemTileFloat{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-7px) rotate(5deg)}}
+@keyframes rocketSkyDrift{from{transform:translateX(-15px) rotate(-12deg)}to{transform:translateX(15px) rotate(-12deg)}}
+@keyframes upgradeShine{0%,100%{opacity:.45;transform:translateX(-8%)}50%{opacity:1;transform:translateX(8%)}}
+@media(hover:hover){.gd-art-tile{transition:transform .25s ease,filter .25s ease}.gd-art-tile:hover{transform:translateY(-3px);filter:brightness(1.12)}}
+@media(prefers-reduced-motion:reduce){.rocket-tile-art:before,.rocket-tile-art .tile-art-object,.upgrade-tile-art:before,.upgrade-tile-art .tile-art-object,.gd-art-tile:hover{animation:none!important;transition:none!important}}
+
+
+/* Matching visual language inside the three game screens */
+#tab-rocket .rocket-topline{border:1px solid rgba(255,151,126,.22);background:linear-gradient(100deg,rgba(255,91,91,.12),rgba(130,76,255,.08));border-radius:13px;padding:11px 13px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+#tab-rocket .rocket-stage{border:1px solid rgba(255,156,124,.48);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 18px 48px rgba(0,0,0,.34),0 0 34px rgba(255,93,84,.12),inset 0 1px rgba(255,255,255,.14)}
+#tab-rocket .rocket-stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.07),transparent 30% 70%,rgba(255,110,91,.08))}
+#tab-rocket .rocket-multiplier{text-shadow:0 0 24px rgba(255,181,124,.7)}
+#tab-rocket .rocket-bet-card{border-color:rgba(255,132,112,.28);background:radial-gradient(ellipse at 100% 0%,rgba(255,112,93,.1),transparent 44%),linear-gradient(145deg,rgba(42,28,70,.98),rgba(20,18,48,.99))}
+#tab-upgrade .upgrade-hero-pro{border:1px solid rgba(103,231,255,.5);box-shadow:0 18px 42px rgba(0,0,0,.26),0 0 34px rgba(67,214,255,.1),inset 0 1px rgba(255,255,255,.16)}
+#tab-upgrade .upgrade-wheel{filter:drop-shadow(0 0 25px rgba(80,224,255,.25))}
+#tab-upgrade .upgrade-wheel-ring{border-color:rgba(120,235,255,.58);box-shadow:0 0 24px rgba(91,229,255,.24),inset 0 0 20px rgba(91,229,255,.1)}
+#tab-upgrade .upgrade-wheel-core{box-shadow:0 0 35px rgba(81,225,255,.28),inset 0 1px rgba(255,255,255,.2)}
+#tab-upgrade .upgrade-selector-card{box-shadow:0 14px 34px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.06)}
+#tab-players .page-intro,#tab-players .player-search-row{position:relative}
+#tab-players .player-search-row{padding:10px;border:1px solid rgba(105,185,255,.26);border-radius:18px;background:linear-gradient(120deg,rgba(55,143,255,.12),rgba(151,103,255,.1));box-shadow:0 12px 28px rgba(0,0,0,.16)}
+#tab-players .player-search-row input{background:rgba(9,17,40,.82);border-color:rgba(126,192,255,.28);box-shadow:inset 0 1px rgba(255,255,255,.06)}
+#tab-players .player-search-row button{background:linear-gradient(110deg,#56c8ff,#7c86ff 58%,#c17aff);color:#101832;box-shadow:0 7px 22px rgba(87,158,255,.24)}
+#tab-players .player-result{border-color:rgba(118,174,255,.22);background:linear-gradient(110deg,rgba(48,93,164,.2),rgba(120,83,183,.12));box-shadow:0 8px 22px rgba(0,0,0,.12);transition:transform .2s,border-color .2s}
+#tab-players .player-result:active{transform:scale(.985);border-color:rgba(126,210,255,.55)}
+#tab-players .player-result-avatar,#tab-players .public-player-avatar{border:1px solid rgba(190,224,255,.5);box-shadow:0 0 22px rgba(93,157,255,.2),inset 0 1px rgba(255,255,255,.22)}
+#tab-players .public-player-card{border-color:rgba(115,170,255,.34);background:radial-gradient(ellipse at 100% 0%,rgba(78,161,255,.13),transparent 45%),linear-gradient(145deg,rgba(30,39,83,.98),rgba(18,20,50,.99))}
+@media(prefers-reduced-motion:reduce){#tab-players .player-result{transition:none}}
+
+
+/* Progress tile — dimensional XP cube artwork */
+.progress-tile-art{background:radial-gradient(ellipse at 67% 35%,rgba(220,165,255,.38),transparent 38%),radial-gradient(ellipse at 18% 15%,rgba(115,93,255,.28),transparent 44%),linear-gradient(135deg,#4b1d79 0%,#25164e 58%,#151738 100%)}
+.progress-tile-art:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 18px,rgba(255,255,255,.045) 19px 20px,transparent 21px 39px)}
+.progress-cube{position:absolute;right:30px;top:19px;width:70px;height:70px;display:grid;place-items:center;transform:rotate(-12deg);border:1px solid rgba(255,255,255,.8);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.34),rgba(154,100,255,.24) 45%,rgba(69,30,130,.76));box-shadow:0 0 0 7px rgba(211,160,255,.08),0 0 32px rgba(194,120,255,.6),inset 0 1px 0 rgba(255,255,255,.7);backdrop-filter:blur(4px);animation:progressCubeFloat 3.3s ease-in-out infinite}
+.progress-cube:before,.progress-cube:after{content:"";position:absolute;inset:8px;border:1px solid rgba(255,255,255,.28);border-radius:11px;transform:rotate(45deg)}
+.progress-cube:after{inset:-8px;border-color:rgba(238,190,255,.28);border-radius:21px}
+.progress-cube i{font-style:normal;font-size:22px;font-weight:1000;letter-spacing:-1px;color:#fff;text-shadow:0 0 9px #d8a6ff,0 0 22px #b76aff}
+.progress-orbit{position:absolute;right:4px;top:2px;width:126px;height:90px;border:1px solid rgba(237,196,255,.36);border-radius:50%;transform:rotate(-28deg);box-shadow:0 0 15px rgba(184,113,255,.14)}
+.progress-orbit.orbit-b{right:20px;top:11px;width:96px;height:68px;transform:rotate(48deg);border-color:rgba(255,220,255,.25)}
+.progress-spark{position:absolute;color:#fff;text-shadow:0 0 12px #e5b8ff,0 0 24px #b46bff;font-size:19px;animation:progressSpark 2.5s ease-in-out infinite}
+.progress-spark.spark-a{right:106px;top:23px}.progress-spark.spark-b{right:20px;top:92px;animation-delay:.8s}
+.progress-tile-art .tile-art-caption{right:13px;top:12px}
+@keyframes progressCubeFloat{0%,100%{transform:translateY(0) rotate(-12deg)}50%{transform:translateY(-7px) rotate(-5deg)}}
+@keyframes progressSpark{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
+@media(prefers-reduced-motion:reduce){.progress-cube,.progress-spark{animation:none!important}}
 
 </style>
 </head>
@@ -1846,19 +1932,23 @@ body.gd-legal-locked{overflow:hidden}
   <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
    <span class="tile-art inventory-art" aria-hidden="true"><b>💎</b><i>🎁</i><em>🪙</em><small>🌟</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile home-tile-rocket" onclick="showTab('rocket')" aria-label="Открыть ракету">
-   <span class="home-tile-icon"><span class="gd-home-emoji">🚀</span></span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
-  </button>
-  <button class="home-tile home-tile-upgrade" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
+  
+  <button class="home-tile home-tile-upgrade gd-art-tile" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
+   <span class="tile-art upgrade-tile-art" aria-hidden="true"><span class="tile-art-orbit"></span><span class="tile-art-object">💎</span><span class="tile-art-caption">NFT EVOLUTION</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">⚡</span></span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile" onclick="showTab('players')" style="--tile-bg:linear-gradient(145deg,#183b62,#10182f);--tile-border:rgba(105,174,255,.28);--tile-glow:rgba(60,140,255,.42)" aria-label="Поиск игроков">
+  <button class="home-tile gd-art-tile player-tile" onclick="showTab('players')" style="--tile-bg:linear-gradient(145deg,#183b62,#10182f);--tile-border:rgba(105,174,255,.28);--tile-glow:rgba(60,140,255,.42)" aria-label="Поиск игроков">
+   <span class="tile-art players-tile-art" aria-hidden="true"><span class="tile-player-orb orb-one">✦</span><span class="tile-player-orb orb-two">◆</span><span class="tile-player-orb orb-three">●</span><span class="tile-art-caption">PLAYER NETWORK</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">🔎</span></span><span class="home-tile-copy"><span class="home-tile-title">ПОИСК ИГРОКОВ</span><span class="home-tile-subtitle">Профили, ранги и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-battles" onclick="showTab('battles')" aria-label="NFT-баттлы">
    <span class="tile-art battle-tile-art" aria-hidden="true"><span class="battle-swords">⚔</span><span class="battle-gem">💎</span><span class="battle-spark">✦</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">⚔️</span></span>
    <span class="home-tile-copy"><span class="home-tile-title">NFT-БАТТЛЫ</span><span class="home-tile-subtitle">Сразись за лучший дроп</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile gd-art-tile progress-tile" onclick="showTab('progress')" style="--tile-bg:linear-gradient(145deg,#6b3c9e,#241a52);--tile-border:rgba(205,166,255,.55);--tile-glow:rgba(174,112,255,.75)" aria-label="Открыть прогресс и задания">
+   <span class="tile-art progress-tile-art" aria-hidden="true"><span class="progress-cube"><i>XP</i></span><span class="progress-orbit orbit-a"></span><span class="progress-orbit orbit-b"></span><span class="progress-spark spark-a">✦</span><span class="progress-spark spark-b">✧</span><span class="tile-art-caption">LEVEL UP SYSTEM</span></span>
+   <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОГРЕСС</span><span class="home-tile-subtitle">Ежедневные задания, XP и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
 </section>
@@ -2103,36 +2193,7 @@ body.gd-legal-locked{overflow:hidden}
  <div class="notice">Серебро нельзя вывести. Выводятся только NFT и подарки. Вывод оформляется заявкой и подтверждается администратором после фактической отправки подарка.</div>
 </section>
 
-<section class="tab-page" id="tab-rocket">
- <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ROCKET • LIVE GAME</span></div>
- <div class="rocket-topline"><span class="rocket-live-dot"></span> ИГРА ИДЁТ <b id="rocketRoundLabel">РАУНД #001</b><span class="rocket-test-label">ТЕСТОВЫЙ РЕЖИМ</span></div>
- <div class="rocket-stage" id="rocketStage">
-  <div class="rocket-stars"></div><div class="rocket-planet"></div>
-  <div class="rocket-cloud cloud-one"></div><div class="rocket-cloud cloud-two"></div>
-  <div class="rocket-flight-path"></div>
-  <div class="rocket-flame" id="rocketFlame">🔥</div>
-  <div class="rocket-ship" id="rocketShip">🚀</div>
-  <div class="rocket-status" id="rocketStatus">ГОТОВ К ЗАПУСКУ</div>
-  <div class="rocket-multiplier" id="rocketMultiplier">1.00<span>x</span></div>
-  <div class="rocket-stage-bottom"><span>1.01x</span><span>МАКС. 10.00x</span></div>
- </div>
- <div class="rocket-live-stats">
-  <div><small>ИГРОКОВ В РАУНДЕ</small><b id="rocketPlayers">12</b></div>
-  <div><small>ПОСЛЕДНИЙ КРАШ</small><b id="rocketLastCrash">2.48x</b></div>
-  <div><small>ТВОЁ СЕРЕБРО</small><b><span id="rocketDemoBalance">0</span> 🪙</b></div>
- </div>
- <div class="card rocket-bet-card">
-  <div class="rocket-card-heading"><div><div class="section-tag">ТВОЯ СТАВКА</div><h2>Врывайся в раунд</h2></div><span class="rocket-round-pill" id="rocketRoundPill">ОЖИДАНИЕ</span></div>
-  <div class="rocket-mode"><button type="button" class="rocket-mode-btn active" id="rocketSilverMode" onclick="setRocketMode('silver')">🪙 СЕРЕБРО</button><button type="button" class="rocket-mode-btn" id="rocketNftMode" onclick="setRocketMode('nft')">🎁 NFT</button></div>
-  <div id="rocketSilverControls"><label class="currency-input-label" for="rocketStake">РАЗМЕР СТАВКИ</label><div class="rocket-input-wrap"><input id="rocketStake" type="number" min="1" max="1000" value="50"><span>🪙</span></div><div class="rocket-quick-bets"><button type="button" onclick="setRocketStake(25)">25</button><button type="button" onclick="setRocketStake(50)">50</button><button type="button" onclick="setRocketStake(100)">100</button><button type="button" onclick="setRocketStake(250)">250</button></div></div>
-  <div id="rocketNftControls" hidden><label class="currency-input-label" for="rocketNftSelect">ВЫБЕРИ NFT ДЛЯ СТАВКИ</label><select id="rocketNftSelect"><option value="">Загрузка инвентаря…</option></select><p class="rocket-hint">При краше NFT теряется. При успешном выводе стоимость NFT начисляется серебром.</p></div>
-  <div class="rocket-actions"><button type="button" id="rocketLaunchButton" onclick="launchRocket()">🚀 ПОСТАВИТЬ И ВОЙТИ</button><button type="button" id="rocketCashoutButton" onclick="cashoutRocket()" disabled>ЗАБРАТЬ ВЫИГРЫШ</button></div>
-  <div class="rocket-result" id="rocketResult">Выбери ставку и заходи в следующий раунд.</div>
-  <div class="rocket-test-note">Ставка списывается с баланса сразу. При краше ставка сгорает; при выводе выигрыш начисляется на баланс.</div>
- </div>
- <div class="card rocket-players-card"><div class="rocket-list-head"><h2>УЧАСТНИКИ РАУНДА</h2><span>LIVE</span></div><div id="rocketPlayerList"></div></div>
- <div class="rocket-history"><div class="rocket-list-head"><h2>ПОСЛЕДНИЕ РАУНДЫ</h2><span>HISTORY</span></div><div id="rocketHistory"></div></div>
-</section>
+
 
 <section class="tab-page" id="tab-upgrade">
  <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>UPGRADE • WORKSHOP</span></div>
@@ -2149,6 +2210,20 @@ body.gd-legal-locked{overflow:hidden}
  </div>
  <div class="upgrade-how"><div><b>01</b><span>Выбери NFT из инвентаря</span></div><div><b>02</b><span>Выбери цель подороже</span></div><div><b>03</b><span>Запусти анимацию и узнай результат</span></div></div>
  <div class="upgrade-test-note">Демонстрационный режим. До подключения серверной проверки вероятности и транзакций реальные NFT и серебро не участвуют.</div>
+</section>
+
+<section class="tab-page" id="tab-progress">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРОГРЕСС</span></div>
+ <div class="page-intro"><span class="eyebrow">GIFTDROP CORE</span><h1>Твой прогресс</h1><p>Выполняй задания, получай опыт и открывай достижения. Прогресс сохраняется в аккаунте.</p></div>
+ <div class="card gd-core-summary">
+  <div class="section-tag">LIFETIME EXPERIENCE</div>
+  <div class="gd-core-xp"><strong id="coreLevel">УРОВЕНЬ 1</strong><span id="coreXp">0 XP</span></div>
+  <div class="level-progress"><div class="level-progress-fill" id="coreLevelProgress"></div></div>
+  <p class="muted" id="coreXpNext">Загружаем прогресс…</p>
+ </div>
+ <div class="card"><div class="section-tag">RECENT EXPERIENCE</div><h2>История опыта</h2><div id="coreXpHistory"><p class="muted">Загружаем историю…</p></div></div>
+ <div class="card"><div class="section-tag">DAILY + WEEKLY</div><h2>Задания</h2><div id="coreMissionList"><p class="muted">Загружаем задания…</p></div></div>
+ <div class="card"><div class="section-tag">MILESTONES</div><h2>Достижения</h2><div id="coreAchievementList"><p class="muted">Загружаем достижения…</p></div></div>
 </section>
 
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
@@ -2310,7 +2385,7 @@ async function loadRecentWins() {
 
 let gdTabTransitionTimer = null;
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade','players','battles'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','upgrade','players','battles','progress'];
  const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
  const targetId = 'tab-'+name;
  const target = document.getElementById(targetId);
@@ -2331,11 +2406,11 @@ function showTab(name) {
  },440);
  if(name==='home'){animateHomeBalanceTile();return;}
  if(name==='battles') loadNftBattles();
+  if(name==='progress') loadCore();
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
  if(name==='profile') loadProfile();
  if(name==='inventory') loadInventory();
- if(name==='rocket') {loadRocketInventory();refreshRocketState();}
  if(name==='upgrade') loadUpgradeData();
  if(name==='gifts') {
   loadGiftCatalog();
@@ -2364,6 +2439,69 @@ requestAnimationFrame(animateHomeBalanceTile);
 
 function openHelp() {
  tg.openTelegramLink('https://t.me/traptrap4');
+}
+
+async function loadCore(){
+ const missions=document.getElementById('coreMissionList'),achievements=document.getElementById('coreAchievementList');
+ if(!missions||!achievements)return;
+ missions.replaceChildren();achievements.replaceChildren();
+ try{
+  const [account,core]=await Promise.all([api('/api/me'),api('/api/core')]);
+  document.getElementById('coreLevel').textContent='УРОВЕНЬ '+(account.level||1);
+  document.getElementById('coreXp').textContent=Number(core.xp||0).toLocaleString('ru-RU')+' XP';
+  const progress=Math.max(0,Math.min(100,Number(account.xp_progress||0)/Math.max(1,Number(account.xp_required||100))*100));
+  document.getElementById('coreLevelProgress').style.width=progress+'%';
+  document.getElementById('coreXpNext').textContent='До следующего уровня: '+Number(account.xp_to_next||0).toLocaleString('ru-RU')+' XP';
+  const history=document.getElementById('coreXpHistory');
+  if(history){
+   history.replaceChildren();
+   const sourceNames={welcome:'Регистрация',daily_visit:'Ежедневный вход',spin:'Прокрутка',nft_battle:'NFT-батл',mission:'Задание',achievement:'Достижение'};
+   const entries=Array.isArray(core.recent_xp)?core.recent_xp:[];
+   if(!entries.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='Начисления опыта появятся здесь.';history.appendChild(empty);}
+   entries.forEach(entry=>{
+    const row=document.createElement('div');row.className='gd-core-item-head';
+    row.style.padding='10px 0';row.style.borderBottom='1px solid rgba(255,255,255,.08)';
+    const label=document.createElement('span');label.textContent=sourceNames[entry.source_type]||'Опыт GiftsDrop';
+    const amount=document.createElement('b');amount.textContent='+'+Number(entry.amount||0).toLocaleString('ru-RU')+' XP';
+    row.append(label,amount);history.appendChild(row);
+   });
+  }
+  const addEmpty=(parent,text)=>{const p=document.createElement('p');p.className='gd-core-empty';p.textContent=text;parent.appendChild(p);};
+  const makeItem=(title,description,reward,progressValue,target,status,claim)=>{
+   const item=document.createElement('div');item.className='gd-core-item';
+   const head=document.createElement('div');head.className='gd-core-item-head';
+   const name=document.createElement('b');name.textContent=title;head.appendChild(name);
+   const rewardText=document.createElement('small');rewardText.textContent='+'+reward+' XP';head.appendChild(rewardText);item.appendChild(head);
+   const copy=document.createElement('p');copy.textContent=description;item.appendChild(copy);
+   const track=document.createElement('div');track.className='gd-core-track';const fill=document.createElement('span');
+   fill.style.width=Math.min(100,Math.max(0,progressValue/Math.max(1,target)*100))+'%';track.appendChild(fill);item.appendChild(track);
+   const count=document.createElement('p');count.textContent=progressValue+' / '+target;count.style.margin='6px 0 0';item.appendChild(count);
+   if(status){const state=document.createElement('span');state.className='gd-core-status';state.textContent=status;item.appendChild(state);}
+   if(claim){const button=document.createElement('button');button.type='button';button.textContent='ЗАБРАТЬ НАГРАДУ';button.onclick=claim;item.appendChild(button);}
+   return item;
+  };
+  if(!core.missions||!core.missions.length)addEmpty(missions,'Пока нет активных заданий.');
+  else{
+   const daily=document.createElement('div');daily.className='section-tag';daily.textContent='ЕЖЕДНЕВНЫЕ';missions.appendChild(daily);
+   core.missions.filter(x=>x.cadence==='daily').forEach(m=>{
+    const done=!!m.completed_at,claimed=!!m.claimed_at;
+    missions.appendChild(makeItem(m.title,m.description,m.xp_reward,m.progress,m.target_count,claimed?'НАГРАДА ПОЛУЧЕНА':done?'ВЫПОЛНЕНО':'В ПРОЦЕССЕ',done&&!claimed?async()=>{try{await api('/api/missions/'+m.id+'/claim',{method:'POST',body:'{}'});await loadCore();}catch(e){tg.showAlert(e.message);}}:null));
+   });
+   const weekly=document.createElement('div');weekly.className='section-tag';weekly.style.marginTop='18px';weekly.textContent='ЕЖЕНЕДЕЛЬНЫЕ';missions.appendChild(weekly);
+   core.missions.filter(x=>x.cadence==='weekly').forEach(m=>{
+    const done=!!m.completed_at,claimed=!!m.claimed_at;
+    missions.appendChild(makeItem(m.title,m.description,m.xp_reward,m.progress,m.target_count,claimed?'НАГРАДА ПОЛУЧЕНА':done?'ВЫПОЛНЕНО':'В ПРОЦЕССЕ',done&&!claimed?async()=>{try{await api('/api/missions/'+m.id+'/claim',{method:'POST',body:'{}'});await loadCore();}catch(e){tg.showAlert(e.message);}}:null));
+   });
+  }
+  if(!core.achievements||!core.achievements.length)addEmpty(achievements,'Достижения скоро появятся.');
+  else core.achievements.forEach(a=>{
+   const unlocked=!!a.unlocked_at,claimed=!!a.claimed_at;
+   achievements.appendChild(makeItem(a.title,a.description,a.xp_reward,a.progress,a.target_count,claimed?'НАГРАДА ПОЛУЧЕНА':unlocked?'ДОСТИЖЕНИЕ ОТКРЫТО':'ЕЩЁ НЕ ОТКРЫТО',unlocked&&!claimed?async()=>{try{await api('/api/achievements/'+a.achievement_id+'/claim',{method:'POST',body:'{}'});await loadCore();}catch(e){tg.showAlert(e.message);}}:null));
+  });
+ }catch(error){addCoreError(missions,achievements,error.message);}
+}
+function addCoreError(missions,achievements,message){
+ [missions,achievements].forEach(el=>{el.replaceChildren();const p=document.createElement('p');p.className='gd-core-empty';p.textContent='Не удалось загрузить данные. '+message;el.appendChild(p);});
 }
 
 async function loadInventory() {
@@ -3269,133 +3407,11 @@ async function completeGiftOrder(id,button) {
 }
 
 
+let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
+
 loadAccount();
 loadGiftCatalog();
-refreshRocketState();
-setInterval(()=>{if(document.getElementById('tab-rocket')?.classList.contains('active'))refreshRocketState();},650);
-
-
-// Rocket: authoritative rounds, balance and settlement are handled by the server.
-let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false;
-let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
-let rocketHistoryValues=[];
-function setRocketMode(mode){
- rocketMode=mode;
- document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
- document.getElementById('rocketNftMode').classList.toggle('active',mode==='nft');
- document.getElementById('rocketSilverControls').hidden=mode!=='silver';
- document.getElementById('rocketNftControls').hidden=mode!=='nft';
- document.getElementById('rocketResult').textContent=mode==='silver'?'Ставка будет списана с твоего реального баланса серебра.':'NFT будет заблокирован ставкой и сгорит при краше.';
-}
-function setRocketStake(value){document.getElementById('rocketStake').value=value;}
-function renderRocketPlayers(players=[]){
- const host=document.getElementById('rocketPlayerList');if(!host)return;host.replaceChildren();
- players.forEach(row=>{
-  const el=document.createElement('div');el.className='rocket-player-row';
-  const nameText=String(row.name||'Игрок');
-  const avatar=document.createElement('span');avatar.className='rocket-player-avatar';avatar.textContent=nameText.slice(0,2).toUpperCase();
-  const name=document.createElement('span');name.className='rocket-player-name';name.textContent=nameText;
-  const bet=document.createElement('span');bet.className='rocket-player-bet';bet.textContent=(row.kind==='nft'?'NFT ':'')+Number(row.amount||0)+' 🪙';
-  const state=document.createElement('span');state.className='rocket-player-state';state.textContent=row.status==='cashed_out'?'ЗАБРАЛ '+Number(row.multiplier||0).toFixed(2)+'x':row.status==='crashed'?'СГОРЕЛА':'В ИГРЕ';
-  el.append(avatar,name,bet,state);host.appendChild(el);
- });
- if(!players.length)host.textContent='Пока никто не вошёл в раунд.';
-}
-function renderRocketHistory(){
- const host=document.getElementById('rocketHistory');if(!host)return;host.replaceChildren();
- rocketHistoryValues.slice(0,7).forEach((row,i)=>{const el=document.createElement('div');el.className='rocket-history-row'+(row.crash<1.5?' crash-low':'');const left=document.createElement('span');left.textContent='РАУНД #'+row.id;const right=document.createElement('b');right.textContent=Number(row.crash).toFixed(2)+'x';el.append(left,right);host.appendChild(el);});
- if(!rocketHistoryValues.length)host.textContent='История появится после первого завершённого раунда.';
-}
-async function loadRocketInventory(){
- const select=document.getElementById('rocketNftSelect');if(!select)return;
- select.innerHTML='<option value="">Загрузка инвентаря…</option>';
- try{
-  const data=await api('/api/me/inventory');const items=Array.isArray(data.items)?data.items.filter(item=>item.status==='owned'):[];
-  select.replaceChildren();
-  items.forEach(item=>{const option=document.createElement('option');option.value=String(item.inventory_id);option.textContent=String(item.prize_name||'NFT')+' · '+(Number(item.prize_stars)||0)+' ⭐';select.appendChild(option);});
-  if(!items.length){const option=document.createElement('option');option.value='';option.textContent='Нет доступных NFT';select.appendChild(option);}
- }catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
-}
-function renderRocketState(data){
- rocketBalance=Number(data.balance)||0;
- document.getElementById('rocketDemoBalance').textContent=rocketBalance.toLocaleString('ru-RU');
- const round=data.round;
- if(round){
-  rocketRound=round.id;
-  document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(round.id).padStart(3,'0');
-  document.getElementById('rocketRoundPill').textContent=round.status==='betting'?'СТАВКИ ОТКРЫТЫ':round.status==='crashed'?'КРАШ':'РАУНД LIVE';
-  document.getElementById('rocketPlayers').textContent=String((data.players||[]).length);
-  document.getElementById('rocketMultiplier').innerHTML=Number(round.multiplier||1).toFixed(2)+'<span>x</span>';
-  document.getElementById('rocketLastCrash').textContent=rocketHistoryValues[0]?Number(rocketHistoryValues[0].crash).toFixed(2)+'x':'—';
-  if(data.my_bet){
-   rocketCurrentBet=data.my_bet;
-   if(data.my_bet.status==='active'){
-    rocketRunning=true;rocketStake=Number(data.my_bet.stake_amount);rocketBetKind=data.my_bet.stake_kind;
-    document.getElementById('rocketCashoutButton').disabled=round.status==='crashed'||round.status==='betting';
-    document.getElementById('rocketLaunchButton').disabled=true;
-    document.getElementById('rocketStatus').textContent=round.status==='betting'?'ОЖИДАЕМ СТАРТ':'РАКЕТА В ПОЛЁТЕ';
-    document.getElementById('rocketStage').classList.toggle('is-flying',round.status==='running');
-    document.getElementById('rocketResult').textContent='Ставка в раунде. Забирай выигрыш до падения ракеты.';
-   }else{
-    rocketRunning=false;document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
-    document.getElementById('rocketResult').textContent=data.my_bet.status==='cashed_out'?'Выигрыш уже зачислен на баланс.':'Ставка сгорела при краше.';
-   }
-  }else{
-   rocketRunning=false;document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=false;
-  }
- }else{
-  rocketRunning=false;rocketCurrentBet=null;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=false;document.getElementById('rocketCashoutButton').disabled=true;
- }
- renderRocketPlayers(data.players||[]);
- rocketHistoryValues=Array.isArray(data.history)?data.history:[];
- renderRocketHistory();
-}
-async function refreshRocketState(){
- if(rocketStateBusy)return;rocketStateBusy=true;
- try{const data=await api('/api/rocket/state');renderRocketState(data);}
- catch(e){document.getElementById('rocketResult').textContent=e.message;}
- finally{rocketStateBusy=false;}
-}
-async function launchRocket(){
- if(rocketRunning)return;
- const button=document.getElementById('rocketLaunchButton');button.disabled=true;
- try{
-  let payload;
-  if(rocketMode==='silver'){
-   const amount=Number(document.getElementById('rocketStake').value);
-   if(!Number.isSafeInteger(amount)||amount<1)throw new Error('Укажи ставку не меньше 1 серебра.');
-   payload={kind:'silver',amount};
-  }else{
-   const inventoryId=document.getElementById('rocketNftSelect').value;
-   if(!inventoryId)throw new Error('Сначала выбери доступный NFT.');
-   payload={kind:'nft',inventory_id:inventoryId};
-  }
-  const result=await api('/api/rocket/bet',{method:'POST',body:JSON.stringify(payload)});
-  rocketCurrentBet={status:'active',stake_kind:result.stake_kind,stake_amount:result.stake_amount};
-  rocketStartedAt=new Date(result.starts_at).getTime();rocketRunning=true;rocketBalance=result.balance;
-  document.getElementById('rocketDemoBalance').textContent=rocketBalance.toLocaleString('ru-RU');
-  document.getElementById('rocketResult').textContent='Ставка принята сервером. Раунд скоро начнётся!';
-  document.getElementById('rocketStage').classList.remove('is-crashed');document.getElementById('rocketStage').classList.add('is-flying');
-  await refreshRocketState();
- }catch(e){document.getElementById('rocketResult').textContent=e.message;button.disabled=false;}
-}
-async function cashoutRocket(){
- if(!rocketRunning)return;
- const button=document.getElementById('rocketCashoutButton');button.disabled=true;
- try{
-  const result=await api('/api/rocket/cashout',{method:'POST',body:'{}'});
-  rocketRunning=false;rocketBalance=result.balance;document.getElementById('rocketDemoBalance').textContent=rocketBalance.toLocaleString('ru-RU');
-  document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketStage').classList.remove('is-flying');
-  document.getElementById('rocketResult').textContent='Забрано на '+Number(result.multiplier).toFixed(2)+'x! Начислено '+Number(result.payout_silver).toLocaleString('ru-RU')+' серебра.';
-  document.getElementById('rocketLaunchButton').disabled=false;
-  await refreshRocketState();await loadRocketInventory();
- }catch(e){
-  document.getElementById('rocketResult').textContent=e.message;
-  if(e.message.includes('упала')){rocketRunning=false;document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStage').classList.add('is-crashed');document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';document.getElementById('rocketLaunchButton').disabled=false;}
-  else button.disabled=false;
-  await refreshRocketState();
- }
-}
+// Give players a wider entry window and avoid hammering the database every 650 ms.
 function loadUpgradeData(){
  const host=document.getElementById('upgradeSourceList');if(!host)return;
  host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
