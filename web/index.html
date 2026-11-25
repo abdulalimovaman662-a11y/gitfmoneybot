@@ -2079,6 +2079,71 @@ button:not(:disabled):active,.nav-button:active,.gift-product:active,.prize-card
   .roulette-item-art img{animation:none;opacity:1}
 }
 
+
+/* GIFTSDROP — mini-game interaction polish */
+.gd-game-card,.gd-game-stage,.gd-game-result,.gd-safe-row{
+  transform:translateZ(0);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+.gd-game-card{
+  transition:transform 300ms cubic-bezier(.2,.78,.22,1),
+    border-color 260ms ease,box-shadow 300ms ease,filter 260ms ease;
+}
+.gd-game-stage:not([hidden]){
+  animation:gdMiniStageEnter 340ms cubic-bezier(.2,.78,.22,1) both;
+}
+@keyframes gdMiniStageEnter{
+  from{opacity:0;transform:translate3d(0,9px,0) scale(.992)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+.gd-reaction-target{
+  transition:transform 180ms cubic-bezier(.2,.78,.22,1),
+    background-color 180ms ease,box-shadow 180ms ease,border-color 180ms ease;
+}
+.gd-reaction-target:not(:disabled):active{
+  transform:scale(.94);
+}
+.gd-reaction-target.is-target{
+  box-shadow:0 0 0 1px rgba(255,235,185,.18),0 8px 25px rgba(236,194,108,.2);
+}
+.gd-memory-card{
+  transform:translateZ(0);
+  transition:transform 220ms cubic-bezier(.2,.78,.22,1),
+    background-color 220ms ease,border-color 220ms ease,box-shadow 220ms ease;
+}
+.gd-memory-card:not(:disabled):active{
+  transform:scale(.94);
+}
+.gd-memory-card.is-open{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 5px 14px rgba(0,0,0,.18);
+}
+.gd-memory-card.is-matched{
+  box-shadow:0 0 15px rgba(214,179,106,.14);
+}
+.gd-safe-row{
+  animation:gdSafeRowEnter 220ms ease both;
+}
+@keyframes gdSafeRowEnter{
+  from{opacity:0;transform:translate3d(0,4px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+.gd-game-result{
+  animation:gdMiniResultEnter 360ms cubic-bezier(.2,.78,.22,1) both;
+}
+@keyframes gdMiniResultEnter{
+  from{opacity:0;transform:translate3d(0,8px,0) scale(.98)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .gd-game-stage:not([hidden]),.gd-safe-row,.gd-game-result{
+    animation:none!important;
+  }
+  .gd-game-card,.gd-reaction-target,.gd-memory-card{
+    transition:none!important;
+  }
+}
+
 </style>
 </head>
 <body>
