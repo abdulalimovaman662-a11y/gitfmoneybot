@@ -1925,6 +1925,64 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   }
 }
 
+
+/* GiftsDrop smoothness pass 1 — общие переходы интерфейса */
+:root{
+  --gd-motion-fast:180ms;
+  --gd-motion-normal:260ms;
+  --gd-motion-ease:cubic-bezier(.22,.8,.25,1);
+}
+html{scroll-behavior:smooth}
+button,.nav-button,.home-tile,.gift-product,.prize-card,
+.card,.order-card,.request,.profile-win-item,.stat,
+input,select,textarea,.tab-page,.roulette-item,.win-chip{
+  transition:
+    transform var(--gd-motion-normal) var(--gd-motion-ease),
+    opacity var(--gd-motion-normal) var(--gd-motion-ease),
+    border-color var(--gd-motion-normal) var(--gd-motion-ease),
+    box-shadow var(--gd-motion-normal) var(--gd-motion-ease),
+    background-color var(--gd-motion-normal) var(--gd-motion-ease),
+    filter var(--gd-motion-normal) var(--gd-motion-ease);
+}
+button:not(:disabled),.nav-button,.home-tile,.gift-product{
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+button:not(:disabled):active,.nav-button:active,
+.home-tile:active,.gift-product:active{
+  transform:scale(.975);
+}
+@media(hover:hover) and (pointer:fine){
+  button:not(:disabled):hover,.nav-button:hover,
+  .home-tile:hover,.gift-product:hover{
+    transform:translateY(-2px);
+    filter:brightness(1.06);
+  }
+  .card:hover,.prize-card:hover,.order-card:hover{
+    border-color:rgba(185,162,255,.3);
+  }
+}
+button:focus-visible,.nav-button:focus-visible,
+.home-tile:focus-visible,.gift-product:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid rgba(185,162,255,.75);
+  outline-offset:3px;
+}
+.tab-page.active{animation:gdSmoothPageIn 260ms var(--gd-motion-ease) both}
+@keyframes gdSmoothPageIn{
+  from{opacity:0;transform:translate3d(0,7px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*:before,*:after{
+    scroll-behavior:auto!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+
 </style>
 </head>
 <body>
