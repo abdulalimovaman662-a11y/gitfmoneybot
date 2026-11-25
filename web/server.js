@@ -516,7 +516,6 @@ async function ensureUser(user, req) {
 
   if (upsert.rows[0]?.was_created) {
     await awardXp(pool, telegramId, 50, 'welcome', `welcome:${telegramId}`);
-    await recordActivity(pool, telegramId, 'daily_visit', `welcome-visit:${telegramId}`);
   }
 
   // Разовая стартовая выдача только аккаунту с точным username @RichGues.
