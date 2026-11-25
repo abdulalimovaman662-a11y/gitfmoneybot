@@ -181,10 +181,12 @@ async function initDatabase() {
       first_name TEXT,
       silver INTEGER NOT NULL DEFAULT 0,
       free_spins INTEGER NOT NULL DEFAULT 3,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       ADD COLUMN IF NOT EXISTS referred_by BIGINT,
       ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS xp BIGINT NOT NULL DEFAULT 0,
@@ -525,7 +527,8 @@ async function ensureUser(user, req) {
     VALUES ($1, $2, $3)
     ON CONFLICT (telegram_id) DO UPDATE
       SET username = EXCLUDED.username,
-          first_name = EXCLUDED.first_name
+          first_name = EXCLUDED.first_name,
+          last_seen_at = NOW()
     RETURNING (xmax = 0) AS was_created
   `, [
     telegramId,
@@ -641,6 +644,17 @@ async function createTelegramInvoice(order) {
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
+
+    // Реальный онлайн: уникальные пользователи, обращавшиеся к Mini App за последние 2 минуты.
+    if (url.pathname === '/api/online' && req.method === 'GET') {
+      const result = await pool.query(`
+        SELECT COUNT(*)::int AS online
+        FROM users
+        WHERE last_seen_at >= NOW() - INTERVAL '2 minutes'
+      `);
+      res.setHeader('Cache-Control', 'no-store');
+      return send(res, 200, { online: Number(result.rows[0]?.online || 0) });
+    }
 
     // Проверка заказа перед подтверждением оплаты Telegram
     if (
