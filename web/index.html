@@ -2733,7 +2733,7 @@ async function loadRecentWins() {
 }
 
 
-const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0, pendingStart:null };
+const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0, pendingStart:null, finishPending:false };
 async function loadGdMiniBalance() {
  try {
   const data=await api('/api/me');
@@ -2845,14 +2845,17 @@ async function hitGdReaction(target) {
   const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
   if(data.session.status!=='active')renderGdMiniGame();else drawGdReaction();
  } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false; if(gdMini.session?.game==='reaction'&&gdMini.session.status==='active')drawGdReaction();}
+ finally {gdMini.locked=false; if(gdMini.session?.game==='reaction'&&gdMini.session.status==='active')drawGdReaction(); if(gdMini.finishPending){gdMini.finishPending=false;finishGdReaction();}}
 }
 async function finishGdReaction() {
  if(!gdMini.session||gdMini.session.status!=='active')return;
+ if(gdMini.locked){gdMini.finishPending=true;return;}
+ gdMini.locked=true;
  try {
   const data=await gdMiniAction({action:'finish'});
   gdMini.session=data.session;renderGdMiniGame();
  } catch(error) {gdMiniMessage(error.message);}
+ finally {gdMini.locked=false;}
 }
 async function submitGdSafeGuess() {
  if(gdMini.locked||!gdMini.session)return;
@@ -2918,7 +2921,7 @@ function drawGdMemory() {
  }
 }
 function closeGdMiniGame() {
- gdMiniStopTimer();gdMini.session=null;gdMini.safeHistory=[];gdMini.locked=false;
+ gdMiniStopTimer();gdMini.session=null;gdMini.safeHistory=[];gdMini.locked=false;gdMini.finishPending=false;
  document.getElementById('gdMiniStage').hidden=true;
  document.getElementById('gdMiniGameList').hidden=false;
  gdMiniMessage('');
