@@ -2861,7 +2861,7 @@ async function flipGdMemory(index) {
   }
   if(data.session.status!=='active')renderGdMiniGame();
  } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false;}
+ finally {gdMini.locked=false;if(gdMini.session?.game==='memory')drawGdMemory();}
 }
 function renderGdMiniMemoryOnly() {
  const s=gdMini.session;if(!s||s.game!=='memory')return;
@@ -2882,7 +2882,7 @@ function drawGdMemory() {
   const button=document.createElement('button');
   button.className='gd-memory-card'+(shown?' is-open':'')+(matched.has(i)?' is-matched':'');
   button.textContent=shown?gdMiniEmoji(visible.get(i)):'?';
-  button.disabled=matched.has(i)||open.has(i)||gdMini.locked||s.status!=='active'||Boolean(s.state.mismatch_until&&Date.now()<Number(s.state.mismatch_until));
+  button.disabled=matched.has(i)||(open.has(i)&&!hideMismatch)||gdMini.locked||s.status!=='active'||Boolean(s.state.mismatch_until&&Date.now()<Number(s.state.mismatch_until));
   button.addEventListener('click',()=>flipGdMemory(i));board.appendChild(button);
  }
 }
