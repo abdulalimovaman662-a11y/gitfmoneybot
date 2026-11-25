@@ -2887,7 +2887,8 @@ async function flipGdMemory(index) {
   renderGdMiniMemoryOnly();
   if(gdMini.memoryHideAt) {
    const wait=Math.max(0,gdMini.memoryHideAt-Date.now()+30);
-   setTimeout(()=>{if(gdMini.session?.status==='active'){renderGdMiniMemoryOnly();}},wait);
+   const sessionId=data.session.id;
+   setTimeout(()=>{if(gdMini.session?.id===sessionId&&gdMini.session.status==='active'){renderGdMiniMemoryOnly();}},wait);
   }
   if(data.session.status!=='active')renderGdMiniGame();
  } catch(error) {gdMiniMessage(error.message);}
