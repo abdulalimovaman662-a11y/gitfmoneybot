@@ -1941,6 +1941,11 @@ const server = http.createServer(async (req, res) => {
       }
 
       await ensureUser(user, req);
+      const body = await readBody(req);
+      const requestId = String(body.request_id || '');
+      if (!/^[a-zA-Z0-9_-]{12,80}$/.test(requestId)) {
+        return send(res, 400, { error: 'Некорректный ID прокрутки. Обнови страницу и попробуй ещё раз.' });
+      }
 
       const client = await pool.connect();
 
@@ -1960,6 +1965,14 @@ const server = http.createServer(async (req, res) => {
         }
 
         const account = result.rows[0];
+        const priorSpin = await client.query(
+          'SELECT response FROM spin_requests WHERE telegram_id = $1 AND request_id = $2',
+          [String(user.id), requestId]
+        );
+        if (priorSpin.rowCount) {
+          await client.query('COMMIT');
+          return send(res, 200, { ...priorSpin.rows[0].response, replayed: true });
+        }
 
         if (account.free_spins <= 0 && account.silver < 20) {
           await client.query('ROLLBACK');
@@ -2063,9 +2076,7 @@ const server = http.createServer(async (req, res) => {
           WHERE telegram_id = $1
         `, [String(user.id)]);
 
-        await client.query('COMMIT');
-
-        return send(res, 200, {
+        const response = {
           result: prize === 'nothing' ? 'none' : prize,
           prize,
           silver: updated.rows[0].silver,
@@ -2073,7 +2084,14 @@ const server = http.createServer(async (req, res) => {
           claim_id: claimId,
           gift: winningGift,
           welcome_gift: welcomeGift
-        });
+        };
+        await client.query(
+          'INSERT INTO spin_requests (telegram_id, request_id, response) VALUES ($1, $2, $3::jsonb)',
+          [String(user.id), requestId, JSON.stringify(response)]
+        );
+        await client.query('COMMIT');
+
+        return send(res, 200, response);
 
       } catch (error) {
         await client.query('ROLLBACK');
