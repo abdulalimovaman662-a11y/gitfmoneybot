@@ -2748,6 +2748,23 @@ function gdMiniMessage(message) {
 function gdMiniEmoji(value) {
  return ['','💎','🌙','🔥','🍀','👑','⚡','🎁','🪐'][Number(value)]||'✦';
 }
+async function gdMiniAction(payload) {
+ const body={...payload,action_id:crypto.randomUUID()};
+ let lastError;
+ for(let attempt=0;attempt<2;attempt++) {
+  try {
+   return await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify(body)});
+  } catch(error) {
+   lastError=error;
+   if(attempt===0&&(!error.status||error.status>=500)) {
+    await new Promise(resolve=>setTimeout(resolve,350));
+    continue;
+   }
+   throw error;
+  }
+ }
+ throw lastError||new Error('Не удалось выполнить действие');
+}
 function gdMiniStopTimer() {
  if(gdMini.timer){clearInterval(gdMini.timer);gdMini.timer=null;}
 }
@@ -2810,7 +2827,7 @@ async function hitGdReaction(target) {
  if(gdMini.locked||!gdMini.session)return;
  gdMini.locked=true;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'hit',target,action_id:crypto.randomUUID()})});
+  const data=await gdMiniAction({action:'hit',target});
   gdMini.session=data.session;
   const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
   if(data.session.status!=='active')renderGdMiniGame();else drawGdReaction();
@@ -2820,7 +2837,7 @@ async function hitGdReaction(target) {
 async function finishGdReaction() {
  if(!gdMini.session||gdMini.session.status!=='active')return;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'finish',action_id:crypto.randomUUID()})});
+  const data=await gdMiniAction({action:'finish'});
   gdMini.session=data.session;renderGdMiniGame();
  } catch(error) {gdMiniMessage(error.message);}
 }
@@ -2830,7 +2847,7 @@ async function submitGdSafeGuess() {
  if(!/^\d{4}$/.test(guess)){gdMiniMessage('Введи четыре цифры.');return;}
  gdMini.locked=true;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'guess',guess,action_id:crypto.randomUUID()})});
+  const data=await gdMiniAction({action:'guess',guess});
   gdMini.session=data.session;gdMini.safeHistory.push({guess,hint:data.session.state.last_hint});
   renderGdMiniGame();
   const hint=data.session.state.last_hint;
@@ -2850,7 +2867,7 @@ async function flipGdMemory(index) {
  if(gdMini.locked||!gdMini.session)return;
  gdMini.locked=true;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'flip',index,action_id:crypto.randomUUID()})});
+  const data=await gdMiniAction({action:'flip',index});
   gdMini.session=data.session;
   if(data.session.state.mismatch_until)gdMini.memoryHideAt=Number(data.session.state.mismatch_until);
   else gdMini.memoryHideAt=0;
@@ -3269,7 +3286,7 @@ async function api(url, options={}) {
   }
  });
  const data = await response.json().catch(()=>({}));
- if(!response.ok) throw new Error(data.error||'Ошибка сервера');
+ if(!response.ok) {const error=new Error(data.error||'Ошибка сервера');error.status=response.status;throw error;}
  return data;
 }
 
