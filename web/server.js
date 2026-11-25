@@ -1726,6 +1726,18 @@ const server = http.createServer(async (req, res) => {
         await client.query("SELECT pg_advisory_xact_lock(731245)");
         const telegramId=String(user.id);
         const account=await client.query("SELECT silver FROM users WHERE telegram_id=$1 FOR UPDATE",[telegramId]);
+        if (!account.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 404, { error: 'Пользователь не найден' });
+        }
+        const existingBet = await client.query(
+          "SELECT id FROM rocket_bets WHERE telegram_id=$1 AND status='active' LIMIT 1 FOR UPDATE",
+          [telegramId]
+        );
+        if (existingBet.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Сначала заверши текущую ставку' });
+        }
         let stakeAmount=amount, nftName=null, item=null;
         if(kind==='silver') {
           if(Number(account.rows[0].silver)<amount){await client.query('ROLLBACK');return send(res,409,{error:'Недостаточно серебра на балансе'});}
@@ -1787,25 +1799,46 @@ const server = http.createServer(async (req, res) => {
         );
         if(!active.rowCount){await client.query('ROLLBACK');return send(res,409,{error:'Нет активной ставки'});}
         const bet=active.rows[0], now=Date.now(), start=new Date(bet.starts_at).getTime();
+        if (now < start && bet.round_status !== 'crashed') {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Раунд ещё не начался', round_not_started: true });
+        }
         const multiplier=Number((Math.pow(1.18,Math.max(0,(now-start)/1000))).toFixed(2));
-        if(bet.round_status==='crashed' || now<start || multiplier>=Number(bet.crash_at)) {
+        if(bet.round_status==='crashed' || multiplier>=Number(bet.crash_at)) {
           await client.query("UPDATE rocket_rounds SET status='crashed',crashed_at=COALESCE(crashed_at,NOW()) WHERE id=$1",[bet.round_id]);
           await client.query("UPDATE rocket_bets SET status='crashed',settled_at=NOW() WHERE round_id=$1 AND status='active'",[bet.round_id]);
           await client.query('COMMIT');
           return send(res,409,{error:'Слишком поздно — ракета уже упала',crashed:true});
         }
-        const payout=Math.floor(Number(bet.stake_amount)*multiplier);
-        await client.query("UPDATE users SET silver=silver+$1 WHERE telegram_id=$2",[payout,String(user.id)]);
-        const balance=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[String(user.id)]);
-        if(bet.stake_kind==='silver') {
+        const payout = bet.stake_kind === 'silver'
+          ? Math.floor(Number(bet.stake_amount) * multiplier)
+          : 0;
+        const settled = await client.query(
+          "UPDATE rocket_bets SET status='cashed_out',cashout_multiplier=$1,payout_silver=$2,settled_at=NOW() WHERE id=$3 AND status='active' RETURNING id",
+          [multiplier,payout,bet.id]
+        );
+        if (!settled.rowCount) {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Ставка уже обработана' });
+        }
+        if (bet.stake_kind === 'silver') {
+          await client.query("UPDATE users SET silver=silver+$1 WHERE telegram_id=$2",[payout,String(user.id)]);
+          const balance=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[String(user.id)]);
           await client.query(
             "INSERT INTO rocket_silver_ledger(bet_id,telegram_id,entry_type,amount,balance_after) VALUES($1,$2,'cashout_credit',$3,$4)",
             [bet.id,String(user.id),payout,Number(balance.rows[0].silver)]
           );
+          await client.query('COMMIT');
+          return send(res,200,{success:true,multiplier,payout_silver:payout,balance:Number(balance.rows[0].silver),stake_kind:bet.stake_kind,nft_name:bet.nft_name});
         }
-        await client.query("UPDATE rocket_bets SET status='cashed_out',cashout_multiplier=$1,payout_silver=$2,settled_at=NOW() WHERE id=$3 AND status='active'",[multiplier,payout,bet.id]);
+        // NFT ставка возвращается владельцу при успешном cashout; она не конвертируется в серебро.
+        await client.query(
+          "UPDATE user_inventory SET status='owned',updated_at=NOW() WHERE id=$1 AND telegram_id=$2 AND status='consumed'",
+          [bet.inventory_id,String(user.id)]
+        );
+        const balance=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[String(user.id)]);
         await client.query('COMMIT');
-        return send(res,200,{success:true,multiplier,payout_silver:payout,balance:Number(balance.rows[0].silver),stake_kind:bet.stake_kind,nft_name:bet.nft_name});
+        return send(res,200,{success:true,multiplier,payout_silver:0,balance:Number(balance.rows[0].silver),stake_kind:bet.stake_kind,nft_name:bet.nft_name,nft_returned:true});
       } catch(error){await client.query('ROLLBACK');throw error;}
       finally{client.release();}
     }
