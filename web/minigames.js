@@ -266,6 +266,7 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
         // browser timer fired. Finalize from the persisted hit count so XP is
         // not lost just because the finish request raced with the last hit.
         session.status = Number(state.hits || 0) > 0 ? 'completed' : 'expired';
+        score = Number(state.hits || 0);
         message = Number(state.hits || 0) > 0
           ? `Раунд завершён. Попаданий: ${Number(state.hits || 0)}`
           : 'Время раунда закончилось';
