@@ -33,7 +33,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
       xp BIGINT NOT NULL DEFAULT 0
     )
   `);
-  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000), (105, 100)");
+  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000), (105, 100), (106, 100)");
   await initProgressionDatabase(pool);
   await initMiniGamesDatabase(pool);
 
@@ -43,6 +43,17 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   assert.equal(retry.status, 200);
   assert.equal(retry.reused, true);
   assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 101')).rows[0].silver), 85);
+
+  const concurrentStarts = await Promise.all([
+    startMiniGame(pool, '106', 'reaction', 'reaction_concurrent_start_001'),
+    startMiniGame(pool, '106', 'reaction', 'reaction_concurrent_start_001')
+  ]);
+  assert.equal(concurrentStarts.filter(result => result.status === 201).length, 1);
+  assert.equal(concurrentStarts.filter(result => result.status === 200 && result.reused).length, 1);
+  assert.equal(concurrentStarts[0].session.id, concurrentStarts[1].session.id);
+  assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 106')).rows[0].silver), 85,
+    'concurrent retries of one start request must charge only once');
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS total FROM minigame_sessions WHERE telegram_id = 106')).rows[0].total), 1);
 
   for (let i = 2; i <= 5; i++) {
     const result = await startMiniGame(pool, '101', 'reaction', 'reaction_request_' + String(i).padStart(4, '0'));
