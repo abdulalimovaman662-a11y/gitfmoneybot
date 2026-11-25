@@ -55,11 +55,12 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   const safe = await startMiniGame(pool, '102', 'safe', 'safe_request_000001');
   assert.equal(safe.status, 201);
   const safeRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [safe.session.id])).rows[0];
-  const invalidGuess = await performMiniGameAction(pool, '102', safe.session.id, { action: 'guess', guess: '12x4' });
+  const invalidGuess = await performMiniGameAction(pool, '102', safe.session.id, { action: 'guess', guess: '12x4', action_id: 'safe_invalid_0001' });
   assert.equal(invalidGuess.status, 400);
   const solved = await performMiniGameAction(pool, '102', safe.session.id, {
     action: 'guess',
-    guess: safeRow.state.secret
+    guess: safeRow.state.secret,
+    action_id: 'safe_solve_00001'
   });
   assert.equal(solved.session.status, 'completed');
   assert.equal(solved.session.message, 'Сейф открыт за 1 из 8 попыток!');
@@ -77,9 +78,14 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
     pairs.get(value).push(index);
   });
   let matched;
+  let memoryAction = 0;
   for (const indexes of pairs.values()) {
-    await performMiniGameAction(pool, '102', memory.session.id, { action: 'flip', index: indexes[0] });
-    matched = await performMiniGameAction(pool, '102', memory.session.id, { action: 'flip', index: indexes[1] });
+    await performMiniGameAction(pool, '102', memory.session.id, {
+      action: 'flip', index: indexes[0], action_id: 'memory_flip_' + String(++memoryAction).padStart(4, '0')
+    });
+    matched = await performMiniGameAction(pool, '102', memory.session.id, {
+      action: 'flip', index: indexes[1], action_id: 'memory_flip_' + String(++memoryAction).padStart(4, '0')
+    });
   }
   assert.equal(matched.session.status, 'completed');
   assert.equal(matched.session.state.matched.length, 16);
@@ -91,7 +97,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
     VALUES (103, 23, 'minigame', 'seed-cap', 'seed-cap')`);
   const cappedSafe = await startMiniGame(pool, '103', 'safe', 'safe_request_cap_1');
   const cappedRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [cappedSafe.session.id])).rows[0];
-  const cappedResult = await performMiniGameAction(pool, '103', cappedSafe.session.id, { action: 'guess', guess: cappedRow.state.secret });
+  const cappedResult = await performMiniGameAction(pool, '103', cappedSafe.session.id, { action: 'guess', guess: cappedRow.state.secret, action_id: 'safe_cap_solve_0001' });
   assert.equal(cappedResult.session.xp_awarded, 2);
   assert.equal(Number((await pool.query(`SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 103 AND source_type = 'minigame'`)).rows[0].total), 25);
 });
