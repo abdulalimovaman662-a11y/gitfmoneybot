@@ -28,3 +28,21 @@ test('real-money endpoints remain disabled until separately reviewed', () => {
   assert.match(source, /if \(url\.pathname === '\/api\/rocket\/bet' && req\.method === 'POST'\) \{\s*return send\(res, 403/);
   assert.match(source, /if \(url\.pathname === '\/api\/rocket\/cashout' && req\.method === 'POST'\) \{\s*return send\(res, 403/);
 });
+
+test('Rocket rejects a second active bet and missing account safely', () => {
+  assert.match(source, /if \(!account\.rowCount\)/);
+  assert.match(source, /SELECT id FROM rocket_bets WHERE telegram_id=\$1 AND status='active'/);
+  assert.match(source, /Сначала заверши текущую ставку/);
+});
+
+test('cashout during countdown does not mark the round as crashed', () => {
+  assert.match(source, /if \(now < start && bet\.round_status !== 'crashed'\)/);
+  assert.match(source, /round_not_started: true/);
+});
+
+test('NFT cashout returns the NFT and never credits silver', () => {
+  assert.match(source, /const payout = bet\.stake_kind === 'silver'/);
+  assert.match(source, /if \(bet\.stake_kind === 'silver'\) \{/);
+  assert.match(source, /nft_returned:true/);
+  assert.match(source, /SET status='owned',updated_at=NOW\(\) WHERE id=\$1 AND telegram_id=\$2 AND status='consumed'/);
+});
