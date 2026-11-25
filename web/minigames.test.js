@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { GAME_CONFIG, scoreGuess, makeMemoryDeck } = require('./minigames');
+const { GAME_CONFIG, scoreGuess, isValidSafeGuess, makeMemoryDeck } = require('./minigames');
 
 test('all mini-games cost 15 silver and have the agreed daily limits', () => {
   assert.deepEqual(
@@ -15,6 +15,15 @@ test('safe cracking counts exact and misplaced digits without double counting', 
   assert.deepEqual(scoreGuess('1122', '1212'), { exact: 2, misplaced: 2 });
   assert.deepEqual(scoreGuess('1234', '1234'), { exact: 4, misplaced: 0 });
   assert.deepEqual(scoreGuess('1234', '5678'), { exact: 0, misplaced: 0 });
+});
+
+test('safe code accepts exactly four decimal digits', () => {
+  assert.equal(isValidSafeGuess('0000'), true);
+  assert.equal(isValidSafeGuess('1234'), true);
+  assert.equal(isValidSafeGuess('12a4'), false);
+  assert.equal(isValidSafeGuess('123'), false);
+  assert.equal(isValidSafeGuess('12345'), false);
+  assert.equal(isValidSafeGuess(1234), false);
 });
 
 test('memory deck always contains eight pairs and sixteen cards', () => {
