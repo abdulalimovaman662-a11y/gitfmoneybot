@@ -2175,6 +2175,7 @@ body.gd-legal-locked{overflow:hidden}
   <div class="level-progress"><div class="level-progress-fill" id="coreLevelProgress"></div></div>
   <p class="muted" id="coreXpNext">Загружаем прогресс…</p>
  </div>
+ <div class="card"><div class="section-tag">RECENT EXPERIENCE</div><h2>История опыта</h2><div id="coreXpHistory"><p class="muted">Загружаем историю…</p></div></div>
  <div class="card"><div class="section-tag">DAILY + WEEKLY</div><h2>Задания</h2><div id="coreMissionList"><p class="muted">Загружаем задания…</p></div></div>
  <div class="card"><div class="section-tag">MILESTONES</div><h2>Достижения</h2><div id="coreAchievementList"><p class="muted">Загружаем достижения…</p></div></div>
 </section>
@@ -2406,6 +2407,20 @@ async function loadCore(){
   const progress=Math.max(0,Math.min(100,Number(account.xp_progress||0)/Math.max(1,Number(account.xp_required||100))*100));
   document.getElementById('coreLevelProgress').style.width=progress+'%';
   document.getElementById('coreXpNext').textContent='До следующего уровня: '+Number(account.xp_to_next||0).toLocaleString('ru-RU')+' XP';
+  const history=document.getElementById('coreXpHistory');
+  if(history){
+   history.replaceChildren();
+   const sourceNames={welcome:'Регистрация',daily_visit:'Ежедневный вход',spin:'Прокрутка',nft_battle:'NFT-батл',mission:'Задание',achievement:'Достижение'};
+   const entries=Array.isArray(core.recent_xp)?core.recent_xp:[];
+   if(!entries.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='Начисления опыта появятся здесь.';history.appendChild(empty);}
+   entries.forEach(entry=>{
+    const row=document.createElement('div');row.className='gd-core-item-head';
+    row.style.padding='10px 0';row.style.borderBottom='1px solid rgba(255,255,255,.08)';
+    const label=document.createElement('span');label.textContent=sourceNames[entry.source_type]||'Опыт GiftsDrop';
+    const amount=document.createElement('b');amount.textContent='+'+Number(entry.amount||0).toLocaleString('ru-RU')+' XP';
+    row.append(label,amount);history.appendChild(row);
+   });
+  }
   const addEmpty=(parent,text)=>{const p=document.createElement('p');p.className='gd-core-empty';p.textContent=text;parent.appendChild(p);};
   const makeItem=(title,description,reward,progressValue,target,status,claim)=>{
    const item=document.createElement('div');item.className='gd-core-item';
