@@ -1847,9 +1847,12 @@ const server = http.createServer(async (req, res) => {
         const battle = lockedBattle.rows[0];
         if (battle.status === 'finished' && String(battle.opponent_id) === String(user.id)) {
           const balances = await client.query(
-            'SELECT telegram_id, silver, free_spins FROM users WHERE telegram_id = ANY($1::bigint[])',
+            'SELECT telegram_id, username, first_name, silver, free_spins FROM users WHERE telegram_id = ANY($1::bigint[])',
             [[String(battle.creator_id), String(user.id)]]
           );
+          const battleUsers = new Map(balances.rows.map(row => [String(row.telegram_id), row]));
+          const creatorUser = battleUsers.get(String(battle.creator_id));
+          const opponentUser = battleUsers.get(String(user.id));
           await client.query('COMMIT');
           return send(res, 200, {
             success: true,
@@ -1857,6 +1860,10 @@ const server = http.createServer(async (req, res) => {
             battle: {
               id: Number(battle.id), spins: Number(battle.spins), status: 'finished',
               creator_id: String(battle.creator_id), opponent_id: String(battle.opponent_id),
+              creator_username: creatorUser?.username || null,
+              creator_first_name: creatorUser?.first_name || null,
+              opponent_username: opponentUser?.username || null,
+              opponent_first_name: opponentUser?.first_name || null,
               winner_id: battle.winner_id ? String(battle.winner_id) : null,
               creator_score: Number(battle.creator_score || 0),
               opponent_score: Number(battle.opponent_score || 0),
@@ -1972,6 +1979,8 @@ const server = http.createServer(async (req, res) => {
 
         const creatorId = String(battle.creator_id);
         const opponentId = String(user.id);
+        const creatorAccount = accounts.get(creatorId);
+        const opponentAccount = accounts.get(opponentId);
         const creatorResult = await runPlayerSpins(creatorId);
         const opponentResult = await runPlayerSpins(opponentId);
         const winnerId = creatorResult.score === opponentResult.score
@@ -2000,7 +2009,12 @@ const server = http.createServer(async (req, res) => {
           success: true,
           battle: {
             id: battleId, spins, status: 'finished',
-            creator_id: creatorId, opponent_id: opponentId, winner_id: winnerId,
+            creator_id: creatorId, opponent_id: opponentId,
+            creator_username: creatorAccount?.username || null,
+            creator_first_name: creatorAccount?.first_name || null,
+            opponent_username: opponentAccount?.username || null,
+            opponent_first_name: opponentAccount?.first_name || null,
+            winner_id: winnerId,
             creator_score: creatorResult.score, opponent_score: opponentResult.score,
             creator_result: creatorResult.drops, opponent_result: opponentResult.drops
           },
