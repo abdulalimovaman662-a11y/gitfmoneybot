@@ -3444,10 +3444,10 @@ async function completeGiftOrder(id,button) {
 let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false;
 let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
 let rocketHistoryValues=[];
+refreshRocketState();
 
 loadAccount();
 loadGiftCatalog();
-refreshRocketState();
 // Give players a wider entry window and avoid hammering the database every 650 ms.
 setInterval(()=>{if(document.getElementById('tab-rocket')?.classList.contains('active'))refreshRocketState();},1200);
 function setRocketMode(mode){
@@ -3505,7 +3505,7 @@ function renderRocketState(data){
   document.getElementById('rocketLastCrash').textContent=rocketHistoryValues[0]?Number(rocketHistoryValues[0].crash).toFixed(2)+'x':'—';
   rocketFreeJoined=Boolean(data.my_entry);
   const joinButton=document.getElementById('rocketLaunchButton');
-  if(joinButton){joinButton.disabled=rocketFreeJoined || round.status!=='betting';joinButton.textContent=rocketFreeJoined?'✓ ТЫ В РАУНДЕ':round.status==='betting'?'🚀 ВОЙТИ БЕСПЛАТНО':'ОЖИДАЙ СЛЕДУЮЩИЙ РАУНД';}
+  if(joinButton){joinButton.disabled=rocketFreeJoined || round.status==='crashed';joinButton.textContent=rocketFreeJoined?'✓ ТЫ В РАУНДЕ':round.status==='betting'?'🚀 ВОЙТИ БЕСПЛАТНО':round.status==='running'?'🚀 ВОЙТИ В ТЕКУЩИЙ РАУНД':'ОЖИДАЙ СЛЕДУЮЩИЙ РАУНД';}
   if(data.my_bet){
    rocketCurrentBet=data.my_bet;
    if(data.my_bet.status==='active'){
@@ -3520,7 +3520,7 @@ function renderRocketState(data){
     document.getElementById('rocketResult').textContent=data.my_bet.status==='cashed_out'?'Выигрыш уже зачислен на баланс.':'Ставка сгорела при краше.';
    }
   }else{
-   rocketRunning=false;document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status!=='betting';
+   rocketRunning=false;document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status==='crashed';
   }
  }else{
   rocketRunning=false;rocketCurrentBet=null;rocketFreeJoined=false;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketLaunchButton').textContent='ОЖИДАЙ РАУНД';document.getElementById('rocketCashoutButton').disabled=true;
