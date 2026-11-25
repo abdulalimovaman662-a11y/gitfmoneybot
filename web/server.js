@@ -373,6 +373,14 @@ async function initDatabase() {
     );
     CREATE INDEX IF NOT EXISTS rocket_bets_round_idx ON rocket_bets(round_id, status);
     CREATE INDEX IF NOT EXISTS rocket_bets_user_idx ON rocket_bets(telegram_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS rocket_free_entries (
+      id BIGSERIAL PRIMARY KEY,
+      round_id BIGINT NOT NULL REFERENCES rocket_rounds(id) ON DELETE CASCADE,
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(round_id, telegram_id)
+    );
+    CREATE INDEX IF NOT EXISTS rocket_free_entries_round_idx ON rocket_free_entries(round_id, created_at ASC);
 
     CREATE TABLE IF NOT EXISTS nft_battles (
       id BIGSERIAL PRIMARY KEY,
@@ -1620,9 +1628,19 @@ const server = http.createServer(async (req, res) => {
         ) : { rows: [] };
         const players = round ? await client.query(
           `SELECT COALESCE(NULLIF(u.username,''), NULLIF(u.first_name,''), 'Игрок') AS name,
-                  b.stake_kind, b.stake_amount, b.status, b.cashout_multiplier
+                  'free'::TEXT AS kind, 0::INTEGER AS amount, 'joined'::TEXT AS status, NULL::NUMERIC AS multiplier
+           FROM rocket_free_entries e JOIN users u ON u.telegram_id=e.telegram_id
+           WHERE e.round_id=$1
+           UNION ALL
+           SELECT COALESCE(NULLIF(u.username,''), NULLIF(u.first_name,''), 'Игрок') AS name,
+                  b.stake_kind AS kind, b.stake_amount AS amount, b.status, b.cashout_multiplier AS multiplier
            FROM rocket_bets b JOIN users u ON u.telegram_id=b.telegram_id
-           WHERE b.round_id=$1 ORDER BY b.created_at ASC LIMIT 30`, [round.id]
+           WHERE b.round_id=$1
+           ORDER BY name LIMIT 30`, [round.id]
+        ) : { rows: [] };
+        const myEntry = round ? await client.query(
+          "SELECT id FROM rocket_free_entries WHERE round_id=$1 AND telegram_id=$2",
+          [round.id, String(user.id)]
         ) : { rows: [] };
         const history = await client.query(
           "SELECT id, crash_at FROM rocket_rounds WHERE status='crashed' ORDER BY id DESC LIMIT 12"
@@ -1635,11 +1653,40 @@ const server = http.createServer(async (req, res) => {
           round: round ? { id:Number(round.id), status:round.status, starts_at:round.starts_at, seconds_to_start:round.status==='betting'?Math.max(0,Math.ceil((new Date(round.starts_at).getTime()-now)/1000)):0, multiplier:current } : null,
           balance: Number(balance.rows[0]?.silver || 0),
           my_bet: myBet.rows[0] ? { ...myBet.rows[0], id:Number(myBet.rows[0].id), stake_amount:Number(myBet.rows[0].stake_amount), payout_silver:Number(myBet.rows[0].payout_silver) } : null,
-          players: players.rows.map(p=>({ name:p.name, kind:p.stake_kind, amount:Number(p.stake_amount), status:p.status, multiplier:p.cashout_multiplier ? Number(p.cashout_multiplier) : null })),
+          my_entry: myEntry.rows[0] ? { id:Number(myEntry.rows[0].id) } : null,
+          players: players.rows.map(p=>({ name:p.name, kind:p.kind, amount:Number(p.amount), status:p.status, multiplier:p.multiplier ? Number(p.multiplier) : null })),
           history: history.rows.map(r=>({id:Number(r.id), crash:Number(r.crash_at)}))
         });
       } catch (error) { await client.query('ROLLBACK'); throw error; }
       finally { client.release(); }
+    }
+
+    if (url.pathname === '/api/rocket/join' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const body = await readBody(req);
+      const roundId = Number(body.round_id);
+      if (!Number.isSafeInteger(roundId) || roundId < 1) return send(res, 400, { error: 'Раунд не найден. Обнови экран.' });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(731245)");
+        const round = await client.query("SELECT id,status,starts_at FROM rocket_rounds WHERE id=$1 FOR UPDATE", [roundId]);
+        if (!round.rowCount || round.rows[0].status !== 'betting' || new Date(round.rows[0].starts_at).getTime() <= Date.now()) {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Раунд уже начался. Войди в следующий раунд.' });
+        }
+        const entry = await client.query(
+          "INSERT INTO rocket_free_entries(round_id,telegram_id) VALUES($1,$2) ON CONFLICT(round_id,telegram_id) DO NOTHING RETURNING id",
+          [roundId, String(user.id)]
+        );
+        await client.query('COMMIT');
+        return send(res, 200, { success:true, joined:true, already_joined:!entry.rowCount });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
     }
 
     if (url.pathname === '/api/rocket/bet' && req.method === 'POST') {
