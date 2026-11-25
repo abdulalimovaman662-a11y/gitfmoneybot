@@ -2777,8 +2777,12 @@ function gdMiniMessage(message) {
 function gdMiniEmoji(value) {
  return ['','💎','🌙','🔥','🍀','👑','⚡','🎁','🪐'][Number(value)]||'✦';
 }
+function gdMiniCreateRequestId() {
+ if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();
+ return 'gdmini_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);
+}
 async function gdMiniAction(payload) {
- const body={...payload,action_id:crypto.randomUUID()};
+ const body={...payload,action_id:gdMiniCreateRequestId()};
  let lastError;
  for(let attempt=0;attempt<2;attempt++) {
   try {
@@ -2802,7 +2806,7 @@ async function startGdMiniGame(game) {
  if(gdMini.pendingStart&&gdMini.pendingStart.game!==game){gdMiniMessage('Сначала повтори запуск предыдущей игры, чтобы проверить его результат.');return;}
  gdMini.locked=true;gdMiniMessage('Запускаем игру…');
  try {
-  const requestId=gdMini.pendingStart?.game===game?gdMini.pendingStart.requestId:crypto.randomUUID();
+  const requestId=gdMini.pendingStart?.game===game?gdMini.pendingStart.requestId:gdMiniCreateRequestId();
   gdMini.pendingStart={game,requestId};
   let data;
   for(let attempt=0;attempt<2;attempt++) {
