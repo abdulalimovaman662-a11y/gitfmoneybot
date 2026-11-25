@@ -33,7 +33,7 @@ class FakePool {
     let snapshot;
     return {
       async query(sql, params = []) {
-        const query = sql.replace(/\\s+/g, ' ').trim();
+        const query = sql.replace(/\s+/g, ' ').trim();
         if (query === 'BEGIN') { snapshot = { silver: db.silver, length: db.sessions.length }; return { rows: [] }; }
         if (query === 'COMMIT') { snapshot = null; return { rows: [] }; }
         if (query === 'ROLLBACK') {
