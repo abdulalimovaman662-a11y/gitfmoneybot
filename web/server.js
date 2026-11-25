@@ -1438,7 +1438,9 @@ const server = http.createServer(async (req, res) => {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
-      const result = await claimMission(pool, String(user.id), Number(url.pathname.split('/')[3]));
+      const missionId = Number(url.pathname.split('/')[3]);
+      if (!Number.isSafeInteger(missionId) || missionId < 1) return send(res, 400, { error: 'Некорректный ID задания' });
+      const result = await claimMission(pool, String(user.id), missionId);
       return send(res, result.status, result.status === 200 ? { success: true, reward: result.reward } : { error: result.error || 'Задание не найдено' });
     }
 
@@ -1447,7 +1449,9 @@ const server = http.createServer(async (req, res) => {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
-      const result = await claimAchievement(pool, String(user.id), Number(url.pathname.split('/')[3]));
+      const achievementId = Number(url.pathname.split('/')[3]);
+      if (!Number.isSafeInteger(achievementId) || achievementId < 1) return send(res, 400, { error: 'Некорректный ID достижения' });
+      const result = await claimAchievement(pool, String(user.id), achievementId);
       return send(res, result.status, result.status === 200 ? { success: true, reward: result.reward } : { error: result.error || 'Достижение не найдено' });
     }
 
@@ -1920,6 +1924,7 @@ const server = http.createServer(async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING id
               `, [history.rows[0].id, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
+              await recordActivity(client, telegramId, 'nft_collected', `battle-claim:${battleId}:${telegramId}:${i}`);
               await client.query(`
                 INSERT INTO user_inventory
                   (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
