@@ -1932,10 +1932,7 @@ body.gd-legal-locked{overflow:hidden}
   <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
    <span class="tile-art inventory-art" aria-hidden="true"><b>💎</b><i>🎁</i><em>🪙</em><small>🌟</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile home-tile-rocket gd-art-tile" onclick="showTab('rocket')" aria-label="Открыть ракету">
-   <span class="tile-art rocket-tile-art" aria-hidden="true"><span class="tile-art-orbit"></span><span class="tile-art-object">🚀</span><span class="tile-art-caption">ROCKET SYSTEM</span></span>
-   <span class="home-tile-icon"><span class="gd-home-emoji">🚀</span></span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
-  </button>
+  
   <button class="home-tile home-tile-upgrade gd-art-tile" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
    <span class="tile-art upgrade-tile-art" aria-hidden="true"><span class="tile-art-orbit"></span><span class="tile-art-object">💎</span><span class="tile-art-caption">NFT EVOLUTION</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">⚡</span></span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
@@ -2196,36 +2193,7 @@ body.gd-legal-locked{overflow:hidden}
  <div class="notice">Серебро нельзя вывести. Выводятся только NFT и подарки. Вывод оформляется заявкой и подтверждается администратором после фактической отправки подарка.</div>
 </section>
 
-<section class="tab-page" id="tab-rocket">
- <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ROCKET • LIVE GAME</span></div>
- <div class="rocket-topline"><span class="rocket-live-dot"></span> ИГРА ИДЁТ <b id="rocketRoundLabel">РАУНД #001</b><span class="rocket-test-label">ТЕСТОВЫЙ РЕЖИМ</span></div>
- <div class="rocket-stage" id="rocketStage">
-  <div class="rocket-stars"></div><div class="rocket-planet"></div>
-  <div class="rocket-cloud cloud-one"></div><div class="rocket-cloud cloud-two"></div>
-  <div class="rocket-flight-path"></div>
-  <div class="rocket-flame" id="rocketFlame">🔥</div>
-  <div class="rocket-ship" id="rocketShip">🚀</div>
-  <div class="rocket-status" id="rocketStatus">ГОТОВ К ЗАПУСКУ</div>
-  <div class="rocket-multiplier" id="rocketMultiplier">1.00<span>x</span></div>
-  <div class="rocket-stage-bottom"><span>1.01x</span><span>МАКС. 10.00x</span></div>
- </div>
- <div class="rocket-live-stats">
-  <div><small>ИГРОКОВ В РАУНДЕ</small><b id="rocketPlayers">0</b></div>
-  <div><small>ПОСЛЕДНИЙ КРАШ</small><b id="rocketLastCrash">—</b></div>
-  <div><small>ДО СТАРТА</small><b><span id="rocketCountdown">10</span> сек</b></div>
- </div>
- <div class="card rocket-bet-card">
-  <div class="rocket-card-heading"><div><div class="section-tag">АВТОМАТИЧЕСКИЙ РЕЖИМ</div><h2>Раунды идут автоматически</h2></div><span class="rocket-round-pill" id="rocketRoundPill">ОЖИДАНИЕ</span></div>
-  <div class="rocket-mode" hidden><button type="button" class="rocket-mode-btn active" id="rocketSilverMode" onclick="setRocketMode('silver')">🪙 СЕРЕБРО</button><button type="button" class="rocket-mode-btn" id="rocketNftMode" onclick="setRocketMode('nft')">🎁 NFT</button></div>
-  <div id="rocketSilverControls" hidden><label class="currency-input-label" for="rocketStake">РАЗМЕР СТАВКИ</label><div class="rocket-input-wrap"><input id="rocketStake" type="number" min="1" max="1000" value="50"><span>🪙</span></div><div class="rocket-quick-bets"><button type="button" onclick="setRocketStake(25)">25</button><button type="button" onclick="setRocketStake(50)">50</button><button type="button" onclick="setRocketStake(100)">100</button><button type="button" onclick="setRocketStake(250)">250</button></div></div>
-  <div id="rocketNftControls" hidden><label class="currency-input-label" for="rocketNftSelect">ВЫБЕРИ NFT ДЛЯ СТАВКИ</label><select id="rocketNftSelect"><option value="">Загрузка инвентаря…</option></select><p class="rocket-hint">При краше NFT теряется. При успешном выводе стоимость NFT начисляется серебром.</p></div>
-  <div class="rocket-actions"><button type="button" id="rocketLaunchButton" onclick="launchRocket()">🚀 ВОЙТИ БЕСПЛАТНО</button><button type="button" id="rocketCashoutButton" hidden disabled onclick="cashoutRocket()">ЗАБРАТЬ</button></div>
-  <div class="rocket-result" id="rocketResult">Нажми «Войти бесплатно» до старта раунда. Серебро и NFT не используются.</div>
-  <div class="rocket-test-note">Бесплатный тестовый режим: серебро и NFT не используются, баланс и инвентарь не меняются.</div>
- </div>
- <div class="card rocket-players-card"><div class="rocket-list-head"><h2>УЧАСТНИКИ РАУНДА</h2><span>LIVE</span></div><div id="rocketPlayerList"></div></div>
- <div class="rocket-history"><div class="rocket-list-head"><h2>ПОСЛЕДНИЕ РАУНДЫ</h2><span>HISTORY</span></div><div id="rocketHistory"></div></div>
-</section>
+
 
 <section class="tab-page" id="tab-upgrade">
  <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>UPGRADE • WORKSHOP</span></div>
@@ -2417,7 +2385,7 @@ async function loadRecentWins() {
 
 let gdTabTransitionTimer = null;
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade','players','battles','progress'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','upgrade','players','battles','progress'];
  const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
  const targetId = 'tab-'+name;
  const target = document.getElementById(targetId);
@@ -2443,7 +2411,6 @@ function showTab(name) {
  if(name==='balance') loadAccount();
  if(name==='profile') loadProfile();
  if(name==='inventory') loadInventory();
- if(name==='rocket') {loadRocketInventory();refreshRocketState();}
  if(name==='upgrade') loadUpgradeData();
  if(name==='gifts') {
   loadGiftCatalog();
@@ -3440,172 +3407,11 @@ async function completeGiftOrder(id,button) {
 }
 
 
-// Rocket state must exist before the first refresh call (avoid the let temporal dead zone).
-let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false,rocketAnimationFrame=null,rocketAnimationActive=false,rocketDemoCashedRound=0,rocketDemoCashedMultiplier=1;
 let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
-let rocketHistoryValues=[];
-refreshRocketState();
 
 loadAccount();
 loadGiftCatalog();
 // Give players a wider entry window and avoid hammering the database every 650 ms.
-setInterval(()=>{if(document.getElementById('tab-rocket')?.classList.contains('active'))refreshRocketState();},1200);
-function setRocketMode(mode){
- rocketMode=mode;
- document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
- document.getElementById('rocketNftMode').classList.toggle('active',mode==='nft');
- document.getElementById('rocketSilverControls').hidden=mode!=='silver';
- document.getElementById('rocketNftControls').hidden=mode!=='nft';
- document.getElementById('rocketResult').textContent=mode==='silver'?'Ставка будет списана с твоего реального баланса серебра.':'NFT будет заблокирован ставкой и сгорит при краше.';
-}
-function setRocketStake(value){document.getElementById('rocketStake').value=value;}
-function renderRocketPlayers(players=[]){
- const host=document.getElementById('rocketPlayerList');if(!host)return;host.replaceChildren();
- players.forEach(row=>{
-  const el=document.createElement('div');el.className='rocket-player-row';
-  const nameText=String(row.name||'Игрок');
-  const avatar=document.createElement('span');avatar.className='rocket-player-avatar';avatar.textContent=nameText.slice(0,2).toUpperCase();
-  const name=document.createElement('span');name.className='rocket-player-name';name.textContent=nameText;
-  const bet=document.createElement('span');bet.className='rocket-player-bet';bet.textContent=row.kind==='free'?'БЕСПЛАТНЫЙ ВХОД':(row.kind==='nft'?'NFT ':'')+Number(row.amount||0)+' 🪙';
-  const state=document.createElement('span');state.className='rocket-player-state';state.textContent=row.kind==='free'?'УЧАСТВУЕТ':row.status==='cashed_out'?'ЗАБРАЛ '+Number(row.multiplier||0).toFixed(2)+'x':row.status==='crashed'?'СГОРЕЛА':'В ИГРЕ';
-  el.append(avatar,name,bet,state);host.appendChild(el);
- });
- if(!players.length)host.textContent='Пока никто не вошёл в раунд.';
-}
-function renderRocketHistory(){
- const host=document.getElementById('rocketHistory');if(!host)return;host.replaceChildren();
- rocketHistoryValues.slice(0,7).forEach((row,i)=>{const el=document.createElement('div');el.className='rocket-history-row'+(row.crash<1.5?' crash-low':'');const left=document.createElement('span');left.textContent='РАУНД #'+row.id;const right=document.createElement('b');right.textContent=Number(row.crash).toFixed(2)+'x';el.append(left,right);host.appendChild(el);});
- if(!rocketHistoryValues.length)host.textContent='История появится после первого завершённого раунда.';
-}
-async function loadRocketInventory(){
- const select=document.getElementById('rocketNftSelect');if(!select)return;
- select.innerHTML='<option value="">Загрузка инвентаря…</option>';
- try{
-  const data=await api('/api/me/inventory');const items=Array.isArray(data.items)?data.items.filter(item=>item.status==='owned'):[];
-  select.replaceChildren();
-  items.forEach(item=>{const option=document.createElement('option');option.value=String(item.inventory_id);option.textContent=String(item.prize_name||'NFT')+' · '+(Number(item.prize_stars)||0)+' ⭐';select.appendChild(option);});
-  if(!items.length){const option=document.createElement('option');option.value='';option.textContent='Нет доступных NFT';select.appendChild(option);}
- }catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
-}
-function stopRocketMultiplierAnimation(){
- if(rocketAnimationFrame!==null){cancelAnimationFrame(rocketAnimationFrame);rocketAnimationFrame=null;}
-}
-function animateRocketMultiplier(){
- stopRocketMultiplierAnimation();
- const tick=()=>{
-  const elapsed=Math.max(0,(Date.now()-rocketStartedAt)/1000);
-  rocketMultiplier=Math.min(10,Math.pow(1.18,elapsed));
-  const el=document.getElementById('rocketMultiplier');
-  if(el)el.innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
-  if(rocketAnimationActive && rocketDemoCashedRound!==rocketRound)rocketAnimationFrame=requestAnimationFrame(tick);
-  else rocketAnimationFrame=null;
- };
- tick();
-}
-function renderRocketState(data){
- rocketBalance=Number(data.balance)||0;
- const rocketBalanceEl=document.getElementById('rocketDemoBalance');
- if(rocketBalanceEl)rocketBalanceEl.textContent=rocketBalance.toLocaleString('ru-RU');
- const round=data.round;
- if(round){
-  rocketRound=round.id;
-  document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(round.id).padStart(3,'0');
-  document.getElementById('rocketRoundPill').textContent=round.status==='betting'?'СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК':round.status==='crashed'?'КРАШ':'РАУНД LIVE';
-  const countdown=document.getElementById('rocketCountdown');if(countdown)countdown.textContent=String(round.status==='betting'?Number(round.seconds_to_start||0):0);
-  const stage=document.getElementById('rocketStage');
-  if(round.status==='betting'){rocketAnimationActive=false;rocketRunning=false;stopRocketMultiplierAnimation();rocketMultiplier=1;document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';document.getElementById('rocketStatus').textContent='СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК';stage.classList.remove('is-flying','is-crashed');}
-  else if(round.status==='running'){document.getElementById('rocketStatus').textContent='РАКЕТА В ПОЛЁТЕ';stage.classList.add('is-flying');stage.classList.remove('is-crashed');rocketStartedAt=new Date(round.starts_at).getTime();rocketAnimationActive=true;animateRocketMultiplier();}
-  else{rocketAnimationActive=false;rocketRunning=false;stopRocketMultiplierAnimation();document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';stage.classList.remove('is-flying');stage.classList.add('is-crashed');}
-  document.getElementById('rocketPlayers').textContent=String((data.players||[]).length);
-  document.getElementById('rocketLastCrash').textContent=rocketHistoryValues[0]?Number(rocketHistoryValues[0].crash).toFixed(2)+'x':'—';
-  rocketFreeJoined=Boolean(data.my_entry);
-  const cashoutButton=document.getElementById('rocketCashoutButton');
-  const demoAlreadyCashed=rocketDemoCashedRound===Number(round.id);
-  cashoutButton.hidden=!(rocketFreeJoined && round.status==='running');
-  cashoutButton.disabled=demoAlreadyCashed || round.status!=='running';
-  cashoutButton.textContent=demoAlreadyCashed?'✓ ЗАБРАНО':'ЗАБРАТЬ';
-  if(demoAlreadyCashed){rocketRunning=false;stopRocketMultiplierAnimation();rocketMultiplier=rocketDemoCashedMultiplier;document.getElementById('rocketMultiplier').innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';}
-  const joinButton=document.getElementById('rocketLaunchButton');
-  if(joinButton){joinButton.disabled=rocketFreeJoined || round.status==='crashed';joinButton.textContent=rocketFreeJoined?'✓ ТЫ В РАУНДЕ':round.status==='betting'?'🚀 ВОЙТИ БЕСПЛАТНО':round.status==='running'?'🚀 ВОЙТИ В ТЕКУЩИЙ РАУНД':'ОЖИДАЙ СЛЕДУЮЩИЙ РАУНД';}
-  if(data.my_bet){
-   rocketCurrentBet=data.my_bet;
-   if(data.my_bet.status==='active'){
-    rocketRunning=true;rocketStake=Number(data.my_bet.stake_amount);rocketBetKind=data.my_bet.stake_kind;
-    document.getElementById('rocketCashoutButton').hidden=true;document.getElementById('rocketCashoutButton').disabled=true;
-    document.getElementById('rocketLaunchButton').disabled=true;
-    document.getElementById('rocketStatus').textContent=round.status==='betting'?'ОЖИДАЕМ СТАРТ':'РАКЕТА В ПОЛЁТЕ';
-    document.getElementById('rocketStage').classList.toggle('is-flying',round.status==='running');
-    document.getElementById('rocketResult').textContent='Ставка в раунде. Забирай выигрыш до падения ракеты.';
-   }else{
-    rocketRunning=false;document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=true;
-    document.getElementById('rocketResult').textContent=data.my_bet.status==='cashed_out'?'Выигрыш уже зачислен на баланс.':'Ставка сгорела при краше.';
-   }
-  }else{
-   if(rocketFreeJoined && round.status==='running' && rocketDemoCashedRound!==Number(round.id)){
-    rocketRunning=true;
-   }else{
-    rocketRunning=false;
-    if(round.status!=='running')stopRocketMultiplierAnimation();
-   }
-   if(!rocketFreeJoined || round.status!=='running')document.getElementById('rocketCashoutButton').hidden=true;
-   document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status==='crashed';
-  }
- }else{
-  rocketRunning=false;rocketAnimationActive=false;stopRocketMultiplierAnimation();rocketCurrentBet=null;rocketFreeJoined=false;document.getElementById('rocketCashoutButton').hidden=true;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketLaunchButton').textContent='ОЖИДАЙ РАУНД';document.getElementById('rocketCashoutButton').disabled=true;
- }
- renderRocketPlayers(data.players||[]);
- rocketHistoryValues=Array.isArray(data.history)?data.history:[];
- renderRocketHistory();
-}
-async function refreshRocketState(){
- if(rocketStateBusy)return;rocketStateBusy=true;
- try{const data=await api('/api/rocket/state');renderRocketState(data);}
- catch(e){document.getElementById('rocketResult').textContent=e.message;}
- finally{rocketStateBusy=false;}
-}
-async function launchRocket(){
- const button=document.getElementById('rocketLaunchButton');
- if(!rocketRound||rocketFreeJoined||button.disabled)return;
- button.disabled=true;button.textContent='ВХОДИМ…';
- try{
-  await api('/api/rocket/join',{method:'POST',body:JSON.stringify({round_id:rocketRound})});
-  rocketFreeJoined=true;
-  document.getElementById('rocketResult').textContent='Ты участвуешь в раунде! Следи за полётом ракеты.';
-  await refreshRocketState();
- }catch(e){
-  document.getElementById('rocketResult').textContent=e.message;
-  button.disabled=false;button.textContent='🚀 ВОЙТИ БЕСПЛАТНО';
-  await refreshRocketState();
- }
-}
-async function cashoutRocket(){
- const button=document.getElementById('rocketCashoutButton');
- if(rocketFreeJoined && !rocketCurrentBet){
-  if(!rocketRunning || button.disabled)return;
-  rocketDemoCashedRound=rocketRound;
-  rocketDemoCashedMultiplier=rocketMultiplier;
-  rocketRunning=false;rocketAnimationActive=false;stopRocketMultiplierAnimation();
-  button.disabled=true;button.textContent='✓ ЗАБРАНО';
-  document.getElementById('rocketStatus').textContent='ДЕМО-ВЫХОД ЗАФИКСИРОВАН';
-  document.getElementById('rocketResult').textContent='Ты зафиксировал '+rocketDemoCashedMultiplier.toFixed(2)+'x. Это бесплатный демо-режим: баланс и NFT не меняются.';
-  return;
- }
- if(!rocketRunning)return;
- button.disabled=true;
- try{
-  const result=await api('/api/rocket/cashout',{method:'POST',body:'{}'});
-  rocketRunning=false;rocketBalance=result.balance;const rocketBalanceEl=document.getElementById('rocketDemoBalance');if(rocketBalanceEl)rocketBalanceEl.textContent=rocketBalance.toLocaleString('ru-RU');
-  document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketStage').classList.remove('is-flying');
-  document.getElementById('rocketResult').textContent='Забрано на '+Number(result.multiplier).toFixed(2)+'x! Начислено '+Number(result.payout_silver).toLocaleString('ru-RU')+' серебра.';
-  document.getElementById('rocketLaunchButton').disabled=false;
-  await refreshRocketState();await loadRocketInventory();
- }catch(e){
-  document.getElementById('rocketResult').textContent=e.message;
-  if(e.message.includes('упала')){rocketRunning=false;document.getElementById('rocketStage').classList.remove('is-flying');document.getElementById('rocketStage').classList.add('is-crashed');document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';document.getElementById('rocketLaunchButton').disabled=false;}
-  else button.disabled=false;
-  await refreshRocketState();
- }
-}
 function loadUpgradeData(){
  const host=document.getElementById('upgradeSourceList');if(!host)return;
  host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
