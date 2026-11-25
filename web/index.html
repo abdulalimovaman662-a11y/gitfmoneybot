@@ -2144,6 +2144,53 @@ button:not(:disabled):active,.nav-button:active,.gift-product:active,.prize-card
   }
 }
 
+
+/* Touch-first polish: predictable feedback without slowing taps */
+button,.gift-product,.stat,.upgrade-source-item,.upgrade-target-item,
+.gd-memory-card,.gd-reaction-target{
+ -webkit-tap-highlight-color:transparent;
+}
+button{
+ transition:transform .18s cubic-bezier(.2,.75,.25,1),filter .18s ease,box-shadow .18s ease,opacity .18s ease;
+}
+button:active:not(:disabled){
+ transform:translateY(1px) scale(.985);
+ filter:brightness(1.08);
+}
+button:focus-visible,.upgrade-source-item:focus-visible,
+.upgrade-target-item:focus-visible,.gd-memory-card:focus-visible,
+.gd-reaction-target:focus-visible{
+ outline:2px solid #74e5ff;
+ outline-offset:3px;
+}
+.gift-product,.stat,.upgrade-source-item,.upgrade-target-item{
+ transition:transform .22s cubic-bezier(.2,.75,.25,1),border-color .22s ease,box-shadow .22s ease,background .22s ease;
+}
+.gift-art img,.upgrade-source-art img,.upgrade-target-art img{
+ transition:transform .35s cubic-bezier(.2,.75,.25,1),filter .35s ease;
+}
+.gift-art img{filter:drop-shadow(0 5px 12px rgba(0,0,0,.28))}
+.gd-memory-card{perspective:700px;transform:translateZ(0)}
+.gd-reaction-target:active:not(:disabled),.gd-memory-card:active:not(:disabled){
+ transform:scale(.95);
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .gift-product:hover,.upgrade-source-item:hover,.upgrade-target-item:hover{
+  transform:translateY(-3px);
+  border-color:rgba(116,229,255,.42);
+  box-shadow:0 12px 28px rgba(0,0,0,.22);
+ }
+ .gift-product:hover .gift-art img,.upgrade-source-item:hover img,.upgrade-target-item:hover img{
+  transform:scale(1.055);
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ button,.gift-product,.stat,.upgrade-source-item,.upgrade-target-item,
+ .gift-art img,.upgrade-source-art img,.upgrade-target-art img{
+  transition:none!important;
+ }
+}
+
 </style>
 </head>
 <body>
