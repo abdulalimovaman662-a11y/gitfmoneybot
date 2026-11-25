@@ -192,6 +192,7 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS rank_bonus_openings BIGINT NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS selected_wings TEXT NOT NULL DEFAULT 'auto',
       ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE;
+      ADD COLUMN IF NOT EXISTS welcome_gift_available BOOLEAN NOT NULL DEFAULT FALSE;
 
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
@@ -525,6 +526,7 @@ async function ensureUser(user, req) {
   ]);
 
   if (upsert.rows[0]?.was_created) {
+    await pool.query('UPDATE users SET welcome_gift_available = TRUE WHERE telegram_id = $1', [telegramId]);
     await awardXp(pool, telegramId, 50, 'welcome', `welcome:${telegramId}`);
   }
 
@@ -1972,15 +1974,18 @@ const server = http.createServer(async (req, res) => {
           `, [String(user.id)]);
         }
 
+        const welcomeGift = Boolean(account.welcome_gift_available);
         const chance = crypto.randomInt(100000);
-        let prize = 'nothing';
+        let prize = welcomeGift ? 'ordinary' : 'nothing';
 
-        if (chance >= 99999) {
-          prize = 'rare';
-        } else if (chance >= 94999) {
-          prize = 'unusual';
-        } else if (chance >= 79999) {
-          prize = 'ordinary';
+        if (!welcomeGift) {
+          if (chance >= 99999) {
+            prize = 'rare';
+          } else if (chance >= 94999) {
+            prize = 'unusual';
+          } else if (chance >= 79999) {
+            prize = 'ordinary';
+          }
         }
 
         const history = await client.query(`
@@ -2005,9 +2010,11 @@ const server = http.createServer(async (req, res) => {
             { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
             { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
           ];
-          const giftPool = prize === 'ordinary'
-            ? ordinaryGifts
-            : PRODUCTS.filter(product => prize === 'unusual'
+          const giftPool = welcomeGift
+            ? ordinaryGifts.filter(gift => Number(gift.stars) === 15)
+            : prize === 'ordinary'
+              ? ordinaryGifts
+              : PRODUCTS.filter(product => prize === 'unusual'
               ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
               : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
           if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
@@ -2035,6 +2042,10 @@ const server = http.createServer(async (req, res) => {
           `, [claimId, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
         }
 
+        if (welcomeGift) {
+          await client.query('UPDATE users SET welcome_gift_available = FALSE WHERE telegram_id = $1', [String(user.id)]);
+        }
+
         await awardXp(client, String(user.id), 10, 'spin', `spin:${history.rows[0].id}`);
         await recordActivity(client, String(user.id), 'spin_completed', `spin:${history.rows[0].id}`);
 
@@ -2052,7 +2063,8 @@ const server = http.createServer(async (req, res) => {
           silver: updated.rows[0].silver,
           free_spins: updated.rows[0].free_spins,
           claim_id: claimId,
-          gift: winningGift
+          gift: winningGift,
+          welcome_gift: welcomeGift
         });
 
       } catch (error) {
