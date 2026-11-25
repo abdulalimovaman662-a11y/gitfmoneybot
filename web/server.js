@@ -1605,7 +1605,7 @@ const server = http.createServer(async (req, res) => {
         if (!round) {
           const crash = Number(((101 + crypto.randomInt(900)) / 100).toFixed(2));
           round = (await client.query(
-            "INSERT INTO rocket_rounds(crash_at,starts_at) VALUES($1,NOW()+INTERVAL '10 seconds') RETURNING *",
+            "INSERT INTO rocket_rounds(crash_at,starts_at) VALUES($1,NOW()+INTERVAL '20 seconds') RETURNING *",
             [crash]
           )).rows[0];
         }
