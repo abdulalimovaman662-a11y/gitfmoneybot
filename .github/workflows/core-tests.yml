@@ -1,0 +1,30 @@
+name: GiftsDrop Core tests
+
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - '.github/workflows/core-tests.yml'
+  push:
+    branches:
+      - main
+      - feature/giftsdrop-platform-foundation
+    paths:
+      - 'web/**'
+      - '.github/workflows/core-tests.yml'
+
+jobs:
+  progression-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run progression tests
+        run: npm test
