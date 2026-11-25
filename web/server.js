@@ -191,7 +191,7 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS last_xp_date DATE,
       ADD COLUMN IF NOT EXISTS rank_bonus_openings BIGINT NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS selected_wings TEXT NOT NULL DEFAULT 'auto',
-      ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE;
+      ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS welcome_gift_available BOOLEAN NOT NULL DEFAULT FALSE;
 
     CREATE TABLE IF NOT EXISTS spin_history (
