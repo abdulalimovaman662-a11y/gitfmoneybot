@@ -3489,7 +3489,8 @@ async function loadRocketInventory(){
 }
 function renderRocketState(data){
  rocketBalance=Number(data.balance)||0;
- document.getElementById('rocketDemoBalance').textContent=rocketBalance.toLocaleString('ru-RU');
+ const rocketBalanceEl=document.getElementById('rocketDemoBalance');
+ if(rocketBalanceEl)rocketBalanceEl.textContent=rocketBalance.toLocaleString('ru-RU');
  const round=data.round;
  if(round){
   rocketRound=round.id;
@@ -3555,7 +3556,7 @@ async function cashoutRocket(){
  const button=document.getElementById('rocketCashoutButton');button.disabled=true;
  try{
   const result=await api('/api/rocket/cashout',{method:'POST',body:'{}'});
-  rocketRunning=false;rocketBalance=result.balance;document.getElementById('rocketDemoBalance').textContent=rocketBalance.toLocaleString('ru-RU');
+  rocketRunning=false;rocketBalance=result.balance;const rocketBalanceEl=document.getElementById('rocketDemoBalance');if(rocketBalanceEl)rocketBalanceEl.textContent=rocketBalance.toLocaleString('ru-RU');
   document.getElementById('rocketStatus').textContent='ВЫ УСПЕЛИ ЗАБРАТЬ';document.getElementById('rocketStage').classList.remove('is-flying');
   document.getElementById('rocketResult').textContent='Забрано на '+Number(result.multiplier).toFixed(2)+'x! Начислено '+Number(result.payout_silver).toLocaleString('ru-RU')+' серебра.';
   document.getElementById('rocketLaunchButton').disabled=false;
