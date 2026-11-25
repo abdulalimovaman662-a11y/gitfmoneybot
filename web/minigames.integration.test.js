@@ -81,11 +81,11 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 102')).rows[0].silver), 70);
   assert.equal(Number((await pool.query('SELECT xp FROM users WHERE telegram_id = 102')).rows[0].xp), 10);
 
-  await pool.query(\`INSERT INTO xp_ledger (telegram_id, amount, source_type, source_id, idempotency_key)
-    VALUES (103, 23, 'minigame', 'seed-cap', 'seed-cap')\`);
+  await pool.query(`INSERT INTO xp_ledger (telegram_id, amount, source_type, source_id, idempotency_key)
+    VALUES (103, 23, 'minigame', 'seed-cap', 'seed-cap')`);
   const cappedSafe = await startMiniGame(pool, '103', 'safe', 'safe_request_cap_1');
   const cappedRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [cappedSafe.session.id])).rows[0];
   const cappedResult = await performMiniGameAction(pool, '103', cappedSafe.session.id, { action: 'guess', guess: cappedRow.state.secret });
   assert.equal(cappedResult.session.xp_awarded, 2);
-  assert.equal(Number((await pool.query(\`SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 103 AND source_type = 'minigame'\`)).rows[0].total), 25);
+  assert.equal(Number((await pool.query(`SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 103 AND source_type = 'minigame'`)).rows[0].total), 25);
 });
