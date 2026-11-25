@@ -1983,6 +1983,53 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   }
 }
 
+
+/* GIFTSDROP — refined touch + cube motion */
+#tab-home .home-grid .home-tile{
+  transform:translate3d(0,0,0);
+  transform-origin:center;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  transition:
+    transform 360ms cubic-bezier(.2,.78,.22,1),
+    box-shadow 360ms cubic-bezier(.2,.78,.22,1),
+    border-color 360ms ease,
+    filter 360ms ease;
+}
+#tab-home .home-grid .home-tile .tile-art{
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  transition:opacity 360ms ease;
+}
+#tab-home .home-grid .home-tile:active{
+  transform:translate3d(0,1px,0) scale(.985)!important;
+  filter:brightness(1.08);
+}
+@media(hover:hover) and (pointer:fine){
+  #tab-home .home-grid .home-tile:hover{
+    transform:translate3d(0,-3px,0) scale(1.008);
+  }
+}
+button,.nav-button,.gift-product,.prize-card,.card,.order-card,.battle-lobby-item,.battle-player,.battle-drop{
+  transition:
+    transform 280ms cubic-bezier(.2,.78,.22,1),
+    box-shadow 280ms cubic-bezier(.2,.78,.22,1),
+    border-color 280ms ease,
+    background-color 280ms ease,
+    opacity 280ms ease;
+}
+button:not(:disabled):active,.nav-button:active,.gift-product:active,.prize-card:active{
+  transform:scale(.985);
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-home .home-grid .home-tile,
+  #tab-home .home-grid .home-tile .tile-art,
+  button,.nav-button,.gift-product,.prize-card,.card,.order-card,.battle-lobby-item,.battle-player,.battle-drop{
+    transition:none!important;
+    animation:none!important;
+  }
+}
+
 </style>
 </head>
 <body>
