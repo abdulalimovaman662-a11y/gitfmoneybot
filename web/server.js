@@ -551,6 +551,8 @@ async function ensureUser(user, req) {
         WHERE telegram_id = $2
       `, [referralId, telegramId]);
 
+      await recordActivity(client, referralId, 'referral_completed', `referral:${telegramId}`);
+
       const count = Number(referrer.rows[0].referral_count);
       if (count % 10 === 0) {
         await client.query(`
