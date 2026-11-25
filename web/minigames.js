@@ -143,7 +143,7 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
     const used = Number(daily.rows[0]?.used || 0);
     if (used >= config.dailyLimit) {
       await client.query('ROLLBACK');
-      return { status: 429, error: `Лимит на сегодня исчерпан: \${config.dailyLimit} запусков`, used, limit: config.dailyLimit };
+      return { status: 429, error: `Лимит на сегодня исчерпан: ${config.dailyLimit} запусков`, used, limit: config.dailyLimit };
     }
     const balance = Number(user.rows[0].silver);
     if (balance < config.price) {
