@@ -1834,6 +1834,50 @@ body.gd-legal-locked{overflow:hidden}
 @keyframes progressSpark{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
 @media(prefers-reduced-motion:reduce){.progress-cube,.progress-spark{animation:none!important}}
 
+
+/* Mini-games: fluid, touch-first surfaces */
+.gd-games-intro{padding:6px 2px 18px}
+.gd-games-intro h1{font:800 29px 'Playfair Display';margin:7px 0;color:#f4dfa5}
+.gd-games-grid{display:grid;gap:13px}
+.gd-game-card{
+ position:relative;overflow:hidden;border:1px solid rgba(214,179,106,.23);
+ border-radius:20px;padding:17px;background:linear-gradient(145deg,rgba(38,32,22,.96),rgba(15,15,14,.98));
+ box-shadow:0 12px 32px rgba(0,0,0,.2);transform:translateZ(0);
+ transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s
+}
+.gd-game-card:before{content:"";position:absolute;inset:-40% -20% auto;height:110px;background:radial-gradient(ellipse,rgba(238,203,127,.12),transparent 68%);pointer-events:none}
+.gd-game-card:active{transform:scale(.985)}
+.gd-game-card-head{display:flex;align-items:center;gap:13px;position:relative}
+.gd-game-icon{width:54px;height:54px;flex:0 0 54px;border-radius:16px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,#4b3920,#211a11);border:1px solid rgba(244,223,165,.25);box-shadow:inset 0 1px rgba(255,255,255,.1)}
+.gd-game-title{font:700 18px 'Playfair Display';color:#f4dfa5}
+.gd-game-meta{font-size:10px;color:#aaa08c;margin-top:5px;letter-spacing:.6px}
+.gd-game-description{font-size:12px;line-height:1.65;color:#a9a293;margin:13px 0 4px;position:relative}
+.gd-game-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.gd-game-foot span{font-size:10px;color:#d2bd8d}
+.gd-game-foot button{width:auto;min-width:116px;margin:0;padding:12px 15px}
+.gd-game-stage{margin-top:14px;min-height:180px;border:1px solid rgba(214,179,106,.18);border-radius:20px;padding:16px;background:radial-gradient(ellipse at 50% 0,rgba(214,179,106,.09),transparent 65%),#10100e}
+.gd-game-stage h3{font:700 20px 'Playfair Display';color:#f4dfa5;margin:0 0 8px}
+.gd-game-stage p{font-size:12px;color:#aaa18e;line-height:1.6}
+.gd-game-stage button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.gd-reaction-arena{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.gd-reaction-target{aspect-ratio:1;border-radius:17px;border:1px solid rgba(244,223,165,.18);background:linear-gradient(145deg,#282319,#14120e);color:#766b54;font-size:25px;display:grid;place-items:center;margin:0;padding:0;transition:transform .12s,background .15s,box-shadow .15s}
+.gd-reaction-target.is-target{background:radial-gradient(circle at 35% 25%,#f7e4a9,#a77c36 70%);color:#21190d;box-shadow:0 0 25px rgba(236,194,108,.32);animation:gdTargetIn .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes gdTargetIn{from{transform:scale(.82);opacity:.6}to{transform:scale(1);opacity:1}}
+.gd-game-score{display:flex;justify-content:space-between;gap:10px;color:#c9b98e;font-size:12px;font-variant-numeric:tabular-nums}
+.gd-game-score strong{font-size:19px;color:#f4dfa5}
+.gd-safe-input{font-size:24px!important;letter-spacing:9px;text-align:center;max-width:220px;margin:14px auto;display:block}
+.gd-safe-history{display:grid;gap:7px;margin-top:12px}
+.gd-safe-row{display:flex;justify-content:space-between;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.035);font-size:12px;color:#d5c9ad}
+.gd-memory-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:15px}
+.gd-memory-card{aspect-ratio:1;border:1px solid rgba(214,179,106,.23);border-radius:13px;background:linear-gradient(145deg,#2b251a,#15130f);color:#d8c18a;font-size:24px;display:grid;place-items:center;margin:0;padding:0;transition:transform .18s,background .18s,border-color .18s}
+.gd-memory-card.is-open,.gd-memory-card.is-matched{background:linear-gradient(145deg,#f1d99c,#a47b3e);color:#21190d;border-color:#f4dfa5;transform:rotateY(0deg)}
+.gd-memory-card.is-matched{opacity:.68}
+.gd-game-result{padding:17px;border-radius:15px;background:rgba(214,179,106,.08);border:1px solid rgba(214,179,106,.2);color:#f4dfa5;text-align:center;margin-top:13px}
+.gd-game-result strong{display:block;font:700 25px 'Playfair Display';margin-bottom:5px}
+.gd-game-back{margin-top:13px}
+@media(hover:hover){.gd-game-card:hover{transform:translateY(-3px);border-color:rgba(244,223,165,.42);box-shadow:0 17px 38px rgba(0,0,0,.28)}}
+@media(prefers-reduced-motion:reduce){.gd-game-card,.gd-reaction-target,.gd-memory-card{transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -1949,6 +1993,9 @@ body.gd-legal-locked{overflow:hidden}
   <button class="home-tile gd-art-tile progress-tile" onclick="showTab('progress')" style="--tile-bg:linear-gradient(145deg,#6b3c9e,#241a52);--tile-border:rgba(205,166,255,.55);--tile-glow:rgba(174,112,255,.75)" aria-label="Открыть прогресс и задания">
    <span class="tile-art progress-tile-art" aria-hidden="true"><span class="progress-cube"><i>XP</i></span><span class="progress-orbit orbit-a"></span><span class="progress-orbit orbit-b"></span><span class="progress-spark spark-a">✦</span><span class="progress-spark spark-b">✧</span><span class="tile-art-caption">LEVEL UP SYSTEM</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОГРЕСС</span><span class="home-tile-subtitle">Ежедневные задания, XP и достижения</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+   <button class="home-tile home-tile-prizes" onclick="showTab('minigames')" aria-label="Открыть мини-игры">
+   <span class="tile-art prizes-art" aria-hidden="true"><i>⚡</i><b>🎮</b><em>🧠</em><small>✦</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎮</span></span><span class="home-tile-copy"><span class="home-tile-title">МИНИ-ИГРЫ</span><span class="home-tile-subtitle">Три режима • 15 серебра за запуск</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
 </section>
@@ -2226,6 +2273,42 @@ body.gd-legal-locked{overflow:hidden}
  <div class="card"><div class="section-tag">MILESTONES</div><h2>Достижения</h2><div id="coreAchievementList"><p class="muted">Загружаем достижения…</p></div></div>
 </section>
 
+
+<section class="tab-page" id="tab-minigames">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>АРЕНА</span></div>
+ <div class="gd-games-intro">
+  <div class="section-tag">GIFTDROP ARCADE</div>
+  <h1>Мини-игры</h1>
+  <p class="muted">Три коротких испытания. Каждый запуск стоит 15 серебра. Наград серебром и NFT нет — только личный результат.</p>
+ </div>
+ <div class="card">
+  <div class="stats">
+   <div class="stat"><small>Стоимость запуска</small><strong>15</strong></div>
+   <div class="stat"><small>Серебро на балансе</small><strong id="gdMiniBalance">—</strong></div>
+  </div>
+  <div class="notice">Лимиты в сутки: Реакция — 5 запусков, Сейф — 3, Память — 5. Повторное нажатие не спишет серебро дважды.</div>
+ </div>
+ <div class="gd-games-grid" id="gdMiniGameList">
+  <article class="gd-game-card">
+   <div class="gd-game-card-head"><div class="gd-game-icon">⚡</div><div><div class="gd-game-title">Reaction Arena</div><div class="gd-game-meta">30 СЕКУНД • 5 ЗАПУСКОВ В ДЕНЬ</div></div></div>
+   <p class="gd-game-description">Попадай по подсвеченной мишени как можно быстрее. Сервер проверяет каждое нажатие.</p>
+   <div class="gd-game-foot"><span>15 серебра</span><button onclick="startGdMiniGame('reaction')">ИГРАТЬ</button></div>
+  </article>
+  <article class="gd-game-card">
+   <div class="gd-game-card-head"><div class="gd-game-icon">🔐</div><div><div class="gd-game-title">Взлом сейфа</div><div class="gd-game-meta">4 ЦИФРЫ • 8 ПОПЫТОК • 3 ЗАПУСКА В ДЕНЬ</div></div></div>
+   <p class="gd-game-description">Найди секретный код. После каждой комбинации получай подсказку о точных и неверно расположенных цифрах.</p>
+   <div class="gd-game-foot"><span>15 серебра</span><button onclick="startGdMiniGame('safe')">ИГРАТЬ</button></div>
+  </article>
+  <article class="gd-game-card">
+   <div class="gd-game-card-head"><div class="gd-game-icon">🧠</div><div><div class="gd-game-title">Memory Battle</div><div class="gd-game-meta">16 КАРТОЧЕК • 8 ПАР • 5 ЗАПУСКОВ В ДЕНЬ</div></div></div>
+   <p class="gd-game-description">Открывай карточки, запоминай символы и собери все пары за минимальное число ходов.</p>
+   <div class="gd-game-foot"><span>15 серебра</span><button onclick="startGdMiniGame('memory')">ИГРАТЬ</button></div>
+  </article>
+ </div>
+ <div class="gd-game-stage" id="gdMiniStage" hidden></div>
+ <div id="gdMiniMessage" role="status" aria-live="polite"></div>
+</section>
+
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
 
 
@@ -2383,9 +2466,163 @@ async function loadRecentWins() {
  }
 }
 
+
+const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0 };
+function gdMiniMessage(message) {
+ const node=document.getElementById('gdMiniMessage');
+ if(node) node.textContent=message||'';
+}
+function gdMiniEmoji(value) {
+ return ['','💎','🌙','🔥','🍀','👑','⚡','🎁','🪐'][Number(value)]||'✦';
+}
+function gdMiniStopTimer() {
+ if(gdMini.timer){clearInterval(gdMini.timer);gdMini.timer=null;}
+}
+async function startGdMiniGame(game) {
+ if(gdMini.locked)return;
+ gdMini.locked=true;gdMiniMessage('Запускаем игру…');
+ try {
+  const requestId=crypto.randomUUID();
+  const data=await api('/api/minigames/start',{method:'POST',body:JSON.stringify({game,request_id:requestId})});
+  gdMini.session=data.session;gdMini.safeHistory=[];gdMini.memoryHideAt=0;
+  const balance=document.getElementById('gdMiniBalance');if(balance)balance.textContent=String(data.balance);
+  const balanceTop=document.getElementById('silver');if(balanceTop)balanceTop.textContent=String(data.balance);
+  document.getElementById('gdMiniGameList').hidden=true;
+  const stage=document.getElementById('gdMiniStage');stage.hidden=false;
+  renderGdMiniGame();
+  gdMiniMessage('');
+ } catch(error) { gdMiniMessage(error.message||'Не удалось запустить игру'); }
+ finally {gdMini.locked=false;}
+}
+function renderGdMiniGame() {
+ const s=gdMini.session;if(!s)return;
+ const stage=document.getElementById('gdMiniStage');
+ gdMiniStopTimer();
+ if(s.status!=='active') {
+  stage.innerHTML='<div class="gd-game-result"><strong>Раунд завершён</strong><span>'+escapeGdText(s.message||'Результат сохранён')+'</span><p>Результат: '+Number(s.score||0)+'</p></div><button class="secondary gd-game-back" onclick="closeGdMiniGame()">ВЕРНУТЬСЯ К ИГРАМ</button>';
+  return;
+ }
+ if(s.game==='reaction') {
+  stage.innerHTML='<h3>Reaction Arena</h3><div class="gd-game-score"><span>ПОПАДАНИЯ <strong id="gdReactionHits">'+Number(s.state.hits||0)+'</strong></span><span>ОСТАЛОСЬ <strong id="gdReactionTime">30.0</strong></span></div><div class="gd-reaction-arena" id="gdReactionArena"></div><p>Нажимай только на подсвеченную мишень. Раунд длится 30 секунд.</p>';
+  drawGdReaction();
+  const start=Date.now();
+  gdMini.timer=setInterval(()=>{
+   const left=Math.max(0,30000-(Date.now()-new Date(s.state.started_at||Date.now()).getTime()));
+   const node=document.getElementById('gdReactionTime');if(node)node.textContent=(left/1000).toFixed(1);
+   if(left<=0){gdMiniStopTimer();finishGdReaction();}
+  },80);
+ } else if(s.game==='safe') {
+  stage.innerHTML='<h3>🔐 Взлом сейфа</h3><p>Введи четырёхзначный код. Цифры могут повторяться.</p><div class="gd-game-score"><span>ПОПЫТКИ <strong id="gdSafeAttempts">'+Number(s.state.attempts||0)+'/8</strong></span><span>ПОДСКАЗКА <strong id="gdSafeHint">—</strong></span></div><input class="gd-safe-input" id="gdSafeGuess" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="••••"><button onclick="submitGdSafeGuess()">ПРОВЕРИТЬ КОД</button><div class="gd-safe-history" id="gdSafeHistory"></div>';
+  const input=document.getElementById('gdSafeGuess');input.addEventListener('input',()=>{input.value=input.value.replace(/[^0-9]/g,'').slice(0,4);});
+ } else {
+  stage.innerHTML='<h3>🧠 Memory Battle</h3><div class="gd-game-score"><span>ХОДЫ <strong id="gdMemoryMoves">'+Number(s.state.moves||0)+'</strong></span><span>ПАРЫ <strong id="gdMemoryPairs">'+Number(s.state.matched.length/2)+'/8</strong></span></div><div class="gd-memory-board" id="gdMemoryBoard"></div>';
+  drawGdMemory();
+ }
+}
+function escapeGdText(value) {
+ return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function drawGdReaction() {
+ const s=gdMini.session;if(!s)return;
+ const arena=document.getElementById('gdReactionArena');if(!arena)return;
+ arena.replaceChildren();
+ for(let i=0;i<9;i++){
+  const button=document.createElement('button');button.className='gd-reaction-target'+(i===Number(s.state.target)?' is-target':'');
+  button.textContent=i===Number(s.state.target)?'✦':'·';button.disabled=gdMini.locked||s.status!=='active';
+  button.addEventListener('click',()=>hitGdReaction(Number(s.state.target)));
+  arena.appendChild(button);
+ }
+}
+async function hitGdReaction(target) {
+ if(gdMini.locked||!gdMini.session)return;
+ gdMini.locked=true;
+ try {
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'hit',target})});
+  gdMini.session=data.session;
+  const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
+  drawGdReaction();
+ } catch(error) {gdMiniMessage(error.message);}
+ finally {gdMini.locked=false; if(gdMini.session?.game==='reaction')drawGdReaction();}
+}
+async function finishGdReaction() {
+ if(!gdMini.session||gdMini.session.status!=='active')return;
+ try {
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'finish'})});
+  gdMini.session=data.session;renderGdMiniGame();
+ } catch(error) {gdMiniMessage(error.message);}
+}
+async function submitGdSafeGuess() {
+ if(gdMini.locked||!gdMini.session)return;
+ const input=document.getElementById('gdSafeGuess');const guess=input.value;
+ if(!/^\d{4}$/.test(guess)){gdMiniMessage('Введи четыре цифры.');return;}
+ gdMini.locked=true;
+ try {
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'guess',guess})});
+  gdMini.session=data.session;gdMini.safeHistory.push({guess,hint:data.session.state.last_hint});
+  renderGdMiniGame();
+  const hint=data.session.state.last_hint;
+  const hintNode=document.getElementById('gdSafeHint');
+  if(hintNode&&hint)hintNode.textContent=hint.exact+' точно · '+hint.misplaced+' рядом';
+  const attempts=document.getElementById('gdSafeAttempts');if(attempts)attempts.textContent=data.session.state.attempts+'/8';
+  const history=document.getElementById('gdSafeHistory');
+  if(history)history.innerHTML=gdMini.safeHistory.map(row=>'<div class="gd-safe-row"><b>'+row.guess+'</b><span>'+row.hint.exact+' точно · '+row.hint.misplaced+' рядом</span></div>').join('');
+  if(data.session.status==='active') {
+   const inputAgain=document.getElementById('gdSafeGuess');
+   if(inputAgain){inputAgain.value='';inputAgain.focus();}
+  }
+ } catch(error) {gdMiniMessage(error.message);}
+ finally {gdMini.locked=false;}
+}
+async function flipGdMemory(index) {
+ if(gdMini.locked||!gdMini.session)return;
+ gdMini.locked=true;
+ try {
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'flip',index})});
+  gdMini.session=data.session;
+  if(data.session.state.mismatch_until)gdMini.memoryHideAt=Number(data.session.state.mismatch_until);
+  else gdMini.memoryHideAt=0;
+  renderGdMiniMemoryOnly();
+  if(gdMini.memoryHideAt) {
+   const wait=Math.max(0,gdMini.memoryHideAt-Date.now()+30);
+   setTimeout(()=>{if(gdMini.session?.status==='active'){renderGdMiniMemoryOnly();}},wait);
+  }
+  if(data.session.status!=='active')renderGdMiniGame();
+ } catch(error) {gdMiniMessage(error.message);}
+ finally {gdMini.locked=false;}
+}
+function renderGdMiniMemoryOnly() {
+ const s=gdMini.session;if(!s||s.game!=='memory')return;
+ const moves=document.getElementById('gdMemoryMoves');if(moves)moves.textContent=String(s.state.moves);
+ const pairs=document.getElementById('gdMemoryPairs');if(pairs)pairs.textContent=(s.state.matched.length/2)+'/8';
+ drawGdMemory();
+}
+function drawGdMemory() {
+ const s=gdMini.session;if(!s)return;
+ const board=document.getElementById('gdMemoryBoard');if(!board)return;
+ const visible=new Map((s.state.cards||[]).map(card=>[Number(card.index),Number(card.value)]));
+ const matched=new Set(s.state.matched||[]);
+ const open=new Set(s.state.open||[]);
+ const hideMismatch=Boolean(s.state.mismatch_until)&&Date.now()>=Number(s.state.mismatch_until);
+ board.replaceChildren();
+ for(let i=0;i<16;i++){
+  const shown=matched.has(i)||(open.has(i)&&!hideMismatch);
+  const button=document.createElement('button');
+  button.className='gd-memory-card'+(shown?' is-open':'')+(matched.has(i)?' is-matched':'');
+  button.textContent=shown?gdMiniEmoji(visible.get(i)):'?';
+  button.disabled=matched.has(i)||open.has(i)||gdMini.locked||s.status!=='active'||Boolean(s.state.mismatch_until&&Date.now()<Number(s.state.mismatch_until));
+  button.addEventListener('click',()=>flipGdMemory(i));board.appendChild(button);
+ }
+}
+function closeGdMiniGame() {
+ gdMiniStopTimer();gdMini.session=null;gdMini.safeHistory=[];gdMini.locked=false;
+ document.getElementById('gdMiniStage').hidden=true;
+ document.getElementById('gdMiniGameList').hidden=false;
+ gdMiniMessage('');
+}
+
 let gdTabTransitionTimer = null;
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','upgrade','players','battles','progress'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','upgrade','players','battles','progress','minigames'];
  const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
  const targetId = 'tab-'+name;
  const target = document.getElementById(targetId);
