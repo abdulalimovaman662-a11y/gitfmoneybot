@@ -1,11 +1,14 @@
 'use strict';
 
 const crypto = require('crypto');
+const { awardXp } = require('./progression');
 
 const GAME_CONFIG = Object.freeze({
   reaction: { title: 'Reaction Arena', price: 15, dailyLimit: 5, durationMs: 30000 },
   safe: { title: 'Взлом сейфа', price: 15, dailyLimit: 3, durationMs: 0 },
-  memory: { title: 'Memory Battle', price: 15, dailyLimit: 5, durationMs: 0 }
+  memory: { title: 'Memory Battle', price: 15, dailyLimit: 5, durationMs: 0 },
+  xpReward: 5,
+  dailyXpCap: 25
 });
 
 function randomInt(max) {
@@ -310,6 +313,27 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       }
     }
 
+    let xpAwarded = 0;
+    const successfulCompletion = session.status === 'completed' && (
+      (session.game_type === 'reaction' && Number(state.hits || 0) > 0) ||
+      (session.game_type === 'safe' && Number(state.last_hint?.exact || 0) === 4) ||
+      (session.game_type === 'memory' && score >= 8)
+    );
+    if (successfulCompletion) {
+      const earnedToday = await client.query(`
+        SELECT COALESCE(SUM(amount), 0)::int AS earned
+        FROM xp_ledger
+        WHERE telegram_id = $1 AND source_type = 'minigame'
+          AND created_at >= (NOW() AT TIME ZONE 'UTC')::date AT TIME ZONE 'UTC'
+          AND created_at < ((NOW() AT TIME ZONE 'UTC')::date + INTERVAL '1 day') AT TIME ZONE 'UTC'
+      `, [String(telegramId)]);
+      xpAwarded = Math.max(0, Math.min(GAME_CONFIG.xpReward, GAME_CONFIG.dailyXpCap - Number(earnedToday.rows[0]?.earned || 0)));
+      if (xpAwarded > 0) {
+        const awarded = await awardXp(client, String(telegramId), xpAwarded, 'minigame', 'minigame:' + session.id, { game_type: session.game_type });
+        if (!awarded) xpAwarded = 0;
+      }
+    }
+
     await client.query(`
       UPDATE minigame_sessions
       SET state = $1::jsonb, status = $2, score = $3,
@@ -318,7 +342,7 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
     `, [JSON.stringify(state), session.status, score, sessionId]);
     const updated = {
       id: session.id, game: session.game_type, status: session.status,
-      score, state: safePublicState({ ...session, state }), message
+      score, xp_awarded: xpAwarded, state: safePublicState({ ...session, state }), message
     };
     await client.query('COMMIT');
     return { status: 200, session: updated, finished: session.status !== 'active' };
