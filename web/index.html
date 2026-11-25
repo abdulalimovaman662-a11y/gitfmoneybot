@@ -3541,6 +3541,12 @@ function renderRocketState(data){
     document.getElementById('rocketResult').textContent=data.my_bet.status==='cashed_out'?'Выигрыш уже зачислен на баланс.':'Ставка сгорела при краше.';
    }
   }else{
+   if(rocketFreeJoined && round.status==='running' && rocketDemoCashedRound!==Number(round.id)){
+    rocketRunning=true;
+   }else{
+    rocketRunning=false;
+    if(round.status!=='running')stopRocketMultiplierAnimation();
+   }
    if(!rocketFreeJoined || round.status!=='running')document.getElementById('rocketCashoutButton').hidden=true;
    document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status==='crashed';
   }
