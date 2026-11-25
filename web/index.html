@@ -2733,7 +2733,7 @@ async function loadRecentWins() {
 }
 
 
-const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0 };
+const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0, pendingStart:null };
 async function loadGdMiniBalance() {
  try {
   const data=await api('/api/me');
@@ -2772,8 +2772,20 @@ async function startGdMiniGame(game) {
  if(gdMini.locked)return;
  gdMini.locked=true;gdMiniMessage('Запускаем игру…');
  try {
-  const requestId=crypto.randomUUID();
-  const data=await api('/api/minigames/start',{method:'POST',body:JSON.stringify({game,request_id:requestId})});
+  const requestId=gdMini.pendingStart?.game===game?gdMini.pendingStart.requestId:crypto.randomUUID();
+  gdMini.pendingStart={game,requestId};
+  let data;
+  for(let attempt=0;attempt<2;attempt++) {
+   try {
+    data=await api('/api/minigames/start',{method:'POST',body:JSON.stringify({game,request_id:requestId})});
+    break;
+   } catch(error) {
+    if(error.status&&error.status<500){gdMini.pendingStart=null;throw error;}
+    if(attempt===1)throw error;
+    await new Promise(resolve=>setTimeout(resolve,350));
+   }
+  }
+  gdMini.pendingStart=null;
   gdMini.session=data.session;gdMini.safeHistory=[];gdMini.memoryHideAt=0;
   const balance=document.getElementById('gdMiniBalance');if(balance)balance.textContent=String(data.balance);
   const balanceTop=document.getElementById('silver');if(balanceTop)balanceTop.textContent=String(data.balance);
