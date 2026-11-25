@@ -63,6 +63,8 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   });
   assert.equal(solved.session.status, 'completed');
   assert.equal(solved.session.message, 'Сейф открыт за 1 из 8 попыток!');
+  assert.equal(solved.session.score, 1);
+  assert.equal(Number((await pool.query('SELECT score FROM minigame_sessions WHERE id = $1', [safe.session.id])).rows[0].score), 1);
 
   assert.equal(solved.session.xp_awarded, 5);
 
