@@ -3441,7 +3441,7 @@ async function completeGiftOrder(id,button) {
 
 
 // Rocket state must exist before the first refresh call (avoid the let temporal dead zone).
-let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false,rocketAnimationFrame=null,rocketDemoCashedRound=0,rocketDemoCashedMultiplier=1;
+let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false,rocketAnimationFrame=null,rocketAnimationActive=false,rocketDemoCashedRound=0,rocketDemoCashedMultiplier=1;
 let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
 let rocketHistoryValues=[];
 refreshRocketState();
@@ -3497,7 +3497,7 @@ function animateRocketMultiplier(){
   rocketMultiplier=Math.min(10,Math.pow(1.18,elapsed));
   const el=document.getElementById('rocketMultiplier');
   if(el)el.innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
-  if(rocketRunning)rocketAnimationFrame=requestAnimationFrame(tick);
+  if(rocketAnimationActive && rocketDemoCashedRound!==rocketRound)rocketAnimationFrame=requestAnimationFrame(tick);
   else rocketAnimationFrame=null;
  };
  tick();
@@ -3513,9 +3513,9 @@ function renderRocketState(data){
   document.getElementById('rocketRoundPill').textContent=round.status==='betting'?'СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК':round.status==='crashed'?'КРАШ':'РАУНД LIVE';
   const countdown=document.getElementById('rocketCountdown');if(countdown)countdown.textContent=String(round.status==='betting'?Number(round.seconds_to_start||0):0);
   const stage=document.getElementById('rocketStage');
-  if(round.status==='betting'){rocketRunning=false;stopRocketMultiplierAnimation();rocketMultiplier=1;document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';document.getElementById('rocketStatus').textContent='СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК';stage.classList.remove('is-flying','is-crashed');}
-  else if(round.status==='running'){document.getElementById('rocketStatus').textContent='РАКЕТА В ПОЛЁТЕ';stage.classList.add('is-flying');stage.classList.remove('is-crashed');rocketStartedAt=new Date(round.starts_at).getTime();rocketRunning=true;animateRocketMultiplier();}
-  else{rocketRunning=false;stopRocketMultiplierAnimation();document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';stage.classList.remove('is-flying');stage.classList.add('is-crashed');}
+  if(round.status==='betting'){rocketAnimationActive=false;rocketRunning=false;stopRocketMultiplierAnimation();rocketMultiplier=1;document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';document.getElementById('rocketStatus').textContent='СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК';stage.classList.remove('is-flying','is-crashed');}
+  else if(round.status==='running'){document.getElementById('rocketStatus').textContent='РАКЕТА В ПОЛЁТЕ';stage.classList.add('is-flying');stage.classList.remove('is-crashed');rocketStartedAt=new Date(round.starts_at).getTime();rocketAnimationActive=true;animateRocketMultiplier();}
+  else{rocketAnimationActive=false;rocketRunning=false;stopRocketMultiplierAnimation();document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';stage.classList.remove('is-flying');stage.classList.add('is-crashed');}
   document.getElementById('rocketPlayers').textContent=String((data.players||[]).length);
   document.getElementById('rocketLastCrash').textContent=rocketHistoryValues[0]?Number(rocketHistoryValues[0].crash).toFixed(2)+'x':'—';
   rocketFreeJoined=Boolean(data.my_entry);
@@ -3551,7 +3551,7 @@ function renderRocketState(data){
    document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status==='crashed';
   }
  }else{
-  rocketRunning=false;stopRocketMultiplierAnimation();rocketCurrentBet=null;rocketFreeJoined=false;document.getElementById('rocketCashoutButton').hidden=true;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketLaunchButton').textContent='ОЖИДАЙ РАУНД';document.getElementById('rocketCashoutButton').disabled=true;
+  rocketRunning=false;rocketAnimationActive=false;stopRocketMultiplierAnimation();rocketCurrentBet=null;rocketFreeJoined=false;document.getElementById('rocketCashoutButton').hidden=true;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketLaunchButton').textContent='ОЖИДАЙ РАУНД';document.getElementById('rocketCashoutButton').disabled=true;
  }
  renderRocketPlayers(data.players||[]);
  rocketHistoryValues=Array.isArray(data.history)?data.history:[];
@@ -3584,7 +3584,7 @@ async function cashoutRocket(){
   if(!rocketRunning || button.disabled)return;
   rocketDemoCashedRound=rocketRound;
   rocketDemoCashedMultiplier=rocketMultiplier;
-  rocketRunning=false;stopRocketMultiplierAnimation();
+  rocketRunning=false;rocketAnimationActive=false;stopRocketMultiplierAnimation();
   button.disabled=true;button.textContent='✓ ЗАБРАНО';
   document.getElementById('rocketStatus').textContent='ДЕМО-ВЫХОД ЗАФИКСИРОВАН';
   document.getElementById('rocketResult').textContent='Ты зафиксировал '+rocketDemoCashedMultiplier.toFixed(2)+'x. Это бесплатный демо-режим: баланс и NFT не меняются.';
