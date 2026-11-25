@@ -1673,9 +1673,13 @@ const server = http.createServer(async (req, res) => {
         await client.query('BEGIN');
         await client.query("SELECT pg_advisory_xact_lock(731245)");
         const round = await client.query("SELECT id,status,starts_at FROM rocket_rounds WHERE id=$1 FOR UPDATE", [roundId]);
-        if (!round.rowCount || round.rows[0].status !== 'betting' || new Date(round.rows[0].starts_at).getTime() <= Date.now()) {
+        if (!round.rowCount || !['betting', 'running'].includes(round.rows[0].status)) {
           await client.query('ROLLBACK');
-          return send(res, 409, { error: 'Раунд уже начался. Войди в следующий раунд.' });
+          return send(res, 409, { error: 'Раунд уже завершён. Обнови экран и войди в следующий.' });
+        }
+        // Бесплатный тестовый вход разрешён и во время полёта: это не меняет результат раунда.
+        if (round.rows[0].status === 'betting' && new Date(round.rows[0].starts_at).getTime() <= Date.now()) {
+          await client.query("UPDATE rocket_rounds SET status='running' WHERE id=$1", [roundId]);
         }
         const entry = await client.query(
           "INSERT INTO rocket_free_entries(round_id,telegram_id) VALUES($1,$2) ON CONFLICT(round_id,telegram_id) DO NOTHING RETURNING id",
