@@ -1,0 +1,31 @@
+name: Rocket ledger regression tests
+
+on:
+  pull_request:
+    paths:
+      - "web/server.js"
+      - "web/test/**"
+      - "web/package.json"
+      - ".github/workflows/rocket-ledger.yml"
+  push:
+    branches:
+      - "rocket-ledger-audit"
+    paths:
+      - "web/server.js"
+      - "web/test/**"
+      - "web/package.json"
+      - ".github/workflows/rocket-ledger.yml"
+
+jobs:
+  rocket-ledger:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check server.js
+      - run: npm test
