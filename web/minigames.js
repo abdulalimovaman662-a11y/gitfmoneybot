@@ -390,7 +390,7 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
     }
     await client.query(`
       UPDATE minigame_sessions
-      SET state = $1::jsonb, status = $2,
+      SET state = $1::jsonb, status = $2, score = $3,
           finished_at = CASE WHEN $2 <> 'active' THEN NOW() ELSE finished_at END
       WHERE id = $4
     `, [JSON.stringify(state), session.status, score, sessionId]);
