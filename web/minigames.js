@@ -67,6 +67,7 @@ function safePublicState(session) {
     deck_size: 16,
     matched: state.matched || [],
     open: state.open || [],
+    cards: [...new Set([...(state.matched || []), ...(state.open || [])])].map(index => ({ index, value: state.deck[index] })),
     moves: Number(state.moves || 0),
     mismatch_until: state.mismatch_until || null
   };
@@ -147,7 +148,7 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
     if (gameType === 'reaction') {
       state = { target: randomInt(6), hits: 0, last_hit_ms: -1000 };
     } else if (gameType === 'safe') {
-      state = { secret: makeSafeCode(), attempts: 0, last_hint: null };
+      state = { secret: makeSafeCode(), attempts: 0, last_hint: null, last_guess_ms: 0 };
     } else {
       state = { deck: makeMemoryDeck(), matched: [], open: [], moves: 0, mismatch_until: null };
     }
@@ -249,6 +250,12 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
         session.status = 'completed';
         message = 'Попытки закончились';
       } else {
+        const nowMs = Date.now();
+        if (nowMs - Number(state.last_guess_ms || 0) < 650) {
+          await client.query('ROLLBACK');
+          return { status: 429, error: 'Не торопись: следующая попытка будет доступна через мгновение.' };
+        }
+        state.last_guess_ms = nowMs;
         const hint = scoreGuess(String(state.secret), guess);
         state.attempts = Number(state.attempts || 0) + 1;
         state.last_hint = hint;
