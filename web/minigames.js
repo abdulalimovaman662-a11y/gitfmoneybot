@@ -301,7 +301,8 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
         state.last_hint = hint;
         if (hint.exact === 4) {
           session.status = 'completed';
-          message = 'Сейф открыт!';
+          score = 1;
+          message = `Сейф открыт за ${state.attempts} из 8 попыток!`;
         } else if (state.attempts >= 8) {
           session.status = 'completed';
           message = 'Попытки закончились';
