@@ -95,6 +95,23 @@ test('retrying the same start request charges silver only once', async () => {
   assert.equal(pool.sessions.length, 1);
 });
 
+test('reusing a completed start request returns the stored result and XP', async () => {
+  const { startMiniGame } = require('./minigames');
+  const pool = new FakePool(100);
+  const first = await startMiniGame(pool, '42', 'reaction', 'request_completed_001');
+  const row = pool.sessions[0];
+  row.status = 'completed';
+  row.score = 7;
+  row.state = { hits: 7, target: 2, result_message: 'Раунд завершён. Попаданий: 7', xp_awarded: 5 };
+  const retry = await startMiniGame(pool, '42', 'reaction', 'request_completed_001');
+  assert.equal(retry.status, 200);
+  assert.equal(retry.session.status, 'completed');
+  assert.equal(retry.session.score, 7);
+  assert.equal(retry.session.message, 'Раунд завершён. Попаданий: 7');
+  assert.equal(retry.session.xp_awarded, 5);
+  assert.equal(pool.silver, 85);
+});
+
 test('daily attempt limit is enforced before another charge', async () => {
   const { startMiniGame } = require('./minigames');
   const pool = new FakePool(500);
