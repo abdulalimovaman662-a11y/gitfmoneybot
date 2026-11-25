@@ -3496,6 +3496,10 @@ function renderRocketState(data){
   document.getElementById('rocketRoundLabel').textContent='РАУНД #'+String(round.id).padStart(3,'0');
   document.getElementById('rocketRoundPill').textContent=round.status==='betting'?'СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК':round.status==='crashed'?'КРАШ':'РАУНД LIVE';
   const countdown=document.getElementById('rocketCountdown');if(countdown)countdown.textContent=String(round.status==='betting'?Number(round.seconds_to_start||0):0);
+  const stage=document.getElementById('rocketStage');
+  if(round.status==='betting'){document.getElementById('rocketStatus').textContent='СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК';stage.classList.remove('is-flying','is-crashed');}
+  else if(round.status==='running'){document.getElementById('rocketStatus').textContent='РАКЕТА В ПОЛЁТЕ';stage.classList.add('is-flying');stage.classList.remove('is-crashed');}
+  else{document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';stage.classList.remove('is-flying');stage.classList.add('is-crashed');}
   document.getElementById('rocketPlayers').textContent=String((data.players||[]).length);
   document.getElementById('rocketMultiplier').innerHTML=Number(round.multiplier||1).toFixed(2)+'<span>x</span>';
   document.getElementById('rocketLastCrash').textContent=rocketHistoryValues[0]?Number(rocketHistoryValues[0].crash).toFixed(2)+'x':'—';
