@@ -1888,6 +1888,43 @@ button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
 
+
+/* Smooth cube interactions — first isolated polish pass */
+#tab-home .home-grid .home-tile{
+  transform:translate3d(0,0,0) scale(1);
+  transform-origin:50% 55%;
+  transition:transform .46s cubic-bezier(.2,.78,.22,1),
+             box-shadow .46s cubic-bezier(.2,.78,.22,1),
+             filter .46s ease,
+             border-color .46s ease;
+  backface-visibility:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+#tab-home .home-grid .home-tile .tile-art{
+  transition:transform .55s cubic-bezier(.2,.78,.22,1);
+  transform:translateZ(0);
+}
+#tab-home .home-grid .home-tile:active{
+  transform:translate3d(0,1px,0) scale(.965);
+  filter:brightness(1.08);
+  transition-duration:.12s;
+}
+@media(hover:hover) and (pointer:fine){
+  #tab-home .home-grid .home-tile:hover{
+    transform:translate3d(0,-5px,0) scale(1.025);
+    filter:brightness(1.09) saturate(1.06);
+  }
+  #tab-home .home-grid .home-tile:hover .tile-art{
+    transform:scale(1.035);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-home .home-grid .home-tile,
+  #tab-home .home-grid .home-tile .tile-art{
+    transition:none!important;
+  }
+}
+
 </style>
 </head>
 <body>
