@@ -3,12 +3,13 @@
 const crypto = require('crypto');
 const { awardXp } = require('./progression');
 
+const XP_REWARD = 5;
+const DAILY_XP_CAP = 25;
+
 const GAME_CONFIG = Object.freeze({
   reaction: { title: 'Reaction Arena', price: 15, dailyLimit: 5, durationMs: 30000 },
   safe: { title: 'Взлом сейфа', price: 15, dailyLimit: 3, durationMs: 0 },
-  memory: { title: 'Memory Battle', price: 15, dailyLimit: 5, durationMs: 0 },
-  xpReward: 5,
-  dailyXpCap: 25
+  memory: { title: 'Memory Battle', price: 15, dailyLimit: 5, durationMs: 0 }
 });
 
 function randomInt(max) {
@@ -327,7 +328,7 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
           AND created_at >= (NOW() AT TIME ZONE 'UTC')::date AT TIME ZONE 'UTC'
           AND created_at < ((NOW() AT TIME ZONE 'UTC')::date + INTERVAL '1 day') AT TIME ZONE 'UTC'
       `, [String(telegramId)]);
-      xpAwarded = Math.max(0, Math.min(GAME_CONFIG.xpReward, GAME_CONFIG.dailyXpCap - Number(earnedToday.rows[0]?.earned || 0)));
+      xpAwarded = Math.max(0, Math.min(XP_REWARD, DAILY_XP_CAP - Number(earnedToday.rows[0]?.earned || 0)));
       if (xpAwarded > 0) {
         const awarded = await awardXp(client, String(telegramId), xpAwarded, 'minigame', 'minigame:' + session.id, { game_type: session.game_type });
         if (!awarded) xpAwarded = 0;
