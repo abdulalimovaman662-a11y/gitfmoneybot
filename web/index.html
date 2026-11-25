@@ -2770,6 +2770,7 @@ function gdMiniStopTimer() {
 }
 async function startGdMiniGame(game) {
  if(gdMini.locked)return;
+ if(gdMini.pendingStart&&gdMini.pendingStart.game!==game){gdMiniMessage('Сначала повтори запуск предыдущей игры, чтобы проверить его результат.');return;}
  gdMini.locked=true;gdMiniMessage('Запускаем игру…');
  try {
   const requestId=gdMini.pendingStart?.game===game?gdMini.pendingStart.requestId:crypto.randomUUID();
