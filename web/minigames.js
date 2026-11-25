@@ -98,6 +98,13 @@ async function initMiniGamesDatabase(pool) {
     );
     CREATE INDEX IF NOT EXISTS minigame_sessions_user_day_idx
       ON minigame_sessions (telegram_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS minigame_action_receipts (
+      session_id TEXT NOT NULL REFERENCES minigame_sessions(id) ON DELETE CASCADE,
+      action_id TEXT NOT NULL,
+      response JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (session_id, action_id)
+    );
   `);
 }
 
@@ -190,6 +197,9 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
   if (typeof sessionId !== 'string' || !/^[0-9a-f-]{36}$/i.test(sessionId)) {
     return { status: 400, error: 'Некорректная игровая сессия' };
   }
+  if (typeof body.action_id !== 'string' || !/^[a-zA-Z0-9_-]{12,80}$/.test(body.action_id)) {
+    return { status: 400, error: 'Некорректный ID действия. Обнови игру и попробуй ещё раз.' };
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -212,6 +222,14 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       return { status: 404, error: 'Игровая сессия не найдена' };
     }
     const session = result.rows[0];
+    const receipt = await client.query(
+      'SELECT response FROM minigame_action_receipts WHERE session_id = $1 AND action_id = $2',
+      [sessionId, body.action_id]
+    );
+    if (receipt.rowCount) {
+      await client.query('COMMIT');
+      return receipt.rows[0].response;
+    }
     const state = session.state || {};
     if (session.status !== 'active') {
       await client.query('COMMIT');
@@ -359,8 +377,13 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       id: session.id, game: session.game_type, status: session.status,
       score, xp_awarded: xpAwarded, state: safePublicState({ ...session, state }), message
     };
+    const response = { status: 200, session: updated, finished: session.status !== 'active' };
+    await client.query(
+      'INSERT INTO minigame_action_receipts (session_id, action_id, response) VALUES ($1,$2,$3::jsonb)',
+      [sessionId, body.action_id, JSON.stringify(response)]
+    );
     await client.query('COMMIT');
-    return { status: 200, session: updated, finished: session.status !== 'active' };
+    return response;
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
