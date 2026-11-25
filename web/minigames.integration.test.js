@@ -33,7 +33,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
       xp BIGINT NOT NULL DEFAULT 0
     )
   `);
-  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000), (105, 100), (106, 100)");
+  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000), (105, 100), (106, 100), (107, 100)");
   await initProgressionDatabase(pool);
   await initMiniGamesDatabase(pool);
 
