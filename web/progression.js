@@ -128,16 +128,23 @@ async function awardXp(db, telegramId, amount, sourceType, sourceId, metadata = 
   const safeAmount = Math.floor(Number(amount));
   if (!Number.isInteger(safeAmount) || safeAmount <= 0) return false;
   const key = String(sourceId);
-  const inserted = await db.query(`
-    INSERT INTO xp_ledger
-      (telegram_id, amount, source_type, source_id, idempotency_key, metadata)
-    VALUES ($1,$2,$3,$4,$5,$6::jsonb)
-    ON CONFLICT (idempotency_key) DO NOTHING
-    RETURNING id
+  // One SQL statement keeps the ledger and users.xp atomic, even when the
+  // caller is not already inside a transaction (e.g. first registration).
+  const result = await db.query(`
+    WITH inserted AS (
+      INSERT INTO xp_ledger
+        (telegram_id, amount, source_type, source_id, idempotency_key, metadata)
+      VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+      ON CONFLICT (idempotency_key) DO NOTHING
+      RETURNING telegram_id, amount
+    )
+    UPDATE users AS u
+    SET xp = u.xp + inserted.amount
+    FROM inserted
+    WHERE u.telegram_id = inserted.telegram_id
+    RETURNING u.telegram_id
   `, [String(telegramId), safeAmount, String(sourceType), key, key, JSON.stringify(metadata)]);
-  if (!inserted.rowCount) return false;
-  await db.query('UPDATE users SET xp = xp + $1 WHERE telegram_id = $2', [safeAmount, String(telegramId)]);
-  return true;
+  return result.rowCount === 1;
 }
 
 async function ensureUserMissions(db, telegramId) {
