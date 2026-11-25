@@ -74,7 +74,7 @@ function safePublicState(session) {
 }
 
 async function initMiniGamesDatabase(pool) {
-  await pool.query(\`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS minigame_sessions (
       id TEXT PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
@@ -90,7 +90,7 @@ async function initMiniGamesDatabase(pool) {
     );
     CREATE INDEX IF NOT EXISTS minigame_sessions_user_day_idx
       ON minigame_sessions (telegram_id, created_at DESC);
-  \`);
+  `);
 }
 
 async function startMiniGame(pool, telegramId, gameType, requestId) {
@@ -125,17 +125,17 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
       }, balance: Number(user.rows[0].silver), reused: true };
     }
 
-    const daily = await client.query(\`
+    const daily = await client.query(`
       SELECT COUNT(*)::int AS used
       FROM minigame_sessions
       WHERE telegram_id = $1 AND game_type = $2
         AND created_at >= (NOW() AT TIME ZONE 'UTC')::date AT TIME ZONE 'UTC'
         AND created_at < ((NOW() AT TIME ZONE 'UTC')::date + INTERVAL '1 day') AT TIME ZONE 'UTC'
-    \`, [String(telegramId), gameType]);
+    `, [String(telegramId), gameType]);
     const used = Number(daily.rows[0]?.used || 0);
     if (used >= config.dailyLimit) {
       await client.query('ROLLBACK');
-      return { status: 429, error: \`Лимит на сегодня исчерпан: \${config.dailyLimit} запусков\`, used, limit: config.dailyLimit };
+      return { status: 429, error: `Лимит на сегодня исчерпан: \${config.dailyLimit} запусков`, used, limit: config.dailyLimit };
     }
     const balance = Number(user.rows[0].silver);
     if (balance < config.price) {
@@ -157,12 +157,12 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
       'UPDATE users SET silver = silver - $1 WHERE telegram_id = $2',
       [config.price, String(telegramId)]
     );
-    const inserted = await client.query(\`
+    const inserted = await client.query(`
       INSERT INTO minigame_sessions (id, telegram_id, game_type, request_id, state, ends_at)
       VALUES ($1,$2,$3,$4,$5::jsonb,
         CASE WHEN $3 = 'reaction' THEN NOW() + INTERVAL '30 seconds' ELSE NULL END)
       RETURNING id, game_type, status, score, state, created_at
-    \`, [id, String(telegramId), gameType, requestId, JSON.stringify(state)]);
+    `, [id, String(telegramId), gameType, requestId, JSON.stringify(state)]);
 
     await client.query('COMMIT');
     const row = inserted.rows[0];
@@ -310,12 +310,12 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       }
     }
 
-    await client.query(\`
+    await client.query(`
       UPDATE minigame_sessions
       SET state = $1::jsonb, status = $2, score = $3,
           finished_at = CASE WHEN $2 <> 'active' THEN NOW() ELSE finished_at END
       WHERE id = $4
-    \`, [JSON.stringify(state), session.status, score, sessionId]);
+    `, [JSON.stringify(state), session.status, score, sessionId]);
     const updated = {
       id: session.id, game: session.game_type, status: session.status,
       score, state: safePublicState({ ...session, state }), message
