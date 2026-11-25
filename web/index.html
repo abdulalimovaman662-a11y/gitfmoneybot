@@ -2803,7 +2803,7 @@ async function loadRecentWins() {
 }
 
 
-const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0, pendingStart:null, finishPending:false };
+const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0, pendingStart:null, finishPending:false, generation:0 };
 async function loadGdMiniBalance() {
  try {
   const data=await api('/api/me');
@@ -2822,12 +2822,14 @@ function gdMiniCreateRequestId() {
  if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();
  return 'gdmini_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);
 }
-async function gdMiniAction(payload) {
+async function gdMiniAction(payload, sessionId) {
+ const targetSessionId=sessionId||gdMini.session?.id;
+ if(!targetSessionId)throw new Error('Игровой раунд уже закрыт.');
  const body={...payload,action_id:gdMiniCreateRequestId()};
  let lastError;
  for(let attempt=0;attempt<2;attempt++) {
   try {
-   return await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify(body)});
+   return await api('/api/minigames/sessions/'+targetSessionId+'/action',{method:'POST',body:JSON.stringify(body)});
   } catch(error) {
    lastError=error;
    if(attempt===0&&(!error.status||error.status>=500)) {
@@ -2912,32 +2914,45 @@ function drawGdReaction() {
 }
 async function hitGdReaction(target) {
  if(gdMini.locked||!gdMini.session)return;
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
  gdMini.locked=true;
  try {
-  const data=await gdMiniAction({action:'hit',target});
+  const data=await gdMiniAction({action:'hit',target},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
   gdMini.session=data.session;
   const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
   if(data.session.status!=='active')renderGdMiniGame();else drawGdReaction();
- } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false; if(gdMini.session?.game==='reaction'&&gdMini.session.status==='active')drawGdReaction(); if(gdMini.finishPending){gdMini.finishPending=false;finishGdReaction();}}
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {
+  if(generation===gdMini.generation) {
+   gdMini.locked=false;
+   if(gdMini.session?.game==='reaction'&&gdMini.session.status==='active')drawGdReaction();
+   if(gdMini.finishPending){gdMini.finishPending=false;finishGdReaction();}
+  }
+ }
 }
 async function finishGdReaction() {
  if(!gdMini.session||gdMini.session.status!=='active')return;
  if(gdMini.locked){gdMini.finishPending=true;return;}
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
  gdMini.locked=true;
  try {
-  const data=await gdMiniAction({action:'finish'});
+  const data=await gdMiniAction({action:'finish'},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
   gdMini.session=data.session;renderGdMiniGame();
- } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false;}
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {if(generation===gdMini.generation)gdMini.locked=false;}
 }
 async function submitGdSafeGuess() {
  if(gdMini.locked||!gdMini.session)return;
- const input=document.getElementById('gdSafeGuess');const guess=input.value;
+ const input=document.getElementById('gdSafeGuess');if(!input)return;
+ const guess=input.value;
  if(!/^\d{4}$/.test(guess)){gdMiniMessage('Введи четыре цифры.');return;}
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
  gdMini.locked=true;
  try {
-  const data=await gdMiniAction({action:'guess',guess});
+  const data=await gdMiniAction({action:'guess',guess},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
   gdMini.session=data.session;gdMini.safeHistory.push({guess,hint:data.session.state.last_hint});
   renderGdMiniGame();
   const hint=data.session.state.last_hint;
@@ -2950,26 +2965,32 @@ async function submitGdSafeGuess() {
    const inputAgain=document.getElementById('gdSafeGuess');
    if(inputAgain){inputAgain.value='';inputAgain.focus();}
   }
- } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false;}
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {if(generation===gdMini.generation)gdMini.locked=false;}
 }
 async function flipGdMemory(index) {
  if(gdMini.locked||!gdMini.session)return;
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
  gdMini.locked=true;
  try {
-  const data=await gdMiniAction({action:'flip',index});
+  const data=await gdMiniAction({action:'flip',index},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
   gdMini.session=data.session;
   if(data.session.state.mismatch_until)gdMini.memoryHideAt=Number(data.session.state.mismatch_until);
   else gdMini.memoryHideAt=0;
   renderGdMiniMemoryOnly();
   if(gdMini.memoryHideAt) {
    const wait=Math.max(0,gdMini.memoryHideAt-Date.now()+30);
-   const sessionId=data.session.id;
-   setTimeout(()=>{if(gdMini.session?.id===sessionId&&gdMini.session.status==='active'){renderGdMiniMemoryOnly();}},wait);
+   setTimeout(()=>{if(generation===gdMini.generation&&gdMini.session?.id===sessionId&&gdMini.session.status==='active'){renderGdMiniMemoryOnly();}},wait);
   }
   if(data.session.status!=='active')renderGdMiniGame();
- } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false;if(gdMini.session?.game==='memory')drawGdMemory();}
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {
+  if(generation===gdMini.generation) {
+   gdMini.locked=false;
+   if(gdMini.session?.game==='memory')drawGdMemory();
+  }
+ }
 }
 function renderGdMiniMemoryOnly() {
  const s=gdMini.session;if(!s||s.game!=='memory')return;
@@ -2995,6 +3016,7 @@ function drawGdMemory() {
  }
 }
 function closeGdMiniGame() {
+ gdMini.generation++;
  gdMiniStopTimer();gdMini.session=null;gdMini.safeHistory=[];gdMini.locked=false;gdMini.finishPending=false;
  document.getElementById('gdMiniStage').hidden=true;
  document.getElementById('gdMiniGameList').hidden=false;
