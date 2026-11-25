@@ -1817,6 +1817,23 @@ body.gd-legal-locked{overflow:hidden}
 #tab-players .public-player-card{border-color:rgba(115,170,255,.34);background:radial-gradient(ellipse at 100% 0%,rgba(78,161,255,.13),transparent 45%),linear-gradient(145deg,rgba(30,39,83,.98),rgba(18,20,50,.99))}
 @media(prefers-reduced-motion:reduce){#tab-players .player-result{transition:none}}
 
+
+/* Progress tile — dimensional XP cube artwork */
+.progress-tile-art{background:radial-gradient(ellipse at 67% 35%,rgba(220,165,255,.38),transparent 38%),radial-gradient(ellipse at 18% 15%,rgba(115,93,255,.28),transparent 44%),linear-gradient(135deg,#4b1d79 0%,#25164e 58%,#151738 100%)}
+.progress-tile-art:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 18px,rgba(255,255,255,.045) 19px 20px,transparent 21px 39px)}
+.progress-cube{position:absolute;right:30px;top:19px;width:70px;height:70px;display:grid;place-items:center;transform:rotate(-12deg);border:1px solid rgba(255,255,255,.8);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.34),rgba(154,100,255,.24) 45%,rgba(69,30,130,.76));box-shadow:0 0 0 7px rgba(211,160,255,.08),0 0 32px rgba(194,120,255,.6),inset 0 1px 0 rgba(255,255,255,.7);backdrop-filter:blur(4px);animation:progressCubeFloat 3.3s ease-in-out infinite}
+.progress-cube:before,.progress-cube:after{content:"";position:absolute;inset:8px;border:1px solid rgba(255,255,255,.28);border-radius:11px;transform:rotate(45deg)}
+.progress-cube:after{inset:-8px;border-color:rgba(238,190,255,.28);border-radius:21px}
+.progress-cube i{font-style:normal;font-size:22px;font-weight:1000;letter-spacing:-1px;color:#fff;text-shadow:0 0 9px #d8a6ff,0 0 22px #b76aff}
+.progress-orbit{position:absolute;right:4px;top:2px;width:126px;height:90px;border:1px solid rgba(237,196,255,.36);border-radius:50%;transform:rotate(-28deg);box-shadow:0 0 15px rgba(184,113,255,.14)}
+.progress-orbit.orbit-b{right:20px;top:11px;width:96px;height:68px;transform:rotate(48deg);border-color:rgba(255,220,255,.25)}
+.progress-spark{position:absolute;color:#fff;text-shadow:0 0 12px #e5b8ff,0 0 24px #b46bff;font-size:19px;animation:progressSpark 2.5s ease-in-out infinite}
+.progress-spark.spark-a{right:106px;top:23px}.progress-spark.spark-b{right:20px;top:92px;animation-delay:.8s}
+.progress-tile-art .tile-art-caption{right:13px;top:12px}
+@keyframes progressCubeFloat{0%,100%{transform:translateY(0) rotate(-12deg)}50%{transform:translateY(-7px) rotate(-5deg)}}
+@keyframes progressSpark{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
+@media(prefers-reduced-motion:reduce){.progress-cube,.progress-spark{animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -1932,7 +1949,8 @@ body.gd-legal-locked{overflow:hidden}
    <span class="home-tile-icon"><span class="gd-home-emoji">⚔️</span></span>
    <span class="home-tile-copy"><span class="home-tile-title">NFT-БАТТЛЫ</span><span class="home-tile-subtitle">Сразись за лучший дроп</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile" onclick="showTab('progress')" style="--tile-bg:linear-gradient(145deg,#6b3c9e,#241a52);--tile-border:rgba(205,166,255,.55);--tile-glow:rgba(174,112,255,.75)" aria-label="Открыть прогресс и задания">
+  <button class="home-tile gd-art-tile progress-tile" onclick="showTab('progress')" style="--tile-bg:linear-gradient(145deg,#6b3c9e,#241a52);--tile-border:rgba(205,166,255,.55);--tile-glow:rgba(174,112,255,.75)" aria-label="Открыть прогресс и задания">
+   <span class="tile-art progress-tile-art" aria-hidden="true"><span class="progress-cube"><i>XP</i></span><span class="progress-orbit orbit-a"></span><span class="progress-orbit orbit-b"></span><span class="progress-spark spark-a">✦</span><span class="progress-spark spark-b">✧</span><span class="tile-art-caption">LEVEL UP SYSTEM</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОГРЕСС</span><span class="home-tile-subtitle">Ежедневные задания, XP и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
