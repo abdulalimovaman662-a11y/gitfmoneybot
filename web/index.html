@@ -2219,7 +2219,7 @@ body.gd-legal-locked{overflow:hidden}
   <div class="rocket-mode" hidden><button type="button" class="rocket-mode-btn active" id="rocketSilverMode" onclick="setRocketMode('silver')">🪙 СЕРЕБРО</button><button type="button" class="rocket-mode-btn" id="rocketNftMode" onclick="setRocketMode('nft')">🎁 NFT</button></div>
   <div id="rocketSilverControls" hidden><label class="currency-input-label" for="rocketStake">РАЗМЕР СТАВКИ</label><div class="rocket-input-wrap"><input id="rocketStake" type="number" min="1" max="1000" value="50"><span>🪙</span></div><div class="rocket-quick-bets"><button type="button" onclick="setRocketStake(25)">25</button><button type="button" onclick="setRocketStake(50)">50</button><button type="button" onclick="setRocketStake(100)">100</button><button type="button" onclick="setRocketStake(250)">250</button></div></div>
   <div id="rocketNftControls" hidden><label class="currency-input-label" for="rocketNftSelect">ВЫБЕРИ NFT ДЛЯ СТАВКИ</label><select id="rocketNftSelect"><option value="">Загрузка инвентаря…</option></select><p class="rocket-hint">При краше NFT теряется. При успешном выводе стоимость NFT начисляется серебром.</p></div>
-  <div class="rocket-actions"><button type="button" id="rocketLaunchButton" onclick="launchRocket()">🚀 ВОЙТИ БЕСПЛАТНО</button><button type="button" id="rocketCashoutButton" hidden disabled>ВЫВОД ОТКЛЮЧЁН</button></div>
+  <div class="rocket-actions"><button type="button" id="rocketLaunchButton" onclick="launchRocket()">🚀 ВОЙТИ БЕСПЛАТНО</button><button type="button" id="rocketCashoutButton" hidden disabled onclick="cashoutRocket()">ЗАБРАТЬ</button></div>
   <div class="rocket-result" id="rocketResult">Нажми «Войти бесплатно» до старта раунда. Серебро и NFT не используются.</div>
   <div class="rocket-test-note">Бесплатный тестовый режим: серебро и NFT не используются, баланс и инвентарь не меняются.</div>
  </div>
@@ -3441,7 +3441,7 @@ async function completeGiftOrder(id,button) {
 
 
 // Rocket state must exist before the first refresh call (avoid the let temporal dead zone).
-let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false;
+let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false,rocketAnimationFrame=null,rocketDemoCashedRound=0,rocketDemoCashedMultiplier=1;
 let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
 let rocketHistoryValues=[];
 refreshRocketState();
@@ -3487,6 +3487,21 @@ async function loadRocketInventory(){
   if(!items.length){const option=document.createElement('option');option.value='';option.textContent='Нет доступных NFT';select.appendChild(option);}
  }catch(e){select.innerHTML='<option value="">Не удалось загрузить инвентарь</option>';}
 }
+function stopRocketMultiplierAnimation(){
+ if(rocketAnimationFrame!==null){cancelAnimationFrame(rocketAnimationFrame);rocketAnimationFrame=null;}
+}
+function animateRocketMultiplier(){
+ stopRocketMultiplierAnimation();
+ const tick=()=>{
+  const elapsed=Math.max(0,(Date.now()-rocketStartedAt)/1000);
+  rocketMultiplier=Math.min(10,Math.pow(1.18,elapsed));
+  const el=document.getElementById('rocketMultiplier');
+  if(el)el.innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';
+  if(rocketRunning)rocketAnimationFrame=requestAnimationFrame(tick);
+  else rocketAnimationFrame=null;
+ };
+ tick();
+}
 function renderRocketState(data){
  rocketBalance=Number(data.balance)||0;
  const rocketBalanceEl=document.getElementById('rocketDemoBalance');
@@ -3498,20 +3513,25 @@ function renderRocketState(data){
   document.getElementById('rocketRoundPill').textContent=round.status==='betting'?'СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК':round.status==='crashed'?'КРАШ':'РАУНД LIVE';
   const countdown=document.getElementById('rocketCountdown');if(countdown)countdown.textContent=String(round.status==='betting'?Number(round.seconds_to_start||0):0);
   const stage=document.getElementById('rocketStage');
-  if(round.status==='betting'){document.getElementById('rocketStatus').textContent='СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК';stage.classList.remove('is-flying','is-crashed');}
-  else if(round.status==='running'){document.getElementById('rocketStatus').textContent='РАКЕТА В ПОЛЁТЕ';stage.classList.add('is-flying');stage.classList.remove('is-crashed');}
-  else{document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';stage.classList.remove('is-flying');stage.classList.add('is-crashed');}
+  if(round.status==='betting'){rocketRunning=false;stopRocketMultiplierAnimation();rocketMultiplier=1;document.getElementById('rocketMultiplier').innerHTML='1.00<span>x</span>';document.getElementById('rocketStatus').textContent='СТАРТ ЧЕРЕЗ '+Number(round.seconds_to_start||0)+' СЕК';stage.classList.remove('is-flying','is-crashed');}
+  else if(round.status==='running'){document.getElementById('rocketStatus').textContent='РАКЕТА В ПОЛЁТЕ';stage.classList.add('is-flying');stage.classList.remove('is-crashed');rocketStartedAt=new Date(round.starts_at).getTime();rocketRunning=true;animateRocketMultiplier();}
+  else{rocketRunning=false;stopRocketMultiplierAnimation();document.getElementById('rocketStatus').textContent='РАКЕТА УПАЛА';stage.classList.remove('is-flying');stage.classList.add('is-crashed');}
   document.getElementById('rocketPlayers').textContent=String((data.players||[]).length);
-  document.getElementById('rocketMultiplier').innerHTML=Number(round.multiplier||1).toFixed(2)+'<span>x</span>';
   document.getElementById('rocketLastCrash').textContent=rocketHistoryValues[0]?Number(rocketHistoryValues[0].crash).toFixed(2)+'x':'—';
   rocketFreeJoined=Boolean(data.my_entry);
+  const cashoutButton=document.getElementById('rocketCashoutButton');
+  const demoAlreadyCashed=rocketDemoCashedRound===Number(round.id);
+  cashoutButton.hidden=!(rocketFreeJoined && round.status==='running');
+  cashoutButton.disabled=demoAlreadyCashed || round.status!=='running';
+  cashoutButton.textContent=demoAlreadyCashed?'✓ ЗАБРАНО':'ЗАБРАТЬ';
+  if(demoAlreadyCashed){rocketRunning=false;stopRocketMultiplierAnimation();rocketMultiplier=rocketDemoCashedMultiplier;document.getElementById('rocketMultiplier').innerHTML=rocketMultiplier.toFixed(2)+'<span>x</span>';}
   const joinButton=document.getElementById('rocketLaunchButton');
   if(joinButton){joinButton.disabled=rocketFreeJoined || round.status==='crashed';joinButton.textContent=rocketFreeJoined?'✓ ТЫ В РАУНДЕ':round.status==='betting'?'🚀 ВОЙТИ БЕСПЛАТНО':round.status==='running'?'🚀 ВОЙТИ В ТЕКУЩИЙ РАУНД':'ОЖИДАЙ СЛЕДУЮЩИЙ РАУНД';}
   if(data.my_bet){
    rocketCurrentBet=data.my_bet;
    if(data.my_bet.status==='active'){
     rocketRunning=true;rocketStake=Number(data.my_bet.stake_amount);rocketBetKind=data.my_bet.stake_kind;
-    document.getElementById('rocketCashoutButton').disabled=round.status==='crashed'||round.status==='betting';
+    document.getElementById('rocketCashoutButton').hidden=true;document.getElementById('rocketCashoutButton').disabled=true;
     document.getElementById('rocketLaunchButton').disabled=true;
     document.getElementById('rocketStatus').textContent=round.status==='betting'?'ОЖИДАЕМ СТАРТ':'РАКЕТА В ПОЛЁТЕ';
     document.getElementById('rocketStage').classList.toggle('is-flying',round.status==='running');
@@ -3521,10 +3541,11 @@ function renderRocketState(data){
     document.getElementById('rocketResult').textContent=data.my_bet.status==='cashed_out'?'Выигрыш уже зачислен на баланс.':'Ставка сгорела при краше.';
    }
   }else{
-   rocketRunning=false;document.getElementById('rocketCashoutButton').disabled=true;document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status==='crashed';
+   if(!rocketFreeJoined || round.status!=='running')document.getElementById('rocketCashoutButton').hidden=true;
+   document.getElementById('rocketLaunchButton').disabled=rocketFreeJoined || round.status==='crashed';
   }
  }else{
-  rocketRunning=false;rocketCurrentBet=null;rocketFreeJoined=false;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketLaunchButton').textContent='ОЖИДАЙ РАУНД';document.getElementById('rocketCashoutButton').disabled=true;
+  rocketRunning=false;stopRocketMultiplierAnimation();rocketCurrentBet=null;rocketFreeJoined=false;document.getElementById('rocketCashoutButton').hidden=true;document.getElementById('rocketRoundPill').textContent='ОЖИДАНИЕ РАУНДА';document.getElementById('rocketStatus').textContent='ГОТОВ К ЗАПУСКУ';document.getElementById('rocketLaunchButton').disabled=true;document.getElementById('rocketLaunchButton').textContent='ОЖИДАЙ РАУНД';document.getElementById('rocketCashoutButton').disabled=true;
  }
  renderRocketPlayers(data.players||[]);
  rocketHistoryValues=Array.isArray(data.history)?data.history:[];
@@ -3552,8 +3573,19 @@ async function launchRocket(){
  }
 }
 async function cashoutRocket(){
+ const button=document.getElementById('rocketCashoutButton');
+ if(rocketFreeJoined && !rocketCurrentBet){
+  if(!rocketRunning || button.disabled)return;
+  rocketDemoCashedRound=rocketRound;
+  rocketDemoCashedMultiplier=rocketMultiplier;
+  rocketRunning=false;stopRocketMultiplierAnimation();
+  button.disabled=true;button.textContent='✓ ЗАБРАНО';
+  document.getElementById('rocketStatus').textContent='ДЕМО-ВЫХОД ЗАФИКСИРОВАН';
+  document.getElementById('rocketResult').textContent='Ты зафиксировал '+rocketDemoCashedMultiplier.toFixed(2)+'x. Это бесплатный демо-режим: баланс и NFT не меняются.';
+  return;
+ }
  if(!rocketRunning)return;
- const button=document.getElementById('rocketCashoutButton');button.disabled=true;
+ button.disabled=true;
  try{
   const result=await api('/api/rocket/cashout',{method:'POST',body:'{}'});
   rocketRunning=false;rocketBalance=result.balance;const rocketBalanceEl=document.getElementById('rocketDemoBalance');if(rocketBalanceEl)rocketBalanceEl.textContent=rocketBalance.toLocaleString('ru-RU');
