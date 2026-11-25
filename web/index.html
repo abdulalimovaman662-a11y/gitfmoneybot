@@ -2706,29 +2706,23 @@ function clearPendingSpinRequestId() {
 loadRecentWins();
 setInterval(loadRecentWins, 60000);
 
-// Динамический счётчик: диапазон зависит от времени суток, значение плавно меняется каждую секунду.
+// Показываем только реальное число игроков, недавно обращавшихся к серверу.
 const activityCount = document.getElementById('activityCount');
-if (activityCount) {
- const getOnlineRange = () => {
-  const hour = new Date().getHours();
-  return hour >= 18
-   ? { min: 1000, max: 2500 }
-   : { min: 100, max: 300 };
- };
- let onlineRange = getOnlineRange();
- let displayedOnline = onlineRange.min + Math.floor(Math.random() * (onlineRange.max - onlineRange.min + 1));
- activityCount.textContent = displayedOnline;
- setInterval(() => {
-  const nextRange = getOnlineRange();
-  if (nextRange.min !== onlineRange.min || nextRange.max !== onlineRange.max) {
-   onlineRange = nextRange;
-   displayedOnline = Math.max(onlineRange.min, Math.min(onlineRange.max, displayedOnline));
-  }
-  const step = Math.floor(Math.random() * 19) - 9;
-  displayedOnline = Math.max(onlineRange.min, Math.min(onlineRange.max, displayedOnline + step));
-  activityCount.textContent = displayedOnline;
- }, 1000);
+async function refreshOnlineCount() {
+ if(!activityCount)return;
+ try {
+  const response=await fetch('/api/online',{cache:'no-store'});
+  if(!response.ok)throw new Error('online unavailable');
+  const data=await response.json();
+  const online=Number(data.online);
+  activityCount.textContent=Number.isSafeInteger(online)&&online>=0
+   ?online.toLocaleString('ru-RU'):'—';
+ } catch(error) {
+  activityCount.textContent='—';
+ }
 }
+refreshOnlineCount();
+setInterval(refreshOnlineCount,20000);
 
 async function loadRecentWins() {
  const track=document.getElementById('winsTickerTrack');
