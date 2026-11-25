@@ -289,7 +289,7 @@ async function getCoreOverview(pool, telegramId) {
       ORDER BY CASE md.cadence WHEN 'daily' THEN 0 ELSE 1 END, um.id
     `,[String(telegramId)]),
     pool.query(`
-      SELECT ad.code, ad.title, ad.description, ad.target_count,
+      SELECT ad.id AS achievement_id, ad.code, ad.title, ad.description, ad.target_count,
         ad.xp_reward, ua.progress, ua.unlocked_at, ua.claimed_at
       FROM user_achievements ua JOIN achievement_definitions ad ON ad.id = ua.achievement_id
       WHERE ua.telegram_id = $1 AND ad.active = TRUE
