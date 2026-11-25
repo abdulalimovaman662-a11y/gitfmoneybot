@@ -1269,14 +1269,46 @@ const server = http.createServer(async (req, res) => {
     if (prizeDone && req.method === 'POST') {
       const admin = await requireAdmin(req);
       if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
-      const result = await pool.query(`
-        UPDATE prize_claims
-        SET status = 'done', processed_at = NOW()
-        WHERE id = $1 AND status = 'pending'
-        RETURNING id
-      `, [prizeDone[1]]);
-      if (!result.rowCount) return send(res, 409, { error: 'Заявка уже выполнена или не найдена' });
-      return send(res, 200, { success: true });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const claim = await client.query(
+          'SELECT id, status FROM prize_claims WHERE id = $1 FOR UPDATE',
+          [prizeDone[1]]
+        );
+        if (!claim.rowCount || claim.rows[0].status !== 'pending') {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Заявка уже выполнена или не найдена' });
+        }
+        await client.query(
+          `UPDATE prize_claims
+           SET status = 'done', processed_at = NOW()
+           WHERE id = $1 AND status = 'pending'`,
+          [prizeDone[1]]
+        );
+        const inventory = await client.query(
+          `UPDATE user_inventory
+           SET status = 'withdrawn', updated_at = NOW()
+           WHERE source_claim_id = $1 AND status IN ('owned', 'withdraw_pending')
+           RETURNING id`,
+          [prizeDone[1]]
+        );
+        if (inventory.rowCount) {
+          await client.query(
+            `UPDATE withdrawal_requests
+             SET status = 'completed', processed_at = NOW()
+             WHERE inventory_id = ANY($1::bigint[]) AND status = 'pending'`,
+            [inventory.rows.map(row => row.id)]
+          );
+        }
+        await client.query('COMMIT');
+        return send(res, 200, { success: true });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     }
 
     // Админ-панель: заказы магазина
