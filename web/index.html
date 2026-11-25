@@ -1760,6 +1760,41 @@ body{
 #gdLegalGate .gd-legal-foot{margin-top:12px;color:#8985aa;font-size:9px;line-height:1.55}
 body.gd-legal-locked{overflow:hidden}
 
+
+/* GiftsDrop visual upgrade — cinematic game tiles */
+.home-grid .gd-art-tile{position:relative;min-height:164px;overflow:hidden;isolation:isolate}
+.home-grid .gd-art-tile:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.95}
+.home-grid .gd-art-tile:after{z-index:1;background:linear-gradient(180deg,rgba(8,7,20,.02) 0%,rgba(8,7,20,.06) 34%,rgba(7,6,18,.88) 100%)}
+.gd-art-tile .tile-art{z-index:0;inset:0;opacity:1}
+.gd-art-tile .home-tile-icon{z-index:4}
+.gd-art-tile .home-tile-copy{z-index:4;background:rgba(7,8,24,.48);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(9px);box-shadow:0 7px 20px rgba(0,0,0,.2)}
+.gd-art-tile .home-tile-arrow{z-index:5}
+.rocket-tile-art{background:radial-gradient(ellipse at 72% 38%,rgba(255,177,96,.4),transparent 34%),radial-gradient(ellipse at 22% 20%,rgba(255,87,114,.28),transparent 40%),linear-gradient(135deg,#4b163e 0%,#24133f 52%,#101b39 100%)}
+.rocket-tile-art:before{content:"";position:absolute;inset:-30%;background:repeating-linear-gradient(118deg,transparent 0 24px,rgba(255,255,255,.06) 25px 26px,transparent 27px 52px);transform:rotate(-12deg);animation:rocketSkyDrift 12s linear infinite}
+.rocket-tile-art .tile-art-orbit{position:absolute;width:130px;height:130px;right:12px;top:-20px;border:1px solid rgba(255,194,153,.36);border-radius:50%;box-shadow:0 0 28px rgba(255,108,91,.18),inset 0 0 25px rgba(255,108,91,.1)}
+.rocket-tile-art .tile-art-orbit:before,.rocket-tile-art .tile-art-orbit:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.18);border-radius:50%;inset:13px;transform:rotate(52deg) scaleX(.42)}
+.rocket-tile-art .tile-art-orbit:after{inset:-12px 28px;transform:rotate(-38deg) scaleX(.5)}
+.rocket-tile-art .tile-art-object{position:absolute;right:31px;top:12px;font-size:66px;line-height:1;filter:drop-shadow(0 0 18px rgba(255,145,99,.72));transform:rotate(-17deg);animation:rocketTileFloat 3.2s ease-in-out infinite}
+.upgrade-tile-art{background:radial-gradient(ellipse at 68% 34%,rgba(82,239,255,.34),transparent 34%),radial-gradient(ellipse at 18% 15%,rgba(180,129,255,.25),transparent 42%),linear-gradient(135deg,#103b63 0%,#17204c 55%,#31154e 100%)}
+.upgrade-tile-art:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 15%,rgba(255,255,255,.12) 16%,transparent 17% 42%,rgba(116,229,255,.1) 43%,transparent 44%);animation:upgradeShine 5s ease-in-out infinite}
+.upgrade-tile-art .tile-art-orbit{position:absolute;right:12px;top:-23px;width:132px;height:132px;border:2px solid rgba(116,229,255,.42);border-radius:50%;transform:rotate(-24deg) scaleY(.42);box-shadow:0 0 20px rgba(116,229,255,.22)}
+.upgrade-tile-art .tile-art-orbit:after{content:"";position:absolute;inset:-12px;border:1px solid rgba(255,207,90,.42);border-radius:50%;transform:rotate(55deg) scaleY(1.8)}
+.upgrade-tile-art .tile-art-object{position:absolute;right:39px;top:20px;font-size:62px;filter:drop-shadow(0 0 19px rgba(116,229,255,.8));animation:gemTileFloat 3.5s ease-in-out infinite}
+.players-tile-art{background:radial-gradient(ellipse at 72% 35%,rgba(73,173,255,.38),transparent 37%),radial-gradient(ellipse at 20% 22%,rgba(134,112,255,.22),transparent 42%),linear-gradient(135deg,#102d55 0%,#111b3f 60%,#12152d 100%)}
+.players-tile-art:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(190,228,255,.7) 1px,transparent 1.5px);background-size:19px 19px;opacity:.3}
+.tile-player-orb{position:absolute;display:grid;place-items:center;border-radius:50%;font-weight:900;color:#fff;border:1px solid rgba(255,255,255,.65);box-shadow:0 0 24px rgba(84,174,255,.4),inset 0 0 14px rgba(255,255,255,.18)}
+.tile-player-orb.orb-one{width:49px;height:49px;right:56px;top:14px;background:linear-gradient(145deg,#65d8ff,#5547bb);font-size:20px}
+.tile-player-orb.orb-two{width:35px;height:35px;right:17px;top:51px;background:linear-gradient(145deg,#ff8bc8,#8044bf);font-size:15px}
+.tile-player-orb.orb-three{width:25px;height:25px;right:103px;top:62px;background:linear-gradient(145deg,#9cf5d1,#168b9a);font-size:10px}
+.tile-art-caption{position:absolute;right:13px;top:12px;color:rgba(255,255,255,.72);font-size:7px;font-weight:900;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.players-tile-art .tile-art-caption{top:105px;right:15px}
+@keyframes rocketTileFloat{0%,100%{transform:translateY(0) rotate(-17deg)}50%{transform:translateY(-8px) rotate(-12deg)}}
+@keyframes gemTileFloat{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-7px) rotate(5deg)}}
+@keyframes rocketSkyDrift{from{transform:translateX(-15px) rotate(-12deg)}to{transform:translateX(15px) rotate(-12deg)}}
+@keyframes upgradeShine{0%,100%{opacity:.45;transform:translateX(-8%)}50%{opacity:1;transform:translateX(8%)}}
+@media(hover:hover){.gd-art-tile{transition:transform .25s ease,filter .25s ease}.gd-art-tile:hover{transform:translateY(-3px);filter:brightness(1.12)}}
+@media(prefers-reduced-motion:reduce){.rocket-tile-art:before,.rocket-tile-art .tile-art-object,.upgrade-tile-art:before,.upgrade-tile-art .tile-art-object,.gd-art-tile:hover{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -1858,13 +1893,16 @@ body.gd-legal-locked{overflow:hidden}
   <button class="home-tile home-tile-inventory" onclick="showTab('inventory')" aria-label="Открыть инвентарь">
    <span class="tile-art inventory-art" aria-hidden="true"><b>💎</b><i>🎁</i><em>🪙</em><small>🌟</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎒</span></span><span class="home-tile-copy"><span class="home-tile-title">ИНВЕНТАРЬ</span><span class="home-tile-subtitle">Твои NFT и выигранные подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile home-tile-rocket" onclick="showTab('rocket')" aria-label="Открыть ракету">
+  <button class="home-tile home-tile-rocket gd-art-tile" onclick="showTab('rocket')" aria-label="Открыть ракету">
+   <span class="tile-art rocket-tile-art" aria-hidden="true"><span class="tile-art-orbit"></span><span class="tile-art-object">🚀</span><span class="tile-art-caption">ROCKET SYSTEM</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">🚀</span></span><span class="home-tile-copy"><span class="home-tile-title">РАКЕТА</span><span class="home-tile-subtitle">Поймай множитель до 10.00x</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile home-tile-upgrade" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
+  <button class="home-tile home-tile-upgrade gd-art-tile" onclick="showTab('upgrade')" aria-label="Открыть апгрейд">
+   <span class="tile-art upgrade-tile-art" aria-hidden="true"><span class="tile-art-orbit"></span><span class="tile-art-object">💎</span><span class="tile-art-caption">NFT EVOLUTION</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">⚡</span></span><span class="home-tile-copy"><span class="home-tile-title">АПГРЕЙД</span><span class="home-tile-subtitle">Прокачивай свои подарки</span></span><span class="home-tile-arrow">↗</span>
   </button>
-  <button class="home-tile" onclick="showTab('players')" style="--tile-bg:linear-gradient(145deg,#183b62,#10182f);--tile-border:rgba(105,174,255,.28);--tile-glow:rgba(60,140,255,.42)" aria-label="Поиск игроков">
+  <button class="home-tile gd-art-tile player-tile" onclick="showTab('players')" style="--tile-bg:linear-gradient(145deg,#183b62,#10182f);--tile-border:rgba(105,174,255,.28);--tile-glow:rgba(60,140,255,.42)" aria-label="Поиск игроков">
+   <span class="tile-art players-tile-art" aria-hidden="true"><span class="tile-player-orb orb-one">✦</span><span class="tile-player-orb orb-two">◆</span><span class="tile-player-orb orb-three">●</span><span class="tile-art-caption">PLAYER NETWORK</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">🔎</span></span><span class="home-tile-copy"><span class="home-tile-title">ПОИСК ИГРОКОВ</span><span class="home-tile-subtitle">Профили, ранги и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
   <button class="home-tile home-tile-battles" onclick="showTab('battles')" aria-label="NFT-баттлы">
