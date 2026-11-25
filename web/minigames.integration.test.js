@@ -33,7 +33,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
       xp BIGINT NOT NULL DEFAULT 0
     )
   `);
-  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100)");
+  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000)");
   await initProgressionDatabase(pool);
   await initMiniGamesDatabase(pool);
 
@@ -51,6 +51,24 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   const blocked = await startMiniGame(pool, '101', 'reaction', 'reaction_request_0006');
   assert.equal(blocked.status, 429);
   assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 101')).rows[0].silver), 25);
+
+  for (let i = 1; i <= 3; i++) {
+    const result = await startMiniGame(pool, '104', 'safe', 'safe_daily_' + String(i).padStart(4, '0'));
+    assert.equal(result.status, 201);
+  }
+  const safeDailyBlocked = await startMiniGame(pool, '104', 'safe', 'safe_daily_0004');
+  assert.equal(safeDailyBlocked.status, 429, 'safe game must enforce its three-round daily limit');
+  assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 104')).rows[0].silver), 955,
+    'a blocked safe round must not charge silver');
+
+  for (let i = 1; i <= 5; i++) {
+    const result = await startMiniGame(pool, '104', 'memory', 'memory_daily_' + String(i).padStart(4, '0'));
+    assert.equal(result.status, 201);
+  }
+  const memoryDailyBlocked = await startMiniGame(pool, '104', 'memory', 'memory_daily_0006');
+  assert.equal(memoryDailyBlocked.status, 429, 'memory game must enforce its five-round daily limit');
+  assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 104')).rows[0].silver), 880,
+    'a blocked memory round must not charge silver');
 
   const safe = await startMiniGame(pool, '102', 'safe', 'safe_request_000001');
   assert.equal(safe.status, 201);
