@@ -3179,14 +3179,14 @@ async function buildRoulette(result,winningGift=null) {
 }
 
 
-function triggerWinCelebration(tier) {
+function triggerWinCelebration(tier,gift=null) {
  const layer=document.createElement('div');
  layer.className='win-fx-layer';
  layer.setAttribute('aria-hidden','true');
  document.body.appendChild(layer);
  const message=document.createElement('div');
  message.className='win-message';
- message.textContent='Ты смог🩷🏆';
+ message.textContent=gift&&gift.name?`Ты выиграл: ${gift.name} · ${Number(gift.stars)||0} ⭐`:'Ты смог🩷🏆';
  message.setAttribute('role','status');
  layer.appendChild(message);
  const colors=['#ffe69a','#ff72b6','#74e5ff','#b99aff','#ffffff'];
@@ -3263,9 +3263,10 @@ async function spin() {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
   await buildRoulette(data.result,data.gift||null);
-  if(data.result!=='none') triggerWinCelebration(data.result);
+  if(data.result!=='none') triggerWinCelebration(data.result,data.gift||null);
   else triggerLossCelebration();
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
+  else if(data.gift&&data.gift.name) message.textContent=(data.welcome_gift?'🎁 Приветственный подарок! ':'🎉 Ты выиграл: ')+data.gift.name+' — стоимость '+(Number(data.gift.stars)||0)+' ⭐. Заявка на выдачу оформлена.';
   else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
   else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
   else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
