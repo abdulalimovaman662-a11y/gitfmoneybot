@@ -1433,21 +1433,21 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, overview);
     }
 
-    const missionClaimMatch = url.pathname.match(/^\\/api\\/missions\\/(\\d+)\\/claim$/);
-    if (missionClaimMatch && req.method === 'POST') {
+    const missionClaimPath = url.pathname.startsWith('/api/missions/') && url.pathname.endsWith('/claim');
+    if (missionClaimPath && req.method === 'POST') {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
-      const result = await claimMission(pool, String(user.id), Number(missionClaimMatch[1]));
+      const result = await claimMission(pool, String(user.id), Number(url.pathname.split('/')[3]));
       return send(res, result.status, result.status === 200 ? { success: true, reward: result.reward } : { error: result.error || 'Задание не найдено' });
     }
 
-    const achievementClaimMatch = url.pathname.match(/^\\/api\\/achievements\\/(\\d+)\\/claim$/);
-    if (achievementClaimMatch && req.method === 'POST') {
+    const achievementClaimPath = url.pathname.startsWith('/api/achievements/') && url.pathname.endsWith('/claim');
+    if (achievementClaimPath && req.method === 'POST') {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
-      const result = await claimAchievement(pool, String(user.id), Number(achievementClaimMatch[1]));
+      const result = await claimAchievement(pool, String(user.id), Number(url.pathname.split('/')[3]));
       return send(res, result.status, result.status === 200 ? { success: true, reward: result.reward } : { error: result.error || 'Достижение не найдено' });
     }
 
