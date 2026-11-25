@@ -82,6 +82,27 @@ test('Rocket ledger PostgreSQL integration: atomic debit, one-time cashout, NFT 
     assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id=1001')).rows[0].silver), 750);
     assert.equal(Number((await pool.query("SELECT COUNT(*) FROM rocket_silver_ledger WHERE bet_id=$1 AND entry_type='stake_debit'", [silverBetId])).rows[0].count), 1);
 
+    // If the journal write fails, the preceding balance debit and bet insert roll back too.
+    const beforeRollbackBalance = Number((await pool.query('SELECT silver FROM users WHERE telegram_id=1001')).rows[0].silver);
+    const beforeRollbackBets = Number((await pool.query('SELECT COUNT(*) FROM rocket_bets')).rows[0].count);
+    const rollbackClient = await pool.connect();
+    try {
+      await rollbackClient.query('BEGIN');
+      await rollbackClient.query('UPDATE users SET silver=silver-50 WHERE telegram_id=1001');
+      const failedBet = await rollbackClient.query(
+        "INSERT INTO rocket_bets(round_id,telegram_id,stake_kind,stake_amount) VALUES(1,1001,'silver',50) RETURNING id"
+      );
+      await assert.rejects(rollbackClient.query(
+        "INSERT INTO rocket_silver_ledger(bet_id,telegram_id,entry_type,amount,balance_after) VALUES($1,1001,'stake_debit',-50,700)",
+        [failedBet.rows[0].id]
+      ));
+      await rollbackClient.query('ROLLBACK');
+    } finally {
+      rollbackClient.release();
+    }
+    assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id=1001')).rows[0].silver), beforeRollbackBalance);
+    assert.equal(Number((await pool.query('SELECT COUNT(*) FROM rocket_bets')).rows[0].count), beforeRollbackBets);
+
     // Two simultaneous cashouts: row lock + conditional settlement allows only one credit.
     async function cashout() {
       const client = await pool.connect();
