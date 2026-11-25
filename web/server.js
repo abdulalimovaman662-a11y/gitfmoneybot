@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { initProgressionDatabase, awardXp, recordActivity, recordDailyVisit, claimMission, claimAchievement, getCoreOverview } = require('./progression');
+const { initMiniGamesDatabase, startMiniGame, performMiniGameAction } = require('./minigames');
 const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 8080;
@@ -180,23 +181,36 @@ async function initDatabase() {
       first_name TEXT,
       silver INTEGER NOT NULL DEFAULT 0,
       free_spins INTEGER NOT NULL DEFAULT 3,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ,
       ADD COLUMN IF NOT EXISTS referred_by BIGINT,
       ADD COLUMN IF NOT EXISTS referral_count INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS xp BIGINT NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS last_xp_date DATE,
       ADD COLUMN IF NOT EXISTS rank_bonus_openings BIGINT NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS selected_wings TEXT NOT NULL DEFAULT 'auto',
-      ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE;
+      ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS welcome_gift_available BOOLEAN NOT NULL DEFAULT FALSE;
+
+    CREATE INDEX IF NOT EXISTS users_last_seen_at_idx ON users (last_seen_at DESC);
 
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
       prize_type TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS spin_requests (
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      request_id TEXT NOT NULL,
+      response JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (telegram_id, request_id)
     );
 
     CREATE TABLE IF NOT EXISTS prize_claims (
@@ -405,6 +419,7 @@ async function initDatabase() {
       ON nft_battles(opponent_id, created_at DESC);
   `);
   await initProgressionDatabase(pool);
+  await initMiniGamesDatabase(pool);
 }
 
 function send(res, status, data) {
@@ -510,11 +525,12 @@ async function ensureUser(user, req) {
   // Для существующего пользователя — один SQL-запрос вместо
   // подключения, транзакции и отдельных INSERT/UPDATE.
   const upsert = await pool.query(`
-    INSERT INTO users (telegram_id, username, first_name)
-    VALUES ($1, $2, $3)
+    INSERT INTO users (telegram_id, username, first_name, last_seen_at)
+    VALUES ($1, $2, $3, NOW())
     ON CONFLICT (telegram_id) DO UPDATE
       SET username = EXCLUDED.username,
-          first_name = EXCLUDED.first_name
+          first_name = EXCLUDED.first_name,
+          last_seen_at = NOW()
     RETURNING (xmax = 0) AS was_created
   `, [
     telegramId,
@@ -523,6 +539,7 @@ async function ensureUser(user, req) {
   ]);
 
   if (upsert.rows[0]?.was_created) {
+    await pool.query('UPDATE users SET welcome_gift_available = TRUE WHERE telegram_id = $1', [telegramId]);
     await awardXp(pool, telegramId, 50, 'welcome', `welcome:${telegramId}`);
   }
 
@@ -629,6 +646,17 @@ async function createTelegramInvoice(order) {
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
+
+    // Реальный онлайн: уникальные пользователи, обращавшиеся к Mini App за последние 2 минуты.
+    if (url.pathname === '/api/online' && req.method === 'GET') {
+      const result = await pool.query(`
+        SELECT COUNT(*)::int AS online
+        FROM users
+        WHERE last_seen_at >= NOW() - INTERVAL '2 minutes'
+      `);
+      res.setHeader('Cache-Control', 'no-store');
+      return send(res, 200, { online: Number(result.rows[0]?.online || 0) });
+    }
 
     // Проверка заказа перед подтверждением оплаты Telegram
     if (
@@ -877,7 +905,11 @@ const server = http.createServer(async (req, res) => {
       if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
       const body = await readBody(req);
       const telegramId = String(body.telegram_id || '');
-      if (!/^\d+$/.test(telegramId)) return send(res, 400, { error: 'Некорректный Telegram ID' });
+      const requestId = String(body.request_id || '');
+      if (!/^\\d+$/.test(telegramId) || !/^[a-f0-9]{64}$/.test(requestId)) {
+        return send(res, 400, { error: 'Некорректные данные прокрутки' });
+      }
+
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -886,6 +918,16 @@ const server = http.createServer(async (req, res) => {
           await client.query('ROLLBACK');
           return send(res, 404, { error: 'Пользователь не найден' });
         }
+
+        const priorSpin = await client.query(
+          'SELECT response FROM spin_requests WHERE telegram_id = $1 AND request_id = $2',
+          [telegramId, requestId]
+        );
+        if (priorSpin.rowCount) {
+          await client.query('COMMIT');
+          return send(res, 200, { ...priorSpin.rows[0].response, replayed: true });
+        }
+
         const account = locked.rows[0];
         if (Number(account.free_spins) <= 0 && Number(account.silver) < 20) {
           await client.query('ROLLBACK');
@@ -896,31 +938,90 @@ const server = http.createServer(async (req, res) => {
         } else {
           await client.query('UPDATE users SET silver = silver - 20 WHERE telegram_id = $1', [telegramId]);
         }
-        const roll = crypto.randomInt(100000);
-        const prize = roll >= 99999 ? 'rare' : (roll >= 94999 ? 'unusual' : (roll >= 79999 ? 'ordinary' : 'nothing'));
+
+        const welcomeGift = Boolean(account.welcome_gift_available);
+        const chance = crypto.randomInt(100000);
+        let prize = welcomeGift ? 'ordinary' : 'nothing';
+        if (!welcomeGift) {
+          if (chance >= 99999) prize = 'rare';
+          else if (chance >= 94999) prize = 'unusual';
+          else if (chance >= 79999) prize = 'ordinary';
+        }
+
         const history = await client.query(
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
           [telegramId, prize]
         );
-        await awardXp(client, telegramId, 10, 'spin', `spin:${history.rows[0].id}`);
-        await recordActivity(client, telegramId, 'spin_completed', `spin:${history.rows[0].id}`);
         let claimId = null;
+        let winningGift = null;
         if (prize !== 'nothing') {
-          const claim = await client.query(
-            'INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type) VALUES ($1, $2, $3) RETURNING id',
-            [history.rows[0].id, telegramId, prize]
-          );
+          const ordinaryGifts = [
+            { id:'love_heart', name:'Love Heart', stars:15, emoji:'❤️', image_url:giftImage('loveheart') },
+            { id:'teddy_bear', name:'Teddy Bear', stars:15, emoji:'🧸', image_url:giftImage('toybear') },
+            { id:'gift_box', name:'Gift Box', stars:25, emoji:'🎁', image_url:giftImage('giftbox') },
+            { id:'red_rose', name:'Red Rose', stars:25, emoji:'🌹', image_url:giftImage('redrose') },
+            { id:'birthday_cake', name:'Birthday Cake', stars:50, emoji:'🎂', image_url:giftImage('birthdaycake') },
+            { id:'bouquet', name:'Bouquet of Flowers', stars:50, emoji:'💐', image_url:giftImage('bouquetofflowers') },
+            { id:'rocket', name:'Rocket', stars:50, emoji:'🚀', image_url:giftImage('rocket') },
+            { id:'champagne', name:'Champagne Bottle', stars:50, emoji:'🍾', image_url:giftImage('champagne') },
+            { id:'trophy', name:'Trophy', stars:100, emoji:'🏆', image_url:giftImage('trophy') },
+            { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
+            { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
+          ];
+          const giftPool = welcomeGift
+            ? ordinaryGifts.filter(gift => gift.stars === 15)
+            : prize === 'ordinary'
+              ? ordinaryGifts
+              : PRODUCTS.filter(product => prize === 'unusual'
+                ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
+                : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+          if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
+          const selected = giftPool[crypto.randomInt(giftPool.length)];
+          winningGift = {
+            id: selected.id,
+            name: selected.name,
+            stars: Number(selected.stars),
+            emoji: selected.emoji || '🎁',
+            image_url: selected.image_url || ''
+          };
+          const claim = await client.query(`
+            INSERT INTO prize_claims
+              (spin_history_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+          `, [history.rows[0].id, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
           claimId = claim.rows[0].id;
           await recordActivity(client, telegramId, 'nft_collected', `claim:${claimId}`);
+          await client.query(`
+            INSERT INTO user_inventory
+              (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (source_claim_id) DO NOTHING
+          `, [claimId, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
         }
+
+        if (welcomeGift) {
+          await client.query('UPDATE users SET welcome_gift_available = FALSE WHERE telegram_id = $1', [telegramId]);
+        }
+        await awardXp(client, telegramId, 10, 'spin', `spin:${history.rows[0].id}`);
+        await recordActivity(client, telegramId, 'spin_completed', `spin:${history.rows[0].id}`);
+
         const updated = await client.query('SELECT silver, free_spins FROM users WHERE telegram_id = $1', [telegramId]);
-        await client.query('COMMIT');
-        return send(res, 200, {
+        const response = {
+          result: prize === 'nothing' ? 'none' : prize,
           prize,
           silver: Number(updated.rows[0].silver),
           free_spins: Number(updated.rows[0].free_spins),
-          claim_id: claimId
-        });
+          claim_id: claimId,
+          gift: winningGift,
+          welcome_gift: welcomeGift
+        };
+        await client.query(
+          'INSERT INTO spin_requests (telegram_id, request_id, response) VALUES ($1, $2, $3::jsonb)',
+          [telegramId, requestId, JSON.stringify(response)]
+        );
+        await client.query('COMMIT');
+        return send(res, 200, response);
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
@@ -1184,14 +1285,46 @@ const server = http.createServer(async (req, res) => {
     if (prizeDone && req.method === 'POST') {
       const admin = await requireAdmin(req);
       if (!admin) return send(res, 403, { error: 'Доступ запрещён' });
-      const result = await pool.query(`
-        UPDATE prize_claims
-        SET status = 'done', processed_at = NOW()
-        WHERE id = $1 AND status = 'pending'
-        RETURNING id
-      `, [prizeDone[1]]);
-      if (!result.rowCount) return send(res, 409, { error: 'Заявка уже выполнена или не найдена' });
-      return send(res, 200, { success: true });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const claim = await client.query(
+          'SELECT id, status FROM prize_claims WHERE id = $1 FOR UPDATE',
+          [prizeDone[1]]
+        );
+        if (!claim.rowCount || claim.rows[0].status !== 'pending') {
+          await client.query('ROLLBACK');
+          return send(res, 409, { error: 'Заявка уже выполнена или не найдена' });
+        }
+        await client.query(
+          `UPDATE prize_claims
+           SET status = 'done', processed_at = NOW()
+           WHERE id = $1 AND status = 'pending'`,
+          [prizeDone[1]]
+        );
+        const inventory = await client.query(
+          `UPDATE user_inventory
+           SET status = 'withdrawn', updated_at = NOW()
+           WHERE source_claim_id = $1 AND status IN ('owned', 'withdraw_pending')
+           RETURNING id`,
+          [prizeDone[1]]
+        );
+        if (inventory.rowCount) {
+          await client.query(
+            `UPDATE withdrawal_requests
+             SET status = 'completed', processed_at = NOW()
+             WHERE inventory_id = ANY($1::bigint[]) AND status = 'pending'`,
+            [inventory.rows.map(row => row.id)]
+          );
+        }
+        await client.query('COMMIT');
+        return send(res, 200, { success: true });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     }
 
     // Админ-панель: заказы магазина
@@ -1431,6 +1564,25 @@ const server = http.createServer(async (req, res) => {
         remaining: 10 - (referralCount % 10),
         referral_link: `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
       });
+    }
+
+    // Платные мини-игры: списание и создание сессии проходят одной транзакцией.
+    if (url.pathname === '/api/minigames/start' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const body = await readBody(req);
+      const result = await startMiniGame(pool, String(user.id), String(body.game || ''), String(body.request_id || ''));
+      return send(res, result.status, result);
+    }
+
+    const miniGameActionMatch = url.pathname.match(/^\/api\/minigames\/sessions\/([0-9a-f-]{36})\/action$/i);
+    if (miniGameActionMatch && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const body = await readBody(req);
+      const result = await performMiniGameAction(pool, String(user.id), miniGameActionMatch[1], body);
+      return send(res, result.status, result);
     }
 
     // GiftsDrop Core: единый обзор прогресса, заданий и достижений.
@@ -1709,6 +1861,37 @@ const server = http.createServer(async (req, res) => {
           return send(res, 404, { error: 'Баттл не найден' });
         }
         const battle = lockedBattle.rows[0];
+        if (battle.status === 'finished' && String(battle.opponent_id) === String(user.id)) {
+          const balances = await client.query(
+            'SELECT telegram_id, username, first_name, silver, free_spins FROM users WHERE telegram_id = ANY($1::bigint[])',
+            [[String(battle.creator_id), String(user.id)]]
+          );
+          const battleUsers = new Map(balances.rows.map(row => [String(row.telegram_id), row]));
+          const creatorUser = battleUsers.get(String(battle.creator_id));
+          const opponentUser = battleUsers.get(String(user.id));
+          await client.query('COMMIT');
+          return send(res, 200, {
+            success: true,
+            replayed: true,
+            battle: {
+              id: Number(battle.id), spins: Number(battle.spins), status: 'finished',
+              creator_id: String(battle.creator_id), opponent_id: String(battle.opponent_id),
+              creator_username: creatorUser?.username || null,
+              creator_first_name: creatorUser?.first_name || null,
+              opponent_username: opponentUser?.username || null,
+              opponent_first_name: opponentUser?.first_name || null,
+              winner_id: battle.winner_id ? String(battle.winner_id) : null,
+              creator_score: Number(battle.creator_score || 0),
+              opponent_score: Number(battle.opponent_score || 0),
+              creator_result: battle.creator_result || [],
+              opponent_result: battle.opponent_result || []
+            },
+            balances: balances.rows.map(row => ({
+              telegram_id: String(row.telegram_id),
+              silver: Number(row.silver), free_spins: Number(row.free_spins)
+            }))
+          });
+        }
         if (battle.status !== 'waiting' || battle.opponent_id) {
           await client.query('ROLLBACK');
           return send(res, 409, { error: 'Этот баттл уже начался или завершён' });
@@ -1812,6 +1995,8 @@ const server = http.createServer(async (req, res) => {
 
         const creatorId = String(battle.creator_id);
         const opponentId = String(user.id);
+        const creatorAccount = accounts.get(creatorId);
+        const opponentAccount = accounts.get(opponentId);
         const creatorResult = await runPlayerSpins(creatorId);
         const opponentResult = await runPlayerSpins(opponentId);
         const winnerId = creatorResult.score === opponentResult.score
@@ -1840,7 +2025,12 @@ const server = http.createServer(async (req, res) => {
           success: true,
           battle: {
             id: battleId, spins, status: 'finished',
-            creator_id: creatorId, opponent_id: opponentId, winner_id: winnerId,
+            creator_id: creatorId, opponent_id: opponentId,
+            creator_username: creatorAccount?.username || null,
+            creator_first_name: creatorAccount?.first_name || null,
+            opponent_username: opponentAccount?.username || null,
+            opponent_first_name: opponentAccount?.first_name || null,
+            winner_id: winnerId,
             creator_score: creatorResult.score, opponent_score: opponentResult.score,
             creator_result: creatorResult.drops, opponent_result: opponentResult.drops
           },
@@ -1910,6 +2100,11 @@ const server = http.createServer(async (req, res) => {
       }
 
       await ensureUser(user, req);
+      const body = await readBody(req);
+      const requestId = String(body.request_id || '');
+      if (!/^[a-zA-Z0-9_-]{12,80}$/.test(requestId)) {
+        return send(res, 400, { error: 'Некорректный ID прокрутки. Обнови страницу и попробуй ещё раз.' });
+      }
 
       const client = await pool.connect();
 
@@ -1929,6 +2124,14 @@ const server = http.createServer(async (req, res) => {
         }
 
         const account = result.rows[0];
+        const priorSpin = await client.query(
+          'SELECT response FROM spin_requests WHERE telegram_id = $1 AND request_id = $2',
+          [String(user.id), requestId]
+        );
+        if (priorSpin.rowCount) {
+          await client.query('COMMIT');
+          return send(res, 200, { ...priorSpin.rows[0].response, replayed: true });
+        }
 
         if (account.free_spins <= 0 && account.silver < 20) {
           await client.query('ROLLBACK');
@@ -1951,15 +2154,18 @@ const server = http.createServer(async (req, res) => {
           `, [String(user.id)]);
         }
 
+        const welcomeGift = Boolean(account.welcome_gift_available);
         const chance = crypto.randomInt(100000);
-        let prize = 'nothing';
+        let prize = welcomeGift ? 'ordinary' : 'nothing';
 
-        if (chance >= 99999) {
-          prize = 'rare';
-        } else if (chance >= 94999) {
-          prize = 'unusual';
-        } else if (chance >= 79999) {
-          prize = 'ordinary';
+        if (!welcomeGift) {
+          if (chance >= 99999) {
+            prize = 'rare';
+          } else if (chance >= 94999) {
+            prize = 'unusual';
+          } else if (chance >= 79999) {
+            prize = 'ordinary';
+          }
         }
 
         const history = await client.query(`
@@ -1984,9 +2190,11 @@ const server = http.createServer(async (req, res) => {
             { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
             { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
           ];
-          const giftPool = prize === 'ordinary'
-            ? ordinaryGifts
-            : PRODUCTS.filter(product => prize === 'unusual'
+          const giftPool = welcomeGift
+            ? ordinaryGifts.filter(gift => Number(gift.stars) === 15)
+            : prize === 'ordinary'
+              ? ordinaryGifts
+              : PRODUCTS.filter(product => prize === 'unusual'
               ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
               : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
           if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
@@ -2014,6 +2222,10 @@ const server = http.createServer(async (req, res) => {
           `, [claimId, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
         }
 
+        if (welcomeGift) {
+          await client.query('UPDATE users SET welcome_gift_available = FALSE WHERE telegram_id = $1', [String(user.id)]);
+        }
+
         await awardXp(client, String(user.id), 10, 'spin', `spin:${history.rows[0].id}`);
         await recordActivity(client, String(user.id), 'spin_completed', `spin:${history.rows[0].id}`);
 
@@ -2023,16 +2235,22 @@ const server = http.createServer(async (req, res) => {
           WHERE telegram_id = $1
         `, [String(user.id)]);
 
-        await client.query('COMMIT');
-
-        return send(res, 200, {
+        const response = {
           result: prize === 'nothing' ? 'none' : prize,
           prize,
           silver: updated.rows[0].silver,
           free_spins: updated.rows[0].free_spins,
           claim_id: claimId,
-          gift: winningGift
-        });
+          gift: winningGift,
+          welcome_gift: welcomeGift
+        };
+        await client.query(
+          'INSERT INTO spin_requests (telegram_id, request_id, response) VALUES ($1, $2, $3::jsonb)',
+          [String(user.id), requestId, JSON.stringify(response)]
+        );
+        await client.query('COMMIT');
+
+        return send(res, 200, response);
 
       } catch (error) {
         await client.query('ROLLBACK');

@@ -1834,6 +1834,363 @@ body.gd-legal-locked{overflow:hidden}
 @keyframes progressSpark{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
 @media(prefers-reduced-motion:reduce){.progress-cube,.progress-spark{animation:none!important}}
 
+
+/* Mini-games: fluid, touch-first surfaces */
+.gd-games-intro{padding:6px 2px 18px}
+.gd-games-intro h1{font:800 29px 'Playfair Display';margin:7px 0;color:#f4dfa5}
+.gd-games-grid{display:grid;gap:13px}
+.gd-game-card{
+ position:relative;overflow:hidden;border:1px solid rgba(214,179,106,.23);
+ border-radius:20px;padding:17px;background:linear-gradient(145deg,rgba(38,32,22,.96),rgba(15,15,14,.98));
+ box-shadow:0 12px 32px rgba(0,0,0,.2);transform:translateZ(0);
+ transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s
+}
+.gd-game-card:before{content:"";position:absolute;inset:-40% -20% auto;height:110px;background:radial-gradient(ellipse,rgba(238,203,127,.12),transparent 68%);pointer-events:none}
+.gd-game-card:active{transform:scale(.985)}
+.gd-game-card-head{display:flex;align-items:center;gap:13px;position:relative}
+.gd-game-icon{width:54px;height:54px;flex:0 0 54px;border-radius:16px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,#4b3920,#211a11);border:1px solid rgba(244,223,165,.25);box-shadow:inset 0 1px rgba(255,255,255,.1)}
+.gd-game-title{font:700 18px 'Playfair Display';color:#f4dfa5}
+.gd-game-meta{font-size:10px;color:#aaa08c;margin-top:5px;letter-spacing:.6px}
+.gd-game-description{font-size:12px;line-height:1.65;color:#a9a293;margin:13px 0 4px;position:relative}
+.gd-game-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.gd-game-foot span{font-size:10px;color:#d2bd8d}
+.gd-game-foot button{width:auto;min-width:116px;margin:0;padding:12px 15px}
+.gd-game-stage{margin-top:14px;min-height:180px;border:1px solid rgba(214,179,106,.18);border-radius:20px;padding:16px;background:radial-gradient(ellipse at 50% 0,rgba(214,179,106,.09),transparent 65%),#10100e}
+.gd-game-stage h3{font:700 20px 'Playfair Display';color:#f4dfa5;margin:0 0 8px}
+.gd-game-stage p{font-size:12px;color:#aaa18e;line-height:1.6}
+.gd-game-stage button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.gd-reaction-arena{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.gd-reaction-target{aspect-ratio:1;border-radius:17px;border:1px solid rgba(244,223,165,.18);background:linear-gradient(145deg,#282319,#14120e);color:#766b54;font-size:25px;display:grid;place-items:center;margin:0;padding:0;transition:transform .12s,background .15s,box-shadow .15s}
+.gd-reaction-target.is-target{background:radial-gradient(circle at 35% 25%,#f7e4a9,#a77c36 70%);color:#21190d;box-shadow:0 0 25px rgba(236,194,108,.32);animation:gdTargetIn .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes gdTargetIn{from{transform:scale(.82);opacity:.6}to{transform:scale(1);opacity:1}}
+.gd-game-score{display:flex;justify-content:space-between;gap:10px;color:#c9b98e;font-size:12px;font-variant-numeric:tabular-nums}
+.gd-game-score strong{font-size:19px;color:#f4dfa5}
+.gd-safe-input{font-size:24px!important;letter-spacing:9px;text-align:center;max-width:220px;margin:14px auto;display:block}
+.gd-safe-history{display:grid;gap:7px;margin-top:12px}
+.gd-safe-row{display:flex;justify-content:space-between;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.035);font-size:12px;color:#d5c9ad}
+.gd-memory-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:15px}
+.gd-memory-card{aspect-ratio:1;border:1px solid rgba(214,179,106,.23);border-radius:13px;background:linear-gradient(145deg,#2b251a,#15130f);color:#d8c18a;font-size:24px;display:grid;place-items:center;margin:0;padding:0;transition:transform .18s,background .18s,border-color .18s}
+.gd-memory-card.is-open,.gd-memory-card.is-matched{background:linear-gradient(145deg,#f1d99c,#a47b3e);color:#21190d;border-color:#f4dfa5;transform:rotateY(0deg)}
+.gd-memory-card.is-matched{opacity:.68}
+.gd-game-result{padding:17px;border-radius:15px;background:rgba(214,179,106,.08);border:1px solid rgba(214,179,106,.2);color:#f4dfa5;text-align:center;margin-top:13px}
+.gd-game-result strong{display:block;font:700 25px 'Playfair Display';margin-bottom:5px}
+.gd-game-back{margin-top:13px}
+@media(hover:hover){.gd-game-card:hover{transform:translateY(-3px);border-color:rgba(244,223,165,.42);box-shadow:0 17px 38px rgba(0,0,0,.28)}}
+@media(prefers-reduced-motion:reduce){.gd-game-card,.gd-reaction-target,.gd-memory-card{transition:none!important;animation:none!important}}
+
+
+/* Consistent low-latency motion across the Mini App */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.tab-page.active,.tab-page.is-leaving{will-change:opacity,transform;backface-visibility:hidden}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+
+/* Smooth cube interactions — first isolated polish pass */
+#tab-home .home-grid .home-tile{
+  transform:translate3d(0,0,0) scale(1);
+  transform-origin:50% 55%;
+  transition:transform .46s cubic-bezier(.2,.78,.22,1),
+             box-shadow .46s cubic-bezier(.2,.78,.22,1),
+             filter .46s ease,
+             border-color .46s ease;
+  backface-visibility:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+#tab-home .home-grid .home-tile .tile-art{
+  transition:transform .55s cubic-bezier(.2,.78,.22,1);
+  transform:translateZ(0);
+}
+#tab-home .home-grid .home-tile:active{
+  transform:translate3d(0,1px,0) scale(.965);
+  filter:brightness(1.08);
+  transition-duration:.12s;
+}
+@media(hover:hover) and (pointer:fine){
+  #tab-home .home-grid .home-tile:hover{
+    transform:translate3d(0,-5px,0) scale(1.025);
+    filter:brightness(1.09) saturate(1.06);
+  }
+  #tab-home .home-grid .home-tile:hover .tile-art{
+    transform:scale(1.035);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-home .home-grid .home-tile,
+  #tab-home .home-grid .home-tile .tile-art{
+    transition:none!important;
+  }
+}
+
+
+/* GiftsDrop smoothness pass 1 — общие переходы интерфейса */
+:root{
+  --gd-motion-fast:180ms;
+  --gd-motion-normal:260ms;
+  --gd-motion-ease:cubic-bezier(.22,.8,.25,1);
+}
+html{scroll-behavior:smooth}
+button,.nav-button,.home-tile,.gift-product,.prize-card,
+.card,.order-card,.request,.profile-win-item,.stat,
+input,select,textarea,.tab-page,.roulette-item,.win-chip{
+  transition:
+    transform var(--gd-motion-normal) var(--gd-motion-ease),
+    opacity var(--gd-motion-normal) var(--gd-motion-ease),
+    border-color var(--gd-motion-normal) var(--gd-motion-ease),
+    box-shadow var(--gd-motion-normal) var(--gd-motion-ease),
+    background-color var(--gd-motion-normal) var(--gd-motion-ease),
+    filter var(--gd-motion-normal) var(--gd-motion-ease);
+}
+button:not(:disabled),.nav-button,.home-tile,.gift-product{
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+button:not(:disabled):active,.nav-button:active,
+.home-tile:active,.gift-product:active{
+  transform:scale(.975);
+}
+@media(hover:hover) and (pointer:fine){
+  button:not(:disabled):hover,.nav-button:hover,
+  .home-tile:hover,.gift-product:hover{
+    transform:translateY(-2px);
+    filter:brightness(1.06);
+  }
+  .card:hover,.prize-card:hover,.order-card:hover{
+    border-color:rgba(185,162,255,.3);
+  }
+}
+button:focus-visible,.nav-button:focus-visible,
+.home-tile:focus-visible,.gift-product:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid rgba(185,162,255,.75);
+  outline-offset:3px;
+}
+.tab-page.active{animation:gdSmoothPageIn 260ms var(--gd-motion-ease) both}
+@keyframes gdSmoothPageIn{
+  from{opacity:0;transform:translate3d(0,7px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*:before,*:after{
+    scroll-behavior:auto!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+
+
+/* GIFTSDROP — refined touch + cube motion */
+#tab-home .home-grid .home-tile{
+  transform:translate3d(0,0,0);
+  transform-origin:center;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  transition:
+    transform 360ms cubic-bezier(.2,.78,.22,1),
+    box-shadow 360ms cubic-bezier(.2,.78,.22,1),
+    border-color 360ms ease,
+    filter 360ms ease;
+}
+#tab-home .home-grid .home-tile .tile-art{
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  transition:opacity 360ms ease;
+}
+#tab-home .home-grid .home-tile:active{
+  transform:translate3d(0,1px,0) scale(.985)!important;
+  filter:brightness(1.08);
+}
+@media(hover:hover) and (pointer:fine){
+  #tab-home .home-grid .home-tile:hover{
+    transform:translate3d(0,-3px,0) scale(1.008);
+  }
+}
+button,.nav-button,.gift-product,.prize-card,.card,.order-card,.battle-lobby-item,.battle-player,.battle-drop{
+  transition:
+    transform 280ms cubic-bezier(.2,.78,.22,1),
+    box-shadow 280ms cubic-bezier(.2,.78,.22,1),
+    border-color 280ms ease,
+    background-color 280ms ease,
+    opacity 280ms ease;
+}
+button:not(:disabled):active,.nav-button:active,.gift-product:active,.prize-card:active{
+  transform:scale(.985);
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-home .home-grid .home-tile,
+  #tab-home .home-grid .home-tile .tile-art,
+  button,.nav-button,.gift-product,.prize-card,.card,.order-card,.battle-lobby-item,.battle-player,.battle-drop{
+    transition:none!important;
+    animation:none!important;
+  }
+}
+
+
+/* GIFTSDROP — roulette and gift-card motion polish */
+.roulette-window{
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
+}
+.roulette-track{
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+.roulette-item{
+  transform:translateZ(0);
+  transition:
+    transform 240ms cubic-bezier(.2,.78,.22,1),
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    filter 240ms ease;
+}
+.roulette-item-art img{
+  opacity:0;
+  animation:gdGiftImageReveal 320ms ease forwards;
+}
+@keyframes gdGiftImageReveal{to{opacity:1}}
+@media(hover:hover) and (pointer:fine){
+  .roulette-item:not(.roulette-item-winner):hover{
+    transform:translate3d(0,-3px,0) scale(1.025);
+    filter:brightness(1.08);
+    border-color:rgba(185,162,255,.52);
+  }
+  .gift-product:hover,.prize-card:hover{
+    transform:translate3d(0,-2px,0);
+  }
+}
+.gift-product img,.prize-card img{
+  transition:transform 320ms cubic-bezier(.2,.78,.22,1),opacity 240ms ease;
+}
+@media(hover:hover) and (pointer:fine){
+  .gift-product:hover img,.prize-card:hover img{
+    transform:scale(1.045);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .roulette-item,.gift-product,.prize-card,
+  .gift-product img,.prize-card img{
+    transition:none!important;
+  }
+  .roulette-item-art img{animation:none;opacity:1}
+}
+
+
+/* GIFTSDROP — mini-game interaction polish */
+.gd-game-card,.gd-game-stage,.gd-game-result,.gd-safe-row{
+  transform:translateZ(0);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+.gd-game-card{
+  transition:transform 300ms cubic-bezier(.2,.78,.22,1),
+    border-color 260ms ease,box-shadow 300ms ease,filter 260ms ease;
+}
+.gd-game-stage:not([hidden]){
+  animation:gdMiniStageEnter 340ms cubic-bezier(.2,.78,.22,1) both;
+}
+@keyframes gdMiniStageEnter{
+  from{opacity:0;transform:translate3d(0,9px,0) scale(.992)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+.gd-reaction-target{
+  transition:transform 180ms cubic-bezier(.2,.78,.22,1),
+    background-color 180ms ease,box-shadow 180ms ease,border-color 180ms ease;
+}
+.gd-reaction-target:not(:disabled):active{
+  transform:scale(.94);
+}
+.gd-reaction-target.is-target{
+  box-shadow:0 0 0 1px rgba(255,235,185,.18),0 8px 25px rgba(236,194,108,.2);
+}
+.gd-memory-card{
+  transform:translateZ(0);
+  transition:transform 220ms cubic-bezier(.2,.78,.22,1),
+    background-color 220ms ease,border-color 220ms ease,box-shadow 220ms ease;
+}
+.gd-memory-card:not(:disabled):active{
+  transform:scale(.94);
+}
+.gd-memory-card.is-open{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 5px 14px rgba(0,0,0,.18);
+}
+.gd-memory-card.is-matched{
+  box-shadow:0 0 15px rgba(214,179,106,.14);
+}
+.gd-safe-row{
+  animation:gdSafeRowEnter 220ms ease both;
+}
+@keyframes gdSafeRowEnter{
+  from{opacity:0;transform:translate3d(0,4px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+.gd-game-result{
+  animation:gdMiniResultEnter 360ms cubic-bezier(.2,.78,.22,1) both;
+}
+@keyframes gdMiniResultEnter{
+  from{opacity:0;transform:translate3d(0,8px,0) scale(.98)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .gd-game-stage:not([hidden]),.gd-safe-row,.gd-game-result{
+    animation:none!important;
+  }
+  .gd-game-card,.gd-reaction-target,.gd-memory-card{
+    transition:none!important;
+  }
+}
+
+
+/* Touch-first polish: predictable feedback without slowing taps */
+button,.gift-product,.stat,.upgrade-source-item,.upgrade-target-item,
+.gd-memory-card,.gd-reaction-target{
+ -webkit-tap-highlight-color:transparent;
+}
+button{
+ transition:transform .18s cubic-bezier(.2,.75,.25,1),filter .18s ease,box-shadow .18s ease,opacity .18s ease;
+}
+button:active:not(:disabled){
+ transform:translateY(1px) scale(.985);
+ filter:brightness(1.08);
+}
+button:focus-visible,.upgrade-source-item:focus-visible,
+.upgrade-target-item:focus-visible,.gd-memory-card:focus-visible,
+.gd-reaction-target:focus-visible{
+ outline:2px solid #74e5ff;
+ outline-offset:3px;
+}
+.gift-product,.stat,.upgrade-source-item,.upgrade-target-item{
+ transition:transform .22s cubic-bezier(.2,.75,.25,1),border-color .22s ease,box-shadow .22s ease,background .22s ease;
+}
+.gift-art img,.upgrade-source-art img,.upgrade-target-art img{
+ transition:transform .35s cubic-bezier(.2,.75,.25,1),filter .35s ease;
+}
+.gift-art img{filter:drop-shadow(0 5px 12px rgba(0,0,0,.28))}
+.gd-memory-card{perspective:700px;transform:translateZ(0)}
+.gd-reaction-target:active:not(:disabled),.gd-memory-card:active:not(:disabled){
+ transform:scale(.95);
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .gift-product:hover,.upgrade-source-item:hover,.upgrade-target-item:hover{
+  transform:translateY(-3px);
+  border-color:rgba(116,229,255,.42);
+  box-shadow:0 12px 28px rgba(0,0,0,.22);
+ }
+ .gift-product:hover .gift-art img,.upgrade-source-item:hover img,.upgrade-target-item:hover img{
+  transform:scale(1.055);
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ button,.gift-product,.stat,.upgrade-source-item,.upgrade-target-item,
+ .gift-art img,.upgrade-source-art img,.upgrade-target-art img{
+  transition:none!important;
+ }
+}
+
 </style>
 </head>
 <body>
@@ -1950,6 +2307,9 @@ body.gd-legal-locked{overflow:hidden}
    <span class="tile-art progress-tile-art" aria-hidden="true"><span class="progress-cube"><i>XP</i></span><span class="progress-orbit orbit-a"></span><span class="progress-orbit orbit-b"></span><span class="progress-spark spark-a">✦</span><span class="progress-spark spark-b">✧</span><span class="tile-art-caption">LEVEL UP SYSTEM</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОГРЕСС</span><span class="home-tile-subtitle">Ежедневные задания, XP и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
+   <button class="home-tile home-tile-prizes" onclick="showTab('minigames')" aria-label="Открыть мини-игры">
+   <span class="tile-art prizes-art" aria-hidden="true"><i>⚡</i><b>🎮</b><em>🧠</em><small>✦</small></span><span class="home-tile-icon"><span class="gd-home-emoji">🎮</span></span><span class="home-tile-copy"><span class="home-tile-title">МИНИ-ИГРЫ</span><span class="home-tile-subtitle">Три режима • 15 серебра за запуск</span></span><span class="home-tile-arrow">↗</span>
+  </button>
  </div>
 </section>
 
@@ -1986,7 +2346,7 @@ body.gd-legal-locked{overflow:hidden}
   <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ ✦</button>
   <div id="message"></div>
   <div class="notice">
-   Первые 3 прокрутки бесплатные. Далее стоимость одной прокрутки — 20 серебра.
+   Новым пользователям первая прокрутка гарантированно выдаёт подарок стоимостью 15 ⭐ (это одна из трёх бесплатных стартовых прокруток). Далее действуют указанные выше шансы: первые 3 прокрутки бесплатные, затем одна прокрутка стоит 20 серебра.
    Выдача NFT осуществляется администратором после проверки результата.
   </div>
  </div>
@@ -2200,7 +2560,7 @@ body.gd-legal-locked{overflow:hidden}
  <div class="upgrade-hero upgrade-hero-pro"><div class="upgrade-wheel" aria-label="Круг апгрейда NFT"><div class="upgrade-wheel-ring"></div><div class="upgrade-wheel-track"><span>🎁</span><span>💎</span><span>🎀</span><span>⭐</span><span>🧸</span><span>💠</span><span>🎁</span><span>✨</span></div><div class="upgrade-wheel-pointer">▼</div><div class="upgrade-wheel-core"><div class="upgrade-wheel-icon">⚡</div><b> NFT </b><small>UPGRADE</small></div><div class="upgrade-wheel-glow"></div></div><div class="rocket-eyebrow">GIFT EVOLUTION SYSTEM</div><h1>ПОДНИМИ УРОВЕНЬ</h1><p>Выбери свой подарок, цель и испытай удачу. Чем дороже цель — тем ниже шанс успеха.</p><div class="upgrade-mini-stats"><span>🎁 ТВОЙ NFT</span><b>➜</b><span>💎 НОВЫЙ УРОВЕНЬ</span></div></div>
  <div class="card upgrade-card upgrade-selector-card">
   <div class="section-tag">ШАГ 01 • ИСХОДНЫЙ ПРЕДМЕТ</div><h2>Что улучшаем?</h2><p class="upgrade-subtext">Выбери NFT из своего инвентаря.</p>
-  <div id="upgradeSourceList" class="upgrade-source-list"><div class="upgrade-empty">Загружаем твой инвентарь…</div></div>
+  <div id="upgradeSourceList" class="upgrade-source-list"><div class="upgrade-empty">Загружаем NFT из твоего инвентаря…</div></div>
   <div class="section-tag upgrade-step-two">ШАГ 02 • ЖЕЛАЕМЫЙ ПРИЗ</div><h2>На что меняем?</h2>
   <div id="upgradeTargetList" class="upgrade-target-grid"><div class="upgrade-empty">Сначала выбери исходный предмет.</div></div>
   <div class="upgrade-chance-panel"><div><small>ТВОЙ ШАНС УСПЕХА</small><b id="upgradeChance">—%</b></div><div class="upgrade-chance-track"><span id="upgradeChanceFill"></span></div><p id="upgradeChanceCaption">Выбери предмет и цель, чтобы увидеть шанс.</p></div>
@@ -2224,6 +2584,42 @@ body.gd-legal-locked{overflow:hidden}
  <div class="card"><div class="section-tag">RECENT EXPERIENCE</div><h2>История опыта</h2><div id="coreXpHistory"><p class="muted">Загружаем историю…</p></div></div>
  <div class="card"><div class="section-tag">DAILY + WEEKLY</div><h2>Задания</h2><div id="coreMissionList"><p class="muted">Загружаем задания…</p></div></div>
  <div class="card"><div class="section-tag">MILESTONES</div><h2>Достижения</h2><div id="coreAchievementList"><p class="muted">Загружаем достижения…</p></div></div>
+</section>
+
+
+<section class="tab-page" id="tab-minigames">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>АРЕНА</span></div>
+ <div class="gd-games-intro">
+  <div class="section-tag">GIFTDROP ARCADE</div>
+  <h1>Мини-игры</h1>
+  <p class="muted">Три коротких испытания. Каждый запуск стоит 15 серебра. Наград серебром и NFT нет — только личный результат.</p>
+ </div>
+ <div class="card">
+  <div class="stats">
+   <div class="stat"><small>Стоимость запуска</small><strong>15</strong></div>
+   <div class="stat"><small>Серебро на балансе</small><strong id="gdMiniBalance">—</strong></div>
+  </div>
+  <div class="notice">Лимиты в сутки (UTC): Реакция — 5 запусков, Сейф — 3, Память — 5. Повторное нажатие не спишет серебро дважды.</div>
+ </div>
+ <div class="gd-games-grid" id="gdMiniGameList">
+  <article class="gd-game-card">
+   <div class="gd-game-card-head"><div class="gd-game-icon">⚡</div><div><div class="gd-game-title">Reaction Arena</div><div class="gd-game-meta">30 СЕКУНД • 5 ЗАПУСКОВ В ДЕНЬ</div></div></div>
+   <p class="gd-game-description">Попадай по подсвеченной мишени как можно быстрее. Сервер проверяет каждое нажатие.</p>
+   <div class="gd-game-foot"><span>15 серебра</span><button onclick="startGdMiniGame('reaction')">ИГРАТЬ</button></div>
+  </article>
+  <article class="gd-game-card">
+   <div class="gd-game-card-head"><div class="gd-game-icon">🔐</div><div><div class="gd-game-title">Взлом сейфа</div><div class="gd-game-meta">4 ЦИФРЫ • 8 ПОПЫТОК • 3 ЗАПУСКА В ДЕНЬ</div></div></div>
+   <p class="gd-game-description">Найди секретный код. После каждой комбинации получай подсказку о точных и неверно расположенных цифрах.</p>
+   <div class="gd-game-foot"><span>15 серебра</span><button onclick="startGdMiniGame('safe')">ИГРАТЬ</button></div>
+  </article>
+  <article class="gd-game-card">
+   <div class="gd-game-card-head"><div class="gd-game-icon">🧠</div><div><div class="gd-game-title">Memory Battle</div><div class="gd-game-meta">16 КАРТОЧЕК • 8 ПАР • 5 ЗАПУСКОВ В ДЕНЬ</div></div></div>
+   <p class="gd-game-description">Открывай карточки, запоминай символы и собери все пары за минимальное число ходов.</p>
+   <div class="gd-game-foot"><span>15 серебра</span><button onclick="startGdMiniGame('memory')">ИГРАТЬ</button></div>
+  </article>
+ </div>
+ <div class="gd-game-stage" id="gdMiniStage" hidden></div>
+ <div id="gdMiniMessage" role="status" aria-live="polite"></div>
 </section>
 
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
@@ -2262,7 +2658,36 @@ initHomeProfileTile();
 
 let referralLink = '';
 let spinning = false;
+let pendingSpinRequestId = null;
 let catalogLoaded = false;
+
+const SPIN_REQUEST_STORAGE_KEY = 'gd_pending_spin_request';
+
+function createSpinRequestId() {
+ if(window.crypto&&typeof window.crypto.randomUUID==='function') {
+  return window.crypto.randomUUID();
+ }
+ return 'spin_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);
+}
+
+function getPendingSpinRequestId() {
+ if(pendingSpinRequestId) return pendingSpinRequestId;
+ try {
+  const saved=sessionStorage.getItem(SPIN_REQUEST_STORAGE_KEY);
+  if(saved&&/^[a-zA-Z0-9_-]{12,80}$/.test(saved)) {
+   pendingSpinRequestId=saved;
+   return saved;
+  }
+ }catch(error){}
+ pendingSpinRequestId=createSpinRequestId();
+ try{sessionStorage.setItem(SPIN_REQUEST_STORAGE_KEY,pendingSpinRequestId);}catch(error){}
+ return pendingSpinRequestId;
+}
+
+function clearPendingSpinRequestId() {
+ pendingSpinRequestId=null;
+ try{sessionStorage.removeItem(SPIN_REQUEST_STORAGE_KEY);}catch(error){}
+}
 
 (function initChristmasDecor(){
  const layer=document.getElementById('gdSnowLayer');if(!layer)return;
@@ -2281,29 +2706,23 @@ let catalogLoaded = false;
 loadRecentWins();
 setInterval(loadRecentWins, 60000);
 
-// Динамический счётчик: диапазон зависит от времени суток, значение плавно меняется каждую секунду.
+// Показываем только реальное число игроков, недавно обращавшихся к серверу.
 const activityCount = document.getElementById('activityCount');
-if (activityCount) {
- const getOnlineRange = () => {
-  const hour = new Date().getHours();
-  return hour >= 18
-   ? { min: 1000, max: 2500 }
-   : { min: 100, max: 300 };
- };
- let onlineRange = getOnlineRange();
- let displayedOnline = onlineRange.min + Math.floor(Math.random() * (onlineRange.max - onlineRange.min + 1));
- activityCount.textContent = displayedOnline;
- setInterval(() => {
-  const nextRange = getOnlineRange();
-  if (nextRange.min !== onlineRange.min || nextRange.max !== onlineRange.max) {
-   onlineRange = nextRange;
-   displayedOnline = Math.max(onlineRange.min, Math.min(onlineRange.max, displayedOnline));
-  }
-  const step = Math.floor(Math.random() * 19) - 9;
-  displayedOnline = Math.max(onlineRange.min, Math.min(onlineRange.max, displayedOnline + step));
-  activityCount.textContent = displayedOnline;
- }, 1000);
+async function refreshOnlineCount() {
+ if(!activityCount)return;
+ try {
+  const response=await fetch('/api/online',{cache:'no-store'});
+  if(!response.ok)throw new Error('online unavailable');
+  const data=await response.json();
+  const online=Number(data.online);
+  activityCount.textContent=Number.isSafeInteger(online)&&online>=0
+   ?online.toLocaleString('ru-RU'):'—';
+ } catch(error) {
+  activityCount.textContent='—';
+ }
 }
+refreshOnlineCount();
+setInterval(refreshOnlineCount,20000);
 
 async function loadRecentWins() {
  const track=document.getElementById('winsTickerTrack');
@@ -2383,9 +2802,230 @@ async function loadRecentWins() {
  }
 }
 
+
+const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0, pendingStart:null, finishPending:false, generation:0 };
+async function loadGdMiniBalance() {
+ try {
+  const data=await api('/api/me');
+  const balance=document.getElementById('gdMiniBalance');
+  if(balance)balance.textContent=String(data.silver??'—');
+ } catch(error) {}
+}
+function gdMiniMessage(message) {
+ const node=document.getElementById('gdMiniMessage');
+ if(node) node.textContent=message||'';
+}
+function gdMiniEmoji(value) {
+ return ['','💎','🌙','🔥','🍀','👑','⚡','🎁','🪐'][Number(value)]||'✦';
+}
+function gdMiniCreateRequestId() {
+ if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();
+ return 'gdmini_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);
+}
+async function gdMiniAction(payload, sessionId) {
+ const targetSessionId=sessionId||gdMini.session?.id;
+ if(!targetSessionId)throw new Error('Игровой раунд уже закрыт.');
+ const body={...payload,action_id:gdMiniCreateRequestId()};
+ let lastError;
+ for(let attempt=0;attempt<2;attempt++) {
+  try {
+   return await api('/api/minigames/sessions/'+targetSessionId+'/action',{method:'POST',body:JSON.stringify(body)});
+  } catch(error) {
+   lastError=error;
+   if(attempt===0&&(!error.status||error.status>=500)) {
+    await new Promise(resolve=>setTimeout(resolve,350));
+    continue;
+   }
+   throw error;
+  }
+ }
+ throw lastError||new Error('Не удалось выполнить действие');
+}
+function gdMiniStopTimer() {
+ if(gdMini.timer){clearInterval(gdMini.timer);gdMini.timer=null;}
+}
+async function startGdMiniGame(game) {
+ if(gdMini.locked)return;
+ if(gdMini.pendingStart&&gdMini.pendingStart.game!==game){gdMiniMessage('Сначала повтори запуск предыдущей игры, чтобы проверить его результат.');return;}
+ gdMini.locked=true;gdMiniMessage('Запускаем игру…');
+ try {
+  const requestId=gdMini.pendingStart?.game===game?gdMini.pendingStart.requestId:gdMiniCreateRequestId();
+  gdMini.pendingStart={game,requestId};
+  let data;
+  for(let attempt=0;attempt<2;attempt++) {
+   try {
+    data=await api('/api/minigames/start',{method:'POST',body:JSON.stringify({game,request_id:requestId})});
+    break;
+   } catch(error) {
+    if(error.status&&error.status<500){gdMini.pendingStart=null;throw error;}
+    if(attempt===1)throw error;
+    await new Promise(resolve=>setTimeout(resolve,350));
+   }
+  }
+  gdMini.pendingStart=null;
+  gdMini.session=data.session;gdMini.safeHistory=[];gdMini.memoryHideAt=0;
+  const balance=document.getElementById('gdMiniBalance');if(balance)balance.textContent=String(data.balance);
+  const balanceTop=document.getElementById('silver');if(balanceTop)balanceTop.textContent=String(data.balance);
+  document.getElementById('gdMiniGameList').hidden=true;
+  const stage=document.getElementById('gdMiniStage');stage.hidden=false;
+  renderGdMiniGame();
+  gdMiniMessage('');
+ } catch(error) { gdMiniMessage(error.message||'Не удалось запустить игру'); }
+ finally {gdMini.locked=false;}
+}
+function renderGdMiniGame() {
+ const s=gdMini.session;if(!s)return;
+ const stage=document.getElementById('gdMiniStage');
+ gdMiniStopTimer();
+ if(s.status!=='active') {
+  stage.innerHTML='<div class="gd-game-result"><strong>Раунд завершён</strong><span>'+escapeGdText(s.message||'Результат сохранён')+'</span><p>Результат: '+Number(s.score||0)+'</p><p>Опыт: +'+Number(s.xp_awarded||0)+' XP</p></div><button class="secondary gd-game-back" onclick="closeGdMiniGame()">ВЕРНУТЬСЯ К ИГРАМ</button>';
+  return;
+ }
+ if(s.game==='reaction') {
+  stage.innerHTML='<h3>Reaction Arena</h3><div class="gd-game-score"><span>ПОПАДАНИЯ <strong id="gdReactionHits">'+Number(s.state.hits||0)+'</strong></span><span>ОСТАЛОСЬ <strong id="gdReactionTime">30.0</strong></span></div><div class="gd-reaction-arena" id="gdReactionArena"></div><p>Нажимай только на подсвеченную мишень. Раунд длится 30 секунд.</p>';
+  drawGdReaction();
+  const start=Date.now();
+  gdMini.timer=setInterval(()=>{
+   const left=Math.max(0,30000-(Date.now()-new Date(s.state.started_at||Date.now()).getTime()));
+   const node=document.getElementById('gdReactionTime');if(node)node.textContent=(left/1000).toFixed(1);
+   if(left<=0){gdMiniStopTimer();finishGdReaction();}
+  },80);
+ } else if(s.game==='safe') {
+  stage.innerHTML='<h3>🔐 Взлом сейфа</h3><p>Введи четырёхзначный код. Цифры могут повторяться.</p><div class="gd-game-score"><span>ПОПЫТКИ <strong id="gdSafeAttempts">'+Number(s.state.attempts||0)+'/8</strong></span><span>ПОДСКАЗКА <strong id="gdSafeHint">—</strong></span></div><input class="gd-safe-input" id="gdSafeGuess" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="••••"><button onclick="submitGdSafeGuess()">ПРОВЕРИТЬ КОД</button><div class="gd-safe-history" id="gdSafeHistory"></div>';
+  const input=document.getElementById('gdSafeGuess');input.addEventListener('input',()=>{input.value=input.value.replace(/[^0-9]/g,'').slice(0,4);});
+ } else {
+  stage.innerHTML='<h3>🧠 Memory Battle</h3><div class="gd-game-score"><span>ХОДЫ <strong id="gdMemoryMoves">'+Number(s.state.moves||0)+'</strong></span><span>ПАРЫ <strong id="gdMemoryPairs">'+Number(s.state.matched.length/2)+'/8</strong></span></div><div class="gd-memory-board" id="gdMemoryBoard"></div>';
+  drawGdMemory();
+ }
+}
+function escapeGdText(value) {
+ return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function drawGdReaction() {
+ const s=gdMini.session;if(!s)return;
+ const arena=document.getElementById('gdReactionArena');if(!arena)return;
+ arena.replaceChildren();
+ for(let i=0;i<9;i++){
+  const button=document.createElement('button');button.className='gd-reaction-target'+(i===Number(s.state.target)?' is-target':'');
+  button.textContent=i===Number(s.state.target)?'✦':'·';button.disabled=gdMini.locked||s.status!=='active'||i!==Number(s.state.target);
+  button.addEventListener('click',()=>hitGdReaction(i));
+  arena.appendChild(button);
+ }
+}
+async function hitGdReaction(target) {
+ if(gdMini.locked||!gdMini.session)return;
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
+ gdMini.locked=true;
+ try {
+  const data=await gdMiniAction({action:'hit',target},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
+  gdMini.session=data.session;
+  const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
+  if(data.session.status!=='active')renderGdMiniGame();else drawGdReaction();
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {
+  if(generation===gdMini.generation) {
+   gdMini.locked=false;
+   if(gdMini.session?.game==='reaction'&&gdMini.session.status==='active')drawGdReaction();
+   if(gdMini.finishPending){gdMini.finishPending=false;finishGdReaction();}
+  }
+ }
+}
+async function finishGdReaction() {
+ if(!gdMini.session||gdMini.session.status!=='active')return;
+ if(gdMini.locked){gdMini.finishPending=true;return;}
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
+ gdMini.locked=true;
+ try {
+  const data=await gdMiniAction({action:'finish'},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
+  gdMini.session=data.session;renderGdMiniGame();
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {if(generation===gdMini.generation)gdMini.locked=false;}
+}
+async function submitGdSafeGuess() {
+ if(gdMini.locked||!gdMini.session)return;
+ const input=document.getElementById('gdSafeGuess');if(!input)return;
+ const guess=input.value;
+ if(!/^\d{4}$/.test(guess)){gdMiniMessage('Введи четыре цифры.');return;}
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
+ gdMini.locked=true;
+ try {
+  const data=await gdMiniAction({action:'guess',guess},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
+  gdMini.session=data.session;gdMini.safeHistory.push({guess,hint:data.session.state.last_hint});
+  renderGdMiniGame();
+  const hint=data.session.state.last_hint;
+  const hintNode=document.getElementById('gdSafeHint');
+  if(hintNode&&hint)hintNode.textContent=hint.exact+' точно · '+hint.misplaced+' рядом';
+  const attempts=document.getElementById('gdSafeAttempts');if(attempts)attempts.textContent=data.session.state.attempts+'/8';
+  const history=document.getElementById('gdSafeHistory');
+  if(history)history.innerHTML=gdMini.safeHistory.map(row=>'<div class="gd-safe-row"><b>'+row.guess+'</b><span>'+row.hint.exact+' точно · '+row.hint.misplaced+' рядом</span></div>').join('');
+  if(data.session.status==='active') {
+   const inputAgain=document.getElementById('gdSafeGuess');
+   if(inputAgain){inputAgain.value='';inputAgain.focus();}
+  }
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {if(generation===gdMini.generation)gdMini.locked=false;}
+}
+async function flipGdMemory(index) {
+ if(gdMini.locked||!gdMini.session)return;
+ const generation=gdMini.generation,sessionId=gdMini.session.id;
+ gdMini.locked=true;
+ try {
+  const data=await gdMiniAction({action:'flip',index},sessionId);
+  if(generation!==gdMini.generation||gdMini.session?.id!==sessionId)return;
+  gdMini.session=data.session;
+  if(data.session.state.mismatch_until)gdMini.memoryHideAt=Number(data.session.state.mismatch_until);
+  else gdMini.memoryHideAt=0;
+  renderGdMiniMemoryOnly();
+  if(gdMini.memoryHideAt) {
+   const wait=Math.max(0,gdMini.memoryHideAt-Date.now()+30);
+   setTimeout(()=>{if(generation===gdMini.generation&&gdMini.session?.id===sessionId&&gdMini.session.status==='active'){renderGdMiniMemoryOnly();}},wait);
+  }
+  if(data.session.status!=='active')renderGdMiniGame();
+ } catch(error) {if(generation===gdMini.generation)gdMiniMessage(error.message);}
+ finally {
+  if(generation===gdMini.generation) {
+   gdMini.locked=false;
+   if(gdMini.session?.game==='memory')drawGdMemory();
+  }
+ }
+}
+function renderGdMiniMemoryOnly() {
+ const s=gdMini.session;if(!s||s.game!=='memory')return;
+ const moves=document.getElementById('gdMemoryMoves');if(moves)moves.textContent=String(s.state.moves);
+ const pairs=document.getElementById('gdMemoryPairs');if(pairs)pairs.textContent=(s.state.matched.length/2)+'/8';
+ drawGdMemory();
+}
+function drawGdMemory() {
+ const s=gdMini.session;if(!s)return;
+ const board=document.getElementById('gdMemoryBoard');if(!board)return;
+ const visible=new Map((s.state.cards||[]).map(card=>[Number(card.index),Number(card.value)]));
+ const matched=new Set(s.state.matched||[]);
+ const open=new Set(s.state.open||[]);
+ const hideMismatch=Boolean(s.state.mismatch_until)&&Date.now()>=Number(s.state.mismatch_until);
+ board.replaceChildren();
+ for(let i=0;i<16;i++){
+  const shown=matched.has(i)||(open.has(i)&&!hideMismatch);
+  const button=document.createElement('button');
+  button.className='gd-memory-card'+(shown?' is-open':'')+(matched.has(i)?' is-matched':'');
+  button.textContent=shown?gdMiniEmoji(visible.get(i)):'?';
+  button.disabled=matched.has(i)||(open.has(i)&&!hideMismatch)||gdMini.locked||s.status!=='active'||Boolean(s.state.mismatch_until&&Date.now()<Number(s.state.mismatch_until));
+  button.addEventListener('click',()=>flipGdMemory(i));board.appendChild(button);
+ }
+}
+function closeGdMiniGame() {
+ gdMini.generation++;
+ gdMiniStopTimer();gdMini.session=null;gdMini.safeHistory=[];gdMini.locked=false;gdMini.finishPending=false;
+ document.getElementById('gdMiniStage').hidden=true;
+ document.getElementById('gdMiniGameList').hidden=false;
+ gdMiniMessage('');
+}
+
 let gdTabTransitionTimer = null;
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','upgrade','players','battles','progress'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','upgrade','players','battles','progress','minigames'];
  const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
  const targetId = 'tab-'+name;
  const target = document.getElementById(targetId);
@@ -2406,6 +3046,7 @@ function showTab(name) {
  },440);
  if(name==='home'){animateHomeBalanceTile();return;}
  if(name==='battles') loadNftBattles();
+ if(name==='minigames') loadGdMiniBalance();
   if(name==='progress') loadCore();
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
@@ -2758,7 +3399,7 @@ async function api(url, options={}) {
   }
  });
  const data = await response.json().catch(()=>({}));
- if(!response.ok) throw new Error(data.error||'Ошибка сервера');
+ if(!response.ok) {const error=new Error(data.error||'Ошибка сервера');error.status=response.status;throw error;}
  return data;
 }
 
@@ -2924,14 +3565,14 @@ async function buildRoulette(result,winningGift=null) {
 }
 
 
-function triggerWinCelebration(tier) {
+function triggerWinCelebration(tier,gift=null) {
  const layer=document.createElement('div');
  layer.className='win-fx-layer';
  layer.setAttribute('aria-hidden','true');
  document.body.appendChild(layer);
  const message=document.createElement('div');
  message.className='win-message';
- message.textContent='Ты смог🩷🏆';
+ message.textContent=gift&&gift.name?`Ты выиграл: ${gift.name} · ${Number(gift.stars)||0} ⭐`:'Ты смог🩷🏆';
  message.setAttribute('role','status');
  layer.appendChild(message);
  const colors=['#ffe69a','#ff72b6','#74e5ff','#b99aff','#ffffff'];
@@ -3003,18 +3644,21 @@ async function spin() {
  button.disabled=true;
  message.textContent='🎰 Лента подарков запускается...';
  try {
-  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({})});
+  const requestId=getPendingSpinRequestId();
+  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({request_id:requestId})});
   if(!['none','ordinary','unusual','rare'].includes(data.result)) {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
   await buildRoulette(data.result,data.gift||null);
-  if(data.result!=='none') triggerWinCelebration(data.result);
+  if(data.result!=='none') triggerWinCelebration(data.result,data.gift||null);
   else triggerLossCelebration();
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
+  else if(data.gift&&data.gift.name) message.textContent=(data.welcome_gift?'🎁 Приветственный подарок! ':'🎉 Ты выиграл: ')+data.gift.name+' — стоимость '+(Number(data.gift.stars)||0)+' ⭐. Заявка на выдачу оформлена.';
   else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
   else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
   else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
   await loadAccount();
+  clearPendingSpinRequestId();
  } catch(error) {
   message.textContent=error.message;
  } finally {
@@ -3414,27 +4058,43 @@ loadGiftCatalog();
 // Give players a wider entry window and avoid hammering the database every 650 ms.
 function loadUpgradeData(){
  const host=document.getElementById('upgradeSourceList');if(!host)return;
- host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
- Promise.all([api('/api/me/wins'),api('/api/store/catalog')]).then(([winsData,catalogData])=>{
-  upgradeInventory=Array.isArray(winsData.wins)?winsData.wins:[];upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
-  if(!upgradeInventory.length)upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];
+ host.textContent='Загружаем NFT из инвентаря…';
+ upgradeSource=null;upgradeTarget=null;
+ const button=document.getElementById('upgradeTryButton');if(button)button.disabled=true;
+ Promise.all([api('/api/me/inventory'),api('/api/store/catalog')]).then(([inventoryData,catalogData])=>{
+  upgradeInventory=(Array.isArray(inventoryData.items)?inventoryData.items:[])
+   .filter(item=>item.status==='owned'&&Number(item.inventory_id)>0);
+  upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
   renderUpgradeSources();
- }).catch(()=>{upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];upgradeCatalog=[];renderUpgradeSources();});
+ }).catch(error=>{
+  upgradeInventory=[];upgradeCatalog=[];
+  host.textContent=error.message||'Не удалось загрузить NFT. Попробуй обновить раздел.';
+  document.getElementById('upgradeTargetList').textContent='Список целей недоступен.';
+  updateUpgradeChance();
+ });
 }
 function renderUpgradeSources(){
  const host=document.getElementById('upgradeSourceList');host.replaceChildren();
+ if(!upgradeInventory.length){
+  const empty=document.createElement('div');empty.className='upgrade-empty';
+  empty.textContent='В инвентаре пока нет доступных NFT. Сначала получи подарок в GiftsDrop.';
+  host.appendChild(empty);
+  document.getElementById('upgradeTargetList').textContent='Для апгрейда нужен NFT из твоего инвентаря.';
+  updateUpgradeChance();return;
+ }
  upgradeInventory.forEach((item,index)=>{
   const button=document.createElement('button');button.type='button';button.className='upgrade-source-item'+(upgradeSource===index?' selected':'');button.onclick=()=>selectUpgradeSource(index);
   const art=document.createElement('div');art.className='upgrade-source-art';art.textContent=item.prize_type==='rare'?'💎':item.prize_type==='unusual'?'💜':'🎁';
   const name=document.createElement('b');name.textContent=String(item.prize_name||'NFT-подарок');
-  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐'+(item.preview?' · ПРИМЕР':'');
+  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐';
   button.append(art,name,value);host.appendChild(button);
  });
  if(upgradeSource===null)document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Выбери предмет выше, чтобы увидеть доступные цели.</div>';
 }
 function selectUpgradeSource(index){
+ if(!Number.isInteger(index)||!upgradeInventory[index])return;
  upgradeSource=index;upgradeTarget=null;renderUpgradeSources();
- const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||100;
+ const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||0;
  const targets=upgradeCatalog.filter(item=>Number(item.stars)>sourceValue).sort((a,b)=>Number(a.stars)-Number(b.stars)).slice(0,8);
  if(!targets.length){upgradeTarget=null;document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Нет подарков дороже этого предмета в каталоге. Попробуй другой NFT.</div>';updateUpgradeChance();return;}
  const host=document.getElementById('upgradeTargetList');host.replaceChildren();
