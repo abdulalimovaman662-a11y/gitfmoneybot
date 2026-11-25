@@ -1937,7 +1937,7 @@ const server = http.createServer(async (req, res) => {
             }
             drops.push({ prize, gift: winningGift, value: winningGift ? winningGift.stars : 0 });
           }
-          await awardXp(client, telegramId, spins * 10, 'nft_battle', `nft-battle:${battleId}:${telegramId}`);
+          await awardXp(client, telegramId, 20, 'nft_battle', `nft-battle:${battleId}:${telegramId}`);
           await recordActivity(client, telegramId, 'spin_completed', `battle-spins:${battleId}:${telegramId}`, spins);
           return { drops, score };
         };
