@@ -132,8 +132,12 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
       [String(telegramId), requestId]
     );
     if (existing.rowCount) {
-      await client.query('COMMIT');
       const row = existing.rows[0];
+      if (row.game_type !== gameType) {
+        await client.query('ROLLBACK');
+        return { status: 409, error: 'Этот ID запуска уже использован для другой игры.' };
+      }
+      await client.query('COMMIT');
       return { status: 200, session: {
         id: row.id, game: row.game_type, status: row.status, score: Number(row.score),
         state: safePublicState(row), created_at: row.created_at
