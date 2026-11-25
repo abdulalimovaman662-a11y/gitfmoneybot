@@ -3440,16 +3440,16 @@ async function completeGiftOrder(id,button) {
 }
 
 
-loadAccount();
-loadGiftCatalog();
-refreshRocketState();
-setInterval(()=>{if(document.getElementById('tab-rocket')?.classList.contains('active'))refreshRocketState();},650);
-
-
-// Rocket: authoritative rounds, balance and settlement are handled by the server.
+// Rocket state must exist before the first refresh call (avoid the let temporal dead zone).
 let rocketMode='silver',rocketRunning=false,rocketInterval=null,rocketMultiplier=1,rocketStake=0,rocketBetKind='silver',rocketRound=0,rocketBalance=0,rocketCurrentBet=null,rocketStartedAt=0,rocketStateBusy=false,rocketFreeJoined=false;
 let upgradeInventory=[],upgradeCatalog=[],upgradeSource=null,upgradeTarget=null,upgradeBusy=false;
 let rocketHistoryValues=[];
+
+loadAccount();
+loadGiftCatalog();
+refreshRocketState();
+// Give players a wider entry window and avoid hammering the database every 650 ms.
+setInterval(()=>{if(document.getElementById('tab-rocket')?.classList.contains('active'))refreshRocketState();},1200);
 function setRocketMode(mode){
  rocketMode=mode;
  document.getElementById('rocketSilverMode').classList.toggle('active',mode==='silver');
