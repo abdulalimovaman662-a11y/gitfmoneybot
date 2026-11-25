@@ -1795,6 +1795,28 @@ body.gd-legal-locked{overflow:hidden}
 @media(hover:hover){.gd-art-tile{transition:transform .25s ease,filter .25s ease}.gd-art-tile:hover{transform:translateY(-3px);filter:brightness(1.12)}}
 @media(prefers-reduced-motion:reduce){.rocket-tile-art:before,.rocket-tile-art .tile-art-object,.upgrade-tile-art:before,.upgrade-tile-art .tile-art-object,.gd-art-tile:hover{animation:none!important;transition:none!important}}
 
+
+/* Matching visual language inside the three game screens */
+#tab-rocket .rocket-topline{border:1px solid rgba(255,151,126,.22);background:linear-gradient(100deg,rgba(255,91,91,.12),rgba(130,76,255,.08));border-radius:13px;padding:11px 13px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+#tab-rocket .rocket-stage{border:1px solid rgba(255,156,124,.48);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 18px 48px rgba(0,0,0,.34),0 0 34px rgba(255,93,84,.12),inset 0 1px rgba(255,255,255,.14)}
+#tab-rocket .rocket-stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.07),transparent 30% 70%,rgba(255,110,91,.08))}
+#tab-rocket .rocket-multiplier{text-shadow:0 0 24px rgba(255,181,124,.7)}
+#tab-rocket .rocket-bet-card{border-color:rgba(255,132,112,.28);background:radial-gradient(ellipse at 100% 0%,rgba(255,112,93,.1),transparent 44%),linear-gradient(145deg,rgba(42,28,70,.98),rgba(20,18,48,.99))}
+#tab-upgrade .upgrade-hero-pro{border:1px solid rgba(103,231,255,.5);box-shadow:0 18px 42px rgba(0,0,0,.26),0 0 34px rgba(67,214,255,.1),inset 0 1px rgba(255,255,255,.16)}
+#tab-upgrade .upgrade-wheel{filter:drop-shadow(0 0 25px rgba(80,224,255,.25))}
+#tab-upgrade .upgrade-wheel-ring{border-color:rgba(120,235,255,.58);box-shadow:0 0 24px rgba(91,229,255,.24),inset 0 0 20px rgba(91,229,255,.1)}
+#tab-upgrade .upgrade-wheel-core{box-shadow:0 0 35px rgba(81,225,255,.28),inset 0 1px rgba(255,255,255,.2)}
+#tab-upgrade .upgrade-selector-card{box-shadow:0 14px 34px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.06)}
+#tab-players .page-intro,#tab-players .player-search-row{position:relative}
+#tab-players .player-search-row{padding:10px;border:1px solid rgba(105,185,255,.26);border-radius:18px;background:linear-gradient(120deg,rgba(55,143,255,.12),rgba(151,103,255,.1));box-shadow:0 12px 28px rgba(0,0,0,.16)}
+#tab-players .player-search-row input{background:rgba(9,17,40,.82);border-color:rgba(126,192,255,.28);box-shadow:inset 0 1px rgba(255,255,255,.06)}
+#tab-players .player-search-row button{background:linear-gradient(110deg,#56c8ff,#7c86ff 58%,#c17aff);color:#101832;box-shadow:0 7px 22px rgba(87,158,255,.24)}
+#tab-players .player-result{border-color:rgba(118,174,255,.22);background:linear-gradient(110deg,rgba(48,93,164,.2),rgba(120,83,183,.12));box-shadow:0 8px 22px rgba(0,0,0,.12);transition:transform .2s,border-color .2s}
+#tab-players .player-result:active{transform:scale(.985);border-color:rgba(126,210,255,.55)}
+#tab-players .player-result-avatar,#tab-players .public-player-avatar{border:1px solid rgba(190,224,255,.5);box-shadow:0 0 22px rgba(93,157,255,.2),inset 0 1px rgba(255,255,255,.22)}
+#tab-players .public-player-card{border-color:rgba(115,170,255,.34);background:radial-gradient(ellipse at 100% 0%,rgba(78,161,255,.13),transparent 45%),linear-gradient(145deg,rgba(30,39,83,.98),rgba(18,20,50,.99))}
+@media(prefers-reduced-motion:reduce){#tab-players .player-result{transition:none}}
+
 </style>
 </head>
 <body>
