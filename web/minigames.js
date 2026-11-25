@@ -232,7 +232,7 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
         }
         state.hits = Math.min(120, Number(state.hits || 0) + 1);
         state.last_hit_ms = nowMs;
-        state.target = randomInt(6);
+        state.target = randomInt(9);
         score = state.hits;
       } else if (body.action === 'finish') {
         if (elapsed < GAME_CONFIG.reaction.durationMs) {
