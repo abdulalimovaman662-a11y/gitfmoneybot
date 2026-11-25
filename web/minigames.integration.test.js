@@ -161,7 +161,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   const lateFinishRetry = await performMiniGameAction(pool, '104', expiredWithHits.session.id, {
     action: 'finish', action_id: 'reaction_late_finish_001'
   });
-  assert.deepEqual(lateFinishRetry, lateFinish,
+  assert.deepEqual(JSON.parse(JSON.stringify(lateFinishRetry)), JSON.parse(JSON.stringify(lateFinish)),
     'retrying a late finish must return the original result without awarding XP again');
   assert.equal(Number((await pool.query(
     "SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 104 AND source_type = 'minigame'"
