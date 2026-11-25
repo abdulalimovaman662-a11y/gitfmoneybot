@@ -1445,7 +1445,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, result.status, result);
     }
 
-    const miniGameActionMatch = url.pathname.match(/^\\/api\\/minigames\\/sessions\\/([0-9a-f-]{36})\\/action$/i);
+    const miniGameActionMatch = url.pathname.match(/^\/api\/minigames\/sessions\/([0-9a-f-]{36})\/action$/i);
     if (miniGameActionMatch && req.method === 'POST') {
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
