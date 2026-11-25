@@ -89,3 +89,34 @@ test('achievement claim rejects an already claimed reward', async () => {
   assert.equal(client.calls.at(-1).sql, 'ROLLBACK');
   assert.equal(client.released, true);
 });
+
+
+test('completed mission claim grants XP once and commits the reward', async () => {
+  const client = fakeClient((sql) => {
+    if (sql.includes('SELECT um.*')) return { rowCount: 1, rows: [{ id: 17, completed_at: new Date(), claimed_at: null, xp_reward: 20, silver_reward: 0 }] };
+    if (sql.includes('INSERT INTO xp_ledger')) return { rowCount: 1, rows: [{ telegram_id: '42' }] };
+    return { rowCount: 1, rows: [] };
+  });
+  const result = await claimMission({ connect: async () => client }, '42', 17);
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.reward, { xp: 20, silver: 0 });
+  assert.equal(client.calls.some(c => c.sql.includes('INSERT INTO xp_ledger')), true);
+  assert.equal(client.calls.some(c => c.sql.includes('UPDATE user_missions SET claimed_at')), true);
+  assert.equal(client.calls.at(-1).sql, 'COMMIT');
+  assert.equal(client.released, true);
+});
+
+test('unlocked achievement claim grants XP and records the claim', async () => {
+  const client = fakeClient((sql) => {
+    if (sql.includes('SELECT ua.*')) return { rowCount: 1, rows: [{ id: 18, achievement_id: 9, unlocked_at: new Date(), claimed_at: null, xp_reward: 75, cosmetic_reward: {} }] };
+    if (sql.includes('INSERT INTO xp_ledger')) return { rowCount: 1, rows: [{ telegram_id: '42' }] };
+    return { rowCount: 1, rows: [] };
+  });
+  const result = await claimAchievement({ connect: async () => client }, '42', 9);
+  assert.equal(result.status, 200);
+  assert.equal(result.reward.xp, 75);
+  assert.equal(client.calls.some(c => c.sql.includes('INSERT INTO xp_ledger')), true);
+  assert.equal(client.calls.some(c => c.sql.includes('UPDATE user_achievements SET claimed_at')), true);
+  assert.equal(client.calls.at(-1).sql, 'COMMIT');
+  assert.equal(client.released, true);
+});
