@@ -56,6 +56,9 @@ class FakePool {
           const row = db.sessions.find(item => item.telegram_id === params[0] && item.request_id === params[1]);
           return { rowCount: row ? 1 : 0, rows: row ? [row] : [] };
         }
+        if (query.startsWith('SELECT amount FROM xp_ledger WHERE idempotency_key = $1')) {
+          return { rowCount: 0, rows: [] };
+        }
         if (query.startsWith('SELECT COUNT(*)::int AS used')) {
           const used = db.sessions.filter(item => item.telegram_id === params[0] && item.game_type === params[1]).length;
           return { rows: [{ used }] };
