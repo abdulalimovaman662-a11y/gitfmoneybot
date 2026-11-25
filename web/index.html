@@ -2802,7 +2802,7 @@ function drawGdReaction() {
  for(let i=0;i<9;i++){
   const button=document.createElement('button');button.className='gd-reaction-target'+(i===Number(s.state.target)?' is-target':'');
   button.textContent=i===Number(s.state.target)?'✦':'·';button.disabled=gdMini.locked||s.status!=='active';
-  button.addEventListener('click',()=>hitGdReaction(Number(s.state.target)));
+  button.addEventListener('click',()=>hitGdReaction(i));
   arena.appendChild(button);
  }
 }
