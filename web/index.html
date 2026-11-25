@@ -2614,11 +2614,32 @@ let spinning = false;
 let pendingSpinRequestId = null;
 let catalogLoaded = false;
 
+const SPIN_REQUEST_STORAGE_KEY = 'gd_pending_spin_request';
+
 function createSpinRequestId() {
  if(window.crypto&&typeof window.crypto.randomUUID==='function') {
   return window.crypto.randomUUID();
  }
  return 'spin_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);
+}
+
+function getPendingSpinRequestId() {
+ if(pendingSpinRequestId) return pendingSpinRequestId;
+ try {
+  const saved=sessionStorage.getItem(SPIN_REQUEST_STORAGE_KEY);
+  if(saved&&/^[a-zA-Z0-9_-]{12,80}$/.test(saved)) {
+   pendingSpinRequestId=saved;
+   return saved;
+  }
+ }catch(error){}
+ pendingSpinRequestId=createSpinRequestId();
+ try{sessionStorage.setItem(SPIN_REQUEST_STORAGE_KEY,pendingSpinRequestId);}catch(error){}
+ return pendingSpinRequestId;
+}
+
+function clearPendingSpinRequestId() {
+ pendingSpinRequestId=null;
+ try{sessionStorage.removeItem(SPIN_REQUEST_STORAGE_KEY);}catch(error){}
 }
 
 (function initChristmasDecor(){
@@ -3556,8 +3577,8 @@ async function spin() {
  button.disabled=true;
  message.textContent='🎰 Лента подарков запускается...';
  try {
-  if(!pendingSpinRequestId) pendingSpinRequestId=createSpinRequestId();
-  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({request_id:pendingSpinRequestId})});
+  const requestId=getPendingSpinRequestId();
+  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({request_id:requestId})});
   if(!['none','ordinary','unusual','rare'].includes(data.result)) {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
@@ -3570,7 +3591,7 @@ async function spin() {
   else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
   else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
   await loadAccount();
-  pendingSpinRequestId=null;
+  clearPendingSpinRequestId();
  } catch(error) {
   message.textContent=error.message;
  } finally {
