@@ -167,6 +167,9 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
     "SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 104 AND source_type = 'minigame'"
   )).rows[0].total), 5);
 
+  const xpBeforeEmptyExpiry = Number((await pool.query(
+    "SELECT COALESCE(SUM(amount), 0) AS total FROM xp_ledger WHERE telegram_id = 105 AND source_type = 'minigame'"
+  )).rows[0].total);
   const expiredWithoutHits = await startMiniGame(pool, '105', 'reaction', 'reaction_expired_empty_001');
   assert.equal(expiredWithoutHits.status, 201);
   await pool.query(
@@ -179,9 +182,10 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   assert.equal(emptyLateFinish.session.status, 'expired',
     'a reaction round with no hits must expire instead of being marked completed');
   assert.equal(emptyLateFinish.session.xp_awarded, 0);
-  assert.equal(Number((await pool.query(
-    "SELECT COUNT(*) AS total FROM xp_ledger WHERE telegram_id = 105 AND source_type = 'minigame'"
-  )).rows[0].total), 5, 'an empty expired round must not add XP');
+  const xpAfterEmptyExpiry = Number((await pool.query(
+    "SELECT COALESCE(SUM(amount), 0) AS total FROM xp_ledger WHERE telegram_id = 105 AND source_type = 'minigame'"
+  )).rows[0].total);
+  assert.equal(xpAfterEmptyExpiry, xpBeforeEmptyExpiry, 'an empty expired round must not add XP');
 
   await pool.query(`INSERT INTO xp_ledger (telegram_id, amount, source_type, source_id, idempotency_key)
     VALUES (103, 23, 'minigame', 'seed-cap', 'seed-cap')`);
