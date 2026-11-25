@@ -137,10 +137,16 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
         await client.query('ROLLBACK');
         return { status: 409, error: 'Этот ID запуска уже использован для другой игры.' };
       }
+      const priorXp = await client.query(
+        'SELECT amount FROM xp_ledger WHERE idempotency_key = $1',
+        ['minigame:' + row.id]
+      );
       await client.query('COMMIT');
       return { status: 200, session: {
         id: row.id, game: row.game_type, status: row.status, score: Number(row.score),
-        state: safePublicState(row), created_at: row.created_at
+        state: safePublicState(row), created_at: row.created_at,
+        message: row.state?.result_message || (row.status === 'completed' ? 'Раунд уже завершён' : ''),
+        xp_awarded: Number(row.state?.xp_awarded ?? priorXp.rows[0]?.amount ?? 0)
       }, balance: Number(user.rows[0].silver), reused: true };
     }
 
@@ -236,10 +242,16 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
     }
     const state = session.state || {};
     if (session.status !== 'active') {
+      const priorXp = await client.query(
+        'SELECT amount FROM xp_ledger WHERE idempotency_key = $1',
+        ['minigame:' + session.id]
+      );
       await client.query('COMMIT');
       return { status: 200, session: {
         id: session.id, game: session.game_type, status: session.status,
-        score: Number(session.score), state: safePublicState(session)
+        score: Number(session.score), state: safePublicState(session),
+        message: state.result_message || (session.status === 'expired' ? 'Время раунда закончилось' : 'Раунд уже завершён'),
+        xp_awarded: Number(state.xp_awarded ?? priorXp.rows[0]?.amount ?? 0)
       }, finished: true };
     }
 
@@ -372,9 +384,13 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       }
     }
 
+    if (session.status !== 'active') {
+      state.result_message = message;
+      state.xp_awarded = xpAwarded;
+    }
     await client.query(`
       UPDATE minigame_sessions
-      SET state = $1::jsonb, status = $2, score = $3,
+      SET state = $1::jsonb, status = $2,
           finished_at = CASE WHEN $2 <> 'active' THEN NOW() ELSE finished_at END
       WHERE id = $4
     `, [JSON.stringify(state), session.status, score, sessionId]);
