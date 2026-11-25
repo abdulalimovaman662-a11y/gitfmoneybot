@@ -33,7 +33,7 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
       xp BIGINT NOT NULL DEFAULT 0
     )
   `);
-  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000)");
+  await pool.query("INSERT INTO users (telegram_id, silver) VALUES (101, 100), (102, 100), (103, 100), (104, 1000), (105, 100)");
   await initProgressionDatabase(pool);
   await initMiniGamesDatabase(pool);
 
@@ -98,6 +98,28 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   )).rows[0].total), 5, 'replaying a completed action must not award XP twice');
   assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 102')).rows[0].silver), 85,
     'replaying a completed action must not charge silver again');
+
+  const concurrentSafe = await startMiniGame(pool, '105', 'safe', 'safe_concurrent_001');
+  assert.equal(concurrentSafe.status, 201);
+  const concurrentRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [concurrentSafe.session.id])).rows[0];
+  const concurrentPayload = {
+    action: 'guess',
+    guess: concurrentRow.state.secret,
+    action_id: 'safe_concurrent_action_01'
+  };
+  const concurrentResults = await Promise.all([
+    performMiniGameAction(pool, '105', concurrentSafe.session.id, concurrentPayload),
+    performMiniGameAction(pool, '105', concurrentSafe.session.id, concurrentPayload)
+  ]);
+  assert.deepEqual(concurrentResults[0], concurrentResults[1],
+    'concurrent retries with the same action ID must receive the same stored result');
+  assert.equal(concurrentResults[0].session.state.attempts, 1,
+    'the same concurrent guess must only count as one attempt');
+  assert.equal(Number((await pool.query(
+    "SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 105 AND source_type = 'minigame'"
+  )).rows[0].total), 5, 'the concurrent replay must not award XP twice');
+  assert.equal(Number((await pool.query('SELECT silver FROM users WHERE telegram_id = 105')).rows[0].silver), 85,
+    'the concurrent replay must not charge the round twice');
 
   const memory = await startMiniGame(pool, '102', 'memory', 'memory_request_0001');
   assert.equal(memory.status, 201);
