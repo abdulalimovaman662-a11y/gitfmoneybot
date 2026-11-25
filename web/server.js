@@ -1707,7 +1707,6 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === '/api/rocket/bet' && req.method === 'POST') {
-      return send(res, 403, { error: 'В тестовом режиме раунды бесплатные: серебро и NFT не принимаются.' });
       const user = getTelegramUser(req);
       if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
       await ensureUser(user, req);
@@ -1786,9 +1785,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === '/api/rocket/cashout' && req.method === 'POST') {
-      return send(res, 403, { error: 'В бесплатном тестовом режиме вывод и начисление серебра отключены.' });
       const user=getTelegramUser(req);
       if(!user) return send(res,401,{error:'Ошибка авторизации Telegram'});
+      if (process.env.ROCKET_LIVE_ENABLED !== 'true') return send(res, 403, { error: 'Реальные выплаты пока отключены до завершения проверок и юридической настройки проекта' });
       await ensureUser(user,req);
       const client=await pool.connect();
       try {
