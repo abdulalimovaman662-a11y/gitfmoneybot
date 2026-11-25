@@ -16,6 +16,10 @@ function randomInt(max) {
   return crypto.randomInt(max);
 }
 
+function isValidSafeGuess(guess) {
+  return typeof guess === 'string' && /^\d{4}$/.test(guess);
+}
+
 function makeSafeCode() {
   return String(randomInt(10000)).padStart(4, '0');
 }
@@ -150,7 +154,7 @@ async function startMiniGame(pool, telegramId, gameType, requestId) {
     const id = crypto.randomUUID();
     let state;
     if (gameType === 'reaction') {
-      state = { target: randomInt(6), hits: 0, last_hit_ms: -1000 };
+      state = { target: randomInt(9), hits: 0, last_hit_ms: -1000 };
     } else if (gameType === 'safe') {
       state = { secret: makeSafeCode(), attempts: 0, last_hint: null, last_guess_ms: 0 };
     } else {
@@ -246,7 +250,7 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
         return { status: 400, error: 'Отправь комбинацию из четырёх цифр' };
       }
       const guess = String(body.guess || '');
-      if (!/^\\d{4}$/.test(guess)) {
+      if (!isValidSafeGuess(guess)) {
         await client.query('ROLLBACK');
         return { status: 400, error: 'Нужно ввести ровно четыре цифры' };
       }
@@ -361,5 +365,6 @@ module.exports = {
   startMiniGame,
   performMiniGameAction,
   scoreGuess,
+  isValidSafeGuess,
   makeMemoryDeck
 };
