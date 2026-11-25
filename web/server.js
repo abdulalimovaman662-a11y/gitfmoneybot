@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { initProgressionDatabase, awardXp, recordActivity, recordDailyVisit, claimMission, claimAchievement, getCoreOverview } = require('./progression');
+const { initMiniGamesDatabase, startMiniGame, performMiniGameAction } = require('./minigames');
 const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 8080;
@@ -405,6 +406,7 @@ async function initDatabase() {
       ON nft_battles(opponent_id, created_at DESC);
   `);
   await initProgressionDatabase(pool);
+  await initMiniGamesDatabase(pool);
 }
 
 function send(res, status, data) {
@@ -1431,6 +1433,25 @@ const server = http.createServer(async (req, res) => {
         remaining: 10 - (referralCount % 10),
         referral_link: `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
       });
+    }
+
+    // Платные мини-игры: списание и создание сессии проходят одной транзакцией.
+    if (url.pathname === '/api/minigames/start' && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const body = await readBody(req);
+      const result = await startMiniGame(pool, String(user.id), String(body.game || ''), String(body.request_id || ''));
+      return send(res, result.status, result);
+    }
+
+    const miniGameActionMatch = url.pathname.match(/^\\/api\\/minigames\\/sessions\\/([0-9a-f-]{36})\\/action$/i);
+    if (miniGameActionMatch && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      const body = await readBody(req);
+      const result = await performMiniGameAction(pool, String(user.id), miniGameActionMatch[1], body);
+      return send(res, result.status, result);
     }
 
     // GiftsDrop Core: единый обзор прогресса, заданий и достижений.
