@@ -25,3 +25,73 @@ test('memory deck always contains eight pairs and sixteen cards', () => {
   assert.equal(counts.size, 8);
   for (const count of counts.values()) assert.equal(count, 2);
 });
+
+class FakePool {
+  constructor(silver = 100) { this.silver = silver; this.sessions = []; }
+  async connect() {
+    const db = this;
+    let snapshot;
+    return {
+      async query(sql, params = []) {
+        const query = sql.replace(/\\s+/g, ' ').trim();
+        if (query === 'BEGIN') { snapshot = { silver: db.silver, length: db.sessions.length }; return { rows: [] }; }
+        if (query === 'COMMIT') { snapshot = null; return { rows: [] }; }
+        if (query === 'ROLLBACK') {
+          if (snapshot) { db.silver = snapshot.silver; db.sessions.length = snapshot.length; }
+          return { rows: [] };
+        }
+        if (query.startsWith('SELECT telegram_id, silver FROM users')) {
+          return { rowCount: 1, rows: [{ telegram_id: '42', silver: db.silver }] };
+        }
+        if (query.startsWith('SELECT * FROM minigame_sessions WHERE telegram_id = $1 AND request_id = $2')) {
+          const row = db.sessions.find(item => item.telegram_id === params[0] && item.request_id === params[1]);
+          return { rowCount: row ? 1 : 0, rows: row ? [row] : [] };
+        }
+        if (query.startsWith('SELECT COUNT(*)::int AS used')) {
+          const used = db.sessions.filter(item => item.telegram_id === params[0] && item.game_type === params[1]).length;
+          return { rows: [{ used }] };
+        }
+        if (query.startsWith('UPDATE users SET silver = silver -')) {
+          db.silver -= params[0];
+          return { rowCount: 1, rows: [] };
+        }
+        if (query.startsWith('INSERT INTO minigame_sessions')) {
+          const row = {
+            id: params[0], telegram_id: params[1], game_type: params[2],
+            request_id: params[3], state: JSON.parse(params[4]),
+            status: 'active', score: 0, created_at: new Date()
+          };
+          db.sessions.push(row);
+          return { rowCount: 1, rows: [row] };
+        }
+        throw new Error('Unexpected SQL in test: ' + query);
+      },
+      release() {}
+    };
+  }
+}
+
+test('retrying the same start request charges silver only once', async () => {
+  const { startMiniGame } = require('./minigames');
+  const pool = new FakePool(100);
+  const first = await startMiniGame(pool, '42', 'reaction', 'request_00000001');
+  const retry = await startMiniGame(pool, '42', 'reaction', 'request_00000001');
+  assert.equal(first.status, 201);
+  assert.equal(retry.status, 200);
+  assert.equal(retry.reused, true);
+  assert.equal(pool.silver, 85);
+  assert.equal(pool.sessions.length, 1);
+});
+
+test('daily attempt limit is enforced before another charge', async () => {
+  const { startMiniGame } = require('./minigames');
+  const pool = new FakePool(500);
+  for (let i = 0; i < 5; i++) {
+    const result = await startMiniGame(pool, '42', 'reaction', 'reaction_req_' + String(i).padStart(3, '0'));
+    assert.equal(result.status, 201);
+  }
+  const blocked = await startMiniGame(pool, '42', 'reaction', 'reaction_req_999');
+  assert.equal(blocked.status, 429);
+  assert.equal(pool.silver, 425);
+  assert.equal(pool.sessions.length, 5);
+});
