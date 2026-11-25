@@ -261,11 +261,14 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
       const elapsed = Date.now() - new Date(session.created_at).getTime();
       // Expire the round server-side even if the player closed the Mini App
       // and the browser timer never got a chance to send the finish action.
-      if (elapsed >= GAME_CONFIG.reaction.durationMs && body.action === 'finish') {
-        session.status = 'completed';
-      } else if (elapsed >= GAME_CONFIG.reaction.durationMs) {
-        session.status = 'expired';
-        message = 'Время раунда закончилось';
+      if (elapsed >= GAME_CONFIG.reaction.durationMs) {
+        // A late request may be the first one to reach the server after the
+        // browser timer fired. Finalize from the persisted hit count so XP is
+        // not lost just because the finish request raced with the last hit.
+        session.status = Number(state.hits || 0) > 0 ? 'completed' : 'expired';
+        message = Number(state.hits || 0) > 0
+          ? `Раунд завершён. Попаданий: ${Number(state.hits || 0)}`
+          : 'Время раунда закончилось';
       } else if (body.action === 'hit') {
         const target = Number(body.target);
         if (!Number.isInteger(target) || target !== Number(state.target)) {
