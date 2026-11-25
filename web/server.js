@@ -373,6 +373,19 @@ async function initDatabase() {
     );
     CREATE INDEX IF NOT EXISTS rocket_bets_round_idx ON rocket_bets(round_id, status);
     CREATE INDEX IF NOT EXISTS rocket_bets_user_idx ON rocket_bets(telegram_id, created_at DESC);
+    -- Immutable audit trail for Rocket silver movements. One debit and one payout per bet.
+    CREATE TABLE IF NOT EXISTS rocket_silver_ledger (
+      id BIGSERIAL PRIMARY KEY,
+      bet_id BIGINT NOT NULL REFERENCES rocket_bets(id),
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      entry_type TEXT NOT NULL CHECK (entry_type IN ('stake_debit','cashout_credit')),
+      amount INTEGER NOT NULL CHECK (amount > 0),
+      balance_after INTEGER NOT NULL CHECK (balance_after >= 0),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (bet_id, entry_type)
+    );
+    CREATE INDEX IF NOT EXISTS rocket_silver_ledger_user_idx
+      ON rocket_silver_ledger(telegram_id, created_at DESC);
     CREATE TABLE IF NOT EXISTS rocket_free_entries (
       id BIGSERIAL PRIMARY KEY,
       round_id BIGINT NOT NULL REFERENCES rocket_rounds(id) ON DELETE CASCADE,
@@ -1745,6 +1758,12 @@ const server = http.createServer(async (req, res) => {
           [round.id,telegramId,kind,stakeAmount,kind==='nft'?inventoryId:null,nftName]
         );
         const updated=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[telegramId]);
+        if(kind==='silver') {
+          await client.query(
+            "INSERT INTO rocket_silver_ledger(bet_id,telegram_id,entry_type,amount,balance_after) VALUES($1,$2,'stake_debit',$3,$4)",
+            [bet.rows[0].id,telegramId,amount,Number(updated.rows[0].silver)]
+          );
+        }
         await client.query('COMMIT');
         return send(res,201,{success:true,bet_id:Number(bet.rows[0].id),round_id:Number(round.id),starts_at:round.starts_at,balance:Number(updated.rows[0].silver),stake_kind:kind,stake_amount:stakeAmount,nft_name:nftName});
       } catch(error) {
@@ -1777,8 +1796,14 @@ const server = http.createServer(async (req, res) => {
         }
         const payout=Math.floor(Number(bet.stake_amount)*multiplier);
         await client.query("UPDATE users SET silver=silver+$1 WHERE telegram_id=$2",[payout,String(user.id)]);
-        await client.query("UPDATE rocket_bets SET status='cashed_out',cashout_multiplier=$1,payout_silver=$2,settled_at=NOW() WHERE id=$3",[multiplier,payout,bet.id]);
         const balance=await client.query("SELECT silver FROM users WHERE telegram_id=$1",[String(user.id)]);
+        if(bet.stake_kind==='silver') {
+          await client.query(
+            "INSERT INTO rocket_silver_ledger(bet_id,telegram_id,entry_type,amount,balance_after) VALUES($1,$2,'cashout_credit',$3,$4)",
+            [bet.id,String(user.id),payout,Number(balance.rows[0].silver)]
+          );
+        }
+        await client.query("UPDATE rocket_bets SET status='cashed_out',cashout_multiplier=$1,payout_silver=$2,settled_at=NOW() WHERE id=$3 AND status='active'",[multiplier,payout,bet.id]);
         await client.query('COMMIT');
         return send(res,200,{success:true,multiplier,payout_silver:payout,balance:Number(balance.rows[0].silver),stake_kind:bet.stake_kind,nft_name:bet.nft_name});
       } catch(error){await client.query('ROLLBACK');throw error;}
