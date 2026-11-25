@@ -2813,9 +2813,9 @@ async function hitGdReaction(target) {
   const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'hit',target,action_id:crypto.randomUUID()})});
   gdMini.session=data.session;
   const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
-  drawGdReaction();
+  if(data.session.status!=='active')renderGdMiniGame();else drawGdReaction();
  } catch(error) {gdMiniMessage(error.message);}
- finally {gdMini.locked=false; if(gdMini.session?.game==='reaction')drawGdReaction();}
+ finally {gdMini.locked=false; if(gdMini.session?.game==='reaction'&&gdMini.session.status==='active')drawGdReaction();}
 }
 async function finishGdReaction() {
  if(!gdMini.session||gdMini.session.status!=='active')return;
