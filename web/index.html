@@ -2513,7 +2513,7 @@ button:not(:disabled):active,.nav-button:active,.gift-product:active,.prize-card
  <div class="upgrade-hero upgrade-hero-pro"><div class="upgrade-wheel" aria-label="Круг апгрейда NFT"><div class="upgrade-wheel-ring"></div><div class="upgrade-wheel-track"><span>🎁</span><span>💎</span><span>🎀</span><span>⭐</span><span>🧸</span><span>💠</span><span>🎁</span><span>✨</span></div><div class="upgrade-wheel-pointer">▼</div><div class="upgrade-wheel-core"><div class="upgrade-wheel-icon">⚡</div><b> NFT </b><small>UPGRADE</small></div><div class="upgrade-wheel-glow"></div></div><div class="rocket-eyebrow">GIFT EVOLUTION SYSTEM</div><h1>ПОДНИМИ УРОВЕНЬ</h1><p>Выбери свой подарок, цель и испытай удачу. Чем дороже цель — тем ниже шанс успеха.</p><div class="upgrade-mini-stats"><span>🎁 ТВОЙ NFT</span><b>➜</b><span>💎 НОВЫЙ УРОВЕНЬ</span></div></div>
  <div class="card upgrade-card upgrade-selector-card">
   <div class="section-tag">ШАГ 01 • ИСХОДНЫЙ ПРЕДМЕТ</div><h2>Что улучшаем?</h2><p class="upgrade-subtext">Выбери NFT из своего инвентаря.</p>
-  <div id="upgradeSourceList" class="upgrade-source-list"><div class="upgrade-empty">Загружаем твой инвентарь…</div></div>
+  <div id="upgradeSourceList" class="upgrade-source-list"><div class="upgrade-empty">Загружаем NFT из твоего инвентаря…</div></div>
   <div class="section-tag upgrade-step-two">ШАГ 02 • ЖЕЛАЕМЫЙ ПРИЗ</div><h2>На что меняем?</h2>
   <div id="upgradeTargetList" class="upgrade-target-grid"><div class="upgrade-empty">Сначала выбери исходный предмет.</div></div>
   <div class="upgrade-chance-panel"><div><small>ТВОЙ ШАНС УСПЕХА</small><b id="upgradeChance">—%</b></div><div class="upgrade-chance-track"><span id="upgradeChanceFill"></span></div><p id="upgradeChanceCaption">Выбери предмет и цель, чтобы увидеть шанс.</p></div>
@@ -3995,27 +3995,43 @@ loadGiftCatalog();
 // Give players a wider entry window and avoid hammering the database every 650 ms.
 function loadUpgradeData(){
  const host=document.getElementById('upgradeSourceList');if(!host)return;
- host.innerHTML='<div class="upgrade-empty">Загружаем предметы…</div>';
- Promise.all([api('/api/me/wins'),api('/api/store/catalog')]).then(([winsData,catalogData])=>{
-  upgradeInventory=Array.isArray(winsData.wins)?winsData.wins:[];upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
-  if(!upgradeInventory.length)upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];
+ host.textContent='Загружаем NFT из инвентаря…';
+ upgradeSource=null;upgradeTarget=null;
+ const button=document.getElementById('upgradeTryButton');if(button)button.disabled=true;
+ Promise.all([api('/api/me/inventory'),api('/api/store/catalog')]).then(([inventoryData,catalogData])=>{
+  upgradeInventory=(Array.isArray(inventoryData.items)?inventoryData.items:[])
+   .filter(item=>item.status==='owned'&&Number(item.inventory_id)>0);
+  upgradeCatalog=Array.isArray(catalogData.products)?catalogData.products:[];
   renderUpgradeSources();
- }).catch(()=>{upgradeInventory=[{id:'preview',prize_name:'Пример подарка',prize_stars:100,prize_type:'ordinary',preview:true}];upgradeCatalog=[];renderUpgradeSources();});
+ }).catch(error=>{
+  upgradeInventory=[];upgradeCatalog=[];
+  host.textContent=error.message||'Не удалось загрузить NFT. Попробуй обновить раздел.';
+  document.getElementById('upgradeTargetList').textContent='Список целей недоступен.';
+  updateUpgradeChance();
+ });
 }
 function renderUpgradeSources(){
  const host=document.getElementById('upgradeSourceList');host.replaceChildren();
+ if(!upgradeInventory.length){
+  const empty=document.createElement('div');empty.className='upgrade-empty';
+  empty.textContent='В инвентаре пока нет доступных NFT. Сначала получи подарок в GiftsDrop.';
+  host.appendChild(empty);
+  document.getElementById('upgradeTargetList').textContent='Для апгрейда нужен NFT из твоего инвентаря.';
+  updateUpgradeChance();return;
+ }
  upgradeInventory.forEach((item,index)=>{
   const button=document.createElement('button');button.type='button';button.className='upgrade-source-item'+(upgradeSource===index?' selected':'');button.onclick=()=>selectUpgradeSource(index);
   const art=document.createElement('div');art.className='upgrade-source-art';art.textContent=item.prize_type==='rare'?'💎':item.prize_type==='unusual'?'💜':'🎁';
   const name=document.createElement('b');name.textContent=String(item.prize_name||'NFT-подарок');
-  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐'+(item.preview?' · ПРИМЕР':'');
+  const value=document.createElement('small');value.textContent=(Number(item.prize_stars)||0)+' ⭐';
   button.append(art,name,value);host.appendChild(button);
  });
  if(upgradeSource===null)document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Выбери предмет выше, чтобы увидеть доступные цели.</div>';
 }
 function selectUpgradeSource(index){
+ if(!Number.isInteger(index)||!upgradeInventory[index])return;
  upgradeSource=index;upgradeTarget=null;renderUpgradeSources();
- const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||100;
+ const source=upgradeInventory[index],sourceValue=Number(source.prize_stars)||0;
  const targets=upgradeCatalog.filter(item=>Number(item.stars)>sourceValue).sort((a,b)=>Number(a.stars)-Number(b.stars)).slice(0,8);
  if(!targets.length){upgradeTarget=null;document.getElementById('upgradeTargetList').innerHTML='<div class="upgrade-empty">Нет подарков дороже этого предмета в каталоге. Попробуй другой NFT.</div>';updateUpgradeChance();return;}
  const host=document.getElementById('upgradeTargetList');host.replaceChildren();
