@@ -1719,6 +1719,18 @@ body{
 .tab-page.active .card{
  animation:none !important;
 }
+.gd-core-xp{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:5px 0 12px;color:#ffe69a;font-weight:900}
+.gd-core-xp strong{font-size:19px}.gd-core-xp span{font-size:13px}
+.gd-core-item{padding:13px 0;border-bottom:1px solid rgba(255,255,255,.075)}
+.gd-core-item:last-child{border-bottom:0}
+.gd-core-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.gd-core-item-head b{font-size:12px;color:#fff}.gd-core-item-head small{color:#ffe69a;font-size:10px;white-space:nowrap}
+.gd-core-item p{margin:5px 0 9px;color:#aaa8c7;font-size:10px;line-height:1.5}
+.gd-core-track{height:7px;border-radius:10px;background:rgba(255,255,255,.09);overflow:hidden}
+.gd-core-track span{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#74e5ff,#b99aff,#ff72b6)}
+.gd-core-status{display:block;margin-top:7px;color:#a9f4d1;font-size:9px;font-weight:800}
+.gd-core-item button{width:100%;margin-top:9px;min-height:39px;padding:10px;font-size:10px}
+.gd-core-empty{color:#aaa8c7;font-size:11px;padding:10px 0}
 .bottom-nav{
  -webkit-backdrop-filter:blur(12px) !important;
  backdrop-filter:blur(12px) !important;
@@ -1859,6 +1871,9 @@ body.gd-legal-locked{overflow:hidden}
    <span class="tile-art battle-tile-art" aria-hidden="true"><span class="battle-swords">⚔</span><span class="battle-gem">💎</span><span class="battle-spark">✦</span></span>
    <span class="home-tile-icon"><span class="gd-home-emoji">⚔️</span></span>
    <span class="home-tile-copy"><span class="home-tile-title">NFT-БАТТЛЫ</span><span class="home-tile-subtitle">Сразись за лучший дроп</span></span><span class="home-tile-arrow">↗</span>
+  </button>
+  <button class="home-tile" onclick="showTab('progress')" style="--tile-bg:linear-gradient(145deg,#6b3c9e,#241a52);--tile-border:rgba(205,166,255,.55);--tile-glow:rgba(174,112,255,.75)" aria-label="Открыть прогресс и задания">
+   <span class="home-tile-icon"><span class="gd-home-emoji">🏆</span></span><span class="home-tile-copy"><span class="home-tile-title">ПРОГРЕСС</span><span class="home-tile-subtitle">Ежедневные задания, XP и достижения</span></span><span class="home-tile-arrow">↗</span>
   </button>
  </div>
 </section>
@@ -2151,6 +2166,19 @@ body.gd-legal-locked{overflow:hidden}
  <div class="upgrade-test-note">Демонстрационный режим. До подключения серверной проверки вероятности и транзакций реальные NFT и серебро не участвуют.</div>
 </section>
 
+<section class="tab-page" id="tab-progress">
+ <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРОГРЕСС</span></div>
+ <div class="page-intro"><span class="eyebrow">GIFTDROP CORE</span><h1>Твой прогресс</h1><p>Выполняй задания, получай опыт и открывай достижения. Прогресс сохраняется в аккаунте.</p></div>
+ <div class="card gd-core-summary">
+  <div class="section-tag">LIFETIME EXPERIENCE</div>
+  <div class="gd-core-xp"><strong id="coreLevel">УРОВЕНЬ 1</strong><span id="coreXp">0 XP</span></div>
+  <div class="level-progress"><div class="level-progress-fill" id="coreLevelProgress"></div></div>
+  <p class="muted" id="coreXpNext">Загружаем прогресс…</p>
+ </div>
+ <div class="card"><div class="section-tag">DAILY + WEEKLY</div><h2>Задания</h2><div id="coreMissionList"><p class="muted">Загружаем задания…</p></div></div>
+ <div class="card"><div class="section-tag">MILESTONES</div><h2>Достижения</h2><div id="coreAchievementList"><p class="muted">Загружаем достижения…</p></div></div>
+</section>
+
 <div class="footer">GIFTSDROP MARKET • PREMIUM EXPERIENCE</div>
 
 
@@ -2310,7 +2338,7 @@ async function loadRecentWins() {
 
 let gdTabTransitionTimer = null;
 function showTab(name) {
- const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade','players','battles'];
+ const tabs = ['spin','prizes','friends','gifts','balance','profile','inventory','rocket','upgrade','players','battles','progress'];
  const pages = [document.getElementById('tab-home'), ...tabs.map(tab=>document.getElementById('tab-'+tab))].filter(Boolean);
  const targetId = 'tab-'+name;
  const target = document.getElementById(targetId);
@@ -2331,6 +2359,7 @@ function showTab(name) {
  },440);
  if(name==='home'){animateHomeBalanceTile();return;}
  if(name==='battles') loadNftBattles();
+  if(name==='progress') loadCore();
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
  if(name==='profile') loadProfile();
@@ -2364,6 +2393,55 @@ requestAnimationFrame(animateHomeBalanceTile);
 
 function openHelp() {
  tg.openTelegramLink('https://t.me/traptrap4');
+}
+
+async function loadCore(){
+ const missions=document.getElementById('coreMissionList'),achievements=document.getElementById('coreAchievementList');
+ if(!missions||!achievements)return;
+ missions.replaceChildren();achievements.replaceChildren();
+ try{
+  const [account,core]=await Promise.all([api('/api/me'),api('/api/core')]);
+  document.getElementById('coreLevel').textContent='УРОВЕНЬ '+(account.level||1);
+  document.getElementById('coreXp').textContent=Number(core.xp||0).toLocaleString('ru-RU')+' XP';
+  const progress=Math.max(0,Math.min(100,Number(account.xp_progress||0)/Math.max(1,Number(account.xp_required||100))*100));
+  document.getElementById('coreLevelProgress').style.width=progress+'%';
+  document.getElementById('coreXpNext').textContent='До следующего уровня: '+Number(account.xp_to_next||0).toLocaleString('ru-RU')+' XP';
+  const addEmpty=(parent,text)=>{const p=document.createElement('p');p.className='gd-core-empty';p.textContent=text;parent.appendChild(p);};
+  const makeItem=(title,description,reward,progressValue,target,status,claim)=>{
+   const item=document.createElement('div');item.className='gd-core-item';
+   const head=document.createElement('div');head.className='gd-core-item-head';
+   const name=document.createElement('b');name.textContent=title;head.appendChild(name);
+   const rewardText=document.createElement('small');rewardText.textContent='+'+reward+' XP';head.appendChild(rewardText);item.appendChild(head);
+   const copy=document.createElement('p');copy.textContent=description;item.appendChild(copy);
+   const track=document.createElement('div');track.className='gd-core-track';const fill=document.createElement('span');
+   fill.style.width=Math.min(100,Math.max(0,progressValue/Math.max(1,target)*100))+'%';track.appendChild(fill);item.appendChild(track);
+   const count=document.createElement('p');count.textContent=progressValue+' / '+target;count.style.margin='6px 0 0';item.appendChild(count);
+   if(status){const state=document.createElement('span');state.className='gd-core-status';state.textContent=status;item.appendChild(state);}
+   if(claim){const button=document.createElement('button');button.type='button';button.textContent='ЗАБРАТЬ НАГРАДУ';button.onclick=claim;item.appendChild(button);}
+   return item;
+  };
+  if(!core.missions||!core.missions.length)addEmpty(missions,'Пока нет активных заданий.');
+  else{
+   const daily=document.createElement('div');daily.className='section-tag';daily.textContent='ЕЖЕДНЕВНЫЕ';missions.appendChild(daily);
+   core.missions.filter(x=>x.cadence==='daily').forEach(m=>{
+    const done=!!m.completed_at,claimed=!!m.claimed_at;
+    missions.appendChild(makeItem(m.title,m.description,m.xp_reward,m.progress,m.target_count,claimed?'НАГРАДА ПОЛУЧЕНА':done?'ВЫПОЛНЕНО':'В ПРОЦЕССЕ',done&&!claimed?async()=>{try{await api('/api/missions/'+m.id+'/claim',{method:'POST',body:'{}'});await loadCore();}catch(e){tg.showAlert(e.message);}}:null));
+   });
+   const weekly=document.createElement('div');weekly.className='section-tag';weekly.style.marginTop='18px';weekly.textContent='ЕЖЕНЕДЕЛЬНЫЕ';missions.appendChild(weekly);
+   core.missions.filter(x=>x.cadence==='weekly').forEach(m=>{
+    const done=!!m.completed_at,claimed=!!m.claimed_at;
+    missions.appendChild(makeItem(m.title,m.description,m.xp_reward,m.progress,m.target_count,claimed?'НАГРАДА ПОЛУЧЕНА':done?'ВЫПОЛНЕНО':'В ПРОЦЕССЕ',done&&!claimed?async()=>{try{await api('/api/missions/'+m.id+'/claim',{method:'POST',body:'{}'});await loadCore();}catch(e){tg.showAlert(e.message);}}:null));
+   });
+  }
+  if(!core.achievements||!core.achievements.length)addEmpty(achievements,'Достижения скоро появятся.');
+  else core.achievements.forEach(a=>{
+   const unlocked=!!a.unlocked_at,claimed=!!a.claimed_at;
+   achievements.appendChild(makeItem(a.title,a.description,a.xp_reward,a.progress,a.target_count,claimed?'НАГРАДА ПОЛУЧЕНА':unlocked?'ДОСТИЖЕНИЕ ОТКРЫТО':'ЕЩЁ НЕ ОТКРЫТО',unlocked&&!claimed?async()=>{try{await api('/api/achievements/'+a.achievement_id+'/claim',{method:'POST',body:'{}'});await loadCore();}catch(e){tg.showAlert(e.message);}}:null));
+  });
+ }catch(error){addCoreError(missions,achievements,error.message);}
+}
+function addCoreError(missions,achievements,message){
+ [missions,achievements].forEach(el=>{el.replaceChildren();const p=document.createElement('p');p.className='gd-core-empty';p.textContent='Не удалось загрузить данные. '+message;el.appendChild(p);});
 }
 
 async function loadInventory() {
