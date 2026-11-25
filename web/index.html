@@ -2614,6 +2614,13 @@ let spinning = false;
 let pendingSpinRequestId = null;
 let catalogLoaded = false;
 
+function createSpinRequestId() {
+ if(window.crypto&&typeof window.crypto.randomUUID==='function') {
+  return window.crypto.randomUUID();
+ }
+ return 'spin_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);
+}
+
 (function initChristmasDecor(){
  const layer=document.getElementById('gdSnowLayer');if(!layer)return;
  for(let i=0;i<38;i++){
@@ -3549,7 +3556,7 @@ async function spin() {
  button.disabled=true;
  message.textContent='🎰 Лента подарков запускается...';
  try {
-  if(!pendingSpinRequestId) pendingSpinRequestId=crypto.randomUUID();
+  if(!pendingSpinRequestId) pendingSpinRequestId=createSpinRequestId();
   const data=await api('/api/spin',{method:'POST',body:JSON.stringify({request_id:pendingSpinRequestId})});
   pendingSpinRequestId=null;
   if(!['none','ordinary','unusual','rare'].includes(data.result)) {
