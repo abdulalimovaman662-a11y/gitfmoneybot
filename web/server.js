@@ -889,7 +889,11 @@ const server = http.createServer(async (req, res) => {
       if (req.headers['x-bot-token'] !== BOT_TOKEN) return send(res, 403, { error: 'Доступ запрещён' });
       const body = await readBody(req);
       const telegramId = String(body.telegram_id || '');
-      if (!/^\d+$/.test(telegramId)) return send(res, 400, { error: 'Некорректный Telegram ID' });
+      const requestId = String(body.request_id || '');
+      if (!/^\\d+$/.test(telegramId) || !/^[a-f0-9]{64}$/.test(requestId)) {
+        return send(res, 400, { error: 'Некорректные данные прокрутки' });
+      }
+
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -898,6 +902,16 @@ const server = http.createServer(async (req, res) => {
           await client.query('ROLLBACK');
           return send(res, 404, { error: 'Пользователь не найден' });
         }
+
+        const priorSpin = await client.query(
+          'SELECT response FROM spin_requests WHERE telegram_id = $1 AND request_id = $2',
+          [telegramId, requestId]
+        );
+        if (priorSpin.rowCount) {
+          await client.query('COMMIT');
+          return send(res, 200, { ...priorSpin.rows[0].response, replayed: true });
+        }
+
         const account = locked.rows[0];
         if (Number(account.free_spins) <= 0 && Number(account.silver) < 20) {
           await client.query('ROLLBACK');
@@ -908,31 +922,90 @@ const server = http.createServer(async (req, res) => {
         } else {
           await client.query('UPDATE users SET silver = silver - 20 WHERE telegram_id = $1', [telegramId]);
         }
-        const roll = crypto.randomInt(100000);
-        const prize = roll >= 99999 ? 'rare' : (roll >= 94999 ? 'unusual' : (roll >= 79999 ? 'ordinary' : 'nothing'));
+
+        const welcomeGift = Boolean(account.welcome_gift_available);
+        const chance = crypto.randomInt(100000);
+        let prize = welcomeGift ? 'ordinary' : 'nothing';
+        if (!welcomeGift) {
+          if (chance >= 99999) prize = 'rare';
+          else if (chance >= 94999) prize = 'unusual';
+          else if (chance >= 79999) prize = 'ordinary';
+        }
+
         const history = await client.query(
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
           [telegramId, prize]
         );
-        await awardXp(client, telegramId, 10, 'spin', `spin:${history.rows[0].id}`);
-        await recordActivity(client, telegramId, 'spin_completed', `spin:${history.rows[0].id}`);
         let claimId = null;
+        let winningGift = null;
         if (prize !== 'nothing') {
-          const claim = await client.query(
-            'INSERT INTO prize_claims (spin_history_id, telegram_id, prize_type) VALUES ($1, $2, $3) RETURNING id',
-            [history.rows[0].id, telegramId, prize]
-          );
+          const ordinaryGifts = [
+            { id:'love_heart', name:'Love Heart', stars:15, emoji:'❤️', image_url:giftImage('loveheart') },
+            { id:'teddy_bear', name:'Teddy Bear', stars:15, emoji:'🧸', image_url:giftImage('toybear') },
+            { id:'gift_box', name:'Gift Box', stars:25, emoji:'🎁', image_url:giftImage('giftbox') },
+            { id:'red_rose', name:'Red Rose', stars:25, emoji:'🌹', image_url:giftImage('redrose') },
+            { id:'birthday_cake', name:'Birthday Cake', stars:50, emoji:'🎂', image_url:giftImage('birthdaycake') },
+            { id:'bouquet', name:'Bouquet of Flowers', stars:50, emoji:'💐', image_url:giftImage('bouquetofflowers') },
+            { id:'rocket', name:'Rocket', stars:50, emoji:'🚀', image_url:giftImage('rocket') },
+            { id:'champagne', name:'Champagne Bottle', stars:50, emoji:'🍾', image_url:giftImage('champagne') },
+            { id:'trophy', name:'Trophy', stars:100, emoji:'🏆', image_url:giftImage('trophy') },
+            { id:'diamond_ring', name:'Diamond Ring', stars:100, emoji:'💍', image_url:giftImage('diamondring') },
+            { id:'gem', name:'Gem', stars:100, emoji:'💎', image_url:giftImage('gem') }
+          ];
+          const giftPool = welcomeGift
+            ? ordinaryGifts.filter(gift => gift.stars === 15)
+            : prize === 'ordinary'
+              ? ordinaryGifts
+              : PRODUCTS.filter(product => prize === 'unusual'
+                ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
+                : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+          if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
+          const selected = giftPool[crypto.randomInt(giftPool.length)];
+          winningGift = {
+            id: selected.id,
+            name: selected.name,
+            stars: Number(selected.stars),
+            emoji: selected.emoji || '🎁',
+            image_url: selected.image_url || ''
+          };
+          const claim = await client.query(`
+            INSERT INTO prize_claims
+              (spin_history_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+          `, [history.rows[0].id, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
           claimId = claim.rows[0].id;
           await recordActivity(client, telegramId, 'nft_collected', `claim:${claimId}`);
+          await client.query(`
+            INSERT INTO user_inventory
+              (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (source_claim_id) DO NOTHING
+          `, [claimId, telegramId, prize, winningGift.name, winningGift.stars, winningGift.image_url]);
         }
+
+        if (welcomeGift) {
+          await client.query('UPDATE users SET welcome_gift_available = FALSE WHERE telegram_id = $1', [telegramId]);
+        }
+        await awardXp(client, telegramId, 10, 'spin', `spin:${history.rows[0].id}`);
+        await recordActivity(client, telegramId, 'spin_completed', `spin:${history.rows[0].id}`);
+
         const updated = await client.query('SELECT silver, free_spins FROM users WHERE telegram_id = $1', [telegramId]);
-        await client.query('COMMIT');
-        return send(res, 200, {
+        const response = {
+          result: prize === 'nothing' ? 'none' : prize,
           prize,
           silver: Number(updated.rows[0].silver),
           free_spins: Number(updated.rows[0].free_spins),
-          claim_id: claimId
-        });
+          claim_id: claimId,
+          gift: winningGift,
+          welcome_gift: welcomeGift
+        };
+        await client.query(
+          'INSERT INTO spin_requests (telegram_id, request_id, response) VALUES ($1, $2, $3::jsonb)',
+          [telegramId, requestId, JSON.stringify(response)]
+        );
+        await client.query('COMMIT');
+        return send(res, 200, response);
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
