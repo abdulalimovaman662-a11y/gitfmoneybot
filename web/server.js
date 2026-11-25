@@ -196,6 +196,8 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS admin_profile_grant_applied BOOLEAN NOT NULL DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS welcome_gift_available BOOLEAN NOT NULL DEFAULT FALSE;
 
+    CREATE INDEX IF NOT EXISTS users_last_seen_at_idx ON users (last_seen_at DESC);
+
     CREATE TABLE IF NOT EXISTS spin_history (
       id BIGSERIAL PRIMARY KEY,
       telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
