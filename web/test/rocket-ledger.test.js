@@ -24,9 +24,10 @@ test('cashout payout and ledger record share one database transaction', () => {
   assert.match(source, /WHERE id=\$3 AND status='active'/);
 });
 
-test('real-money endpoints remain disabled until separately reviewed', () => {
-  assert.match(source, /if \(url\.pathname === '\/api\/rocket\/bet' && req\.method === 'POST'\) \{\s*return send\(res, 403/);
-  assert.match(source, /if \(url\.pathname === '\/api\/rocket\/cashout' && req\.method === 'POST'\) \{\s*return send\(res, 403/);
+test('paid Rocket endpoints are gated by the explicit live-mode flag, not unconditional 403s', () => {
+  assert.match(source, /if \(process\.env\.ROCKET_LIVE_ENABLED !== 'true'\) return send\(res, 403/);
+  assert.doesNotMatch(source, /if \(url\.pathname === '\/api\/rocket\/bet' && req\.method === 'POST'\) \{\s*return send\(res, 403/);
+  assert.doesNotMatch(source, /if \(url\.pathname === '\/api\/rocket\/cashout' && req\.method === 'POST'\) \{\s*return send\(res, 403/);
 });
 
 test('Rocket rejects a second active bet and missing account safely', () => {
