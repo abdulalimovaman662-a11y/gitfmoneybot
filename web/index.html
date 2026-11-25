@@ -2810,7 +2810,7 @@ async function hitGdReaction(target) {
  if(gdMini.locked||!gdMini.session)return;
  gdMini.locked=true;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'hit',target})});
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'hit',target,action_id:crypto.randomUUID()})});
   gdMini.session=data.session;
   const hits=document.getElementById('gdReactionHits');if(hits)hits.textContent=String(data.session.state.hits);
   drawGdReaction();
@@ -2820,7 +2820,7 @@ async function hitGdReaction(target) {
 async function finishGdReaction() {
  if(!gdMini.session||gdMini.session.status!=='active')return;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'finish'})});
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'finish',action_id:crypto.randomUUID()})});
   gdMini.session=data.session;renderGdMiniGame();
  } catch(error) {gdMiniMessage(error.message);}
 }
@@ -2830,7 +2830,7 @@ async function submitGdSafeGuess() {
  if(!/^\d{4}$/.test(guess)){gdMiniMessage('Введи четыре цифры.');return;}
  gdMini.locked=true;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'guess',guess})});
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'guess',guess,action_id:crypto.randomUUID()})});
   gdMini.session=data.session;gdMini.safeHistory.push({guess,hint:data.session.state.last_hint});
   renderGdMiniGame();
   const hint=data.session.state.last_hint;
@@ -2850,7 +2850,7 @@ async function flipGdMemory(index) {
  if(gdMini.locked||!gdMini.session)return;
  gdMini.locked=true;
  try {
-  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'flip',index})});
+  const data=await api('/api/minigames/sessions/'+gdMini.session.id+'/action',{method:'POST',body:JSON.stringify({action:'flip',index,action_id:crypto.randomUUID()})});
   gdMini.session=data.session;
   if(data.session.state.mismatch_until)gdMini.memoryHideAt=Number(data.session.state.mismatch_until);
   else gdMini.memoryHideAt=0;
