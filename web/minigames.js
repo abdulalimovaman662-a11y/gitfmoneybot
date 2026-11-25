@@ -247,11 +247,12 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
     let message = '';
     if (session.game_type === 'reaction') {
       const elapsed = Date.now() - new Date(session.created_at).getTime();
-      if (body.action === 'hit') {
-        if (elapsed >= GAME_CONFIG.reaction.durationMs) {
-          await client.query('ROLLBACK');
-          return { status: 409, error: 'Время раунда закончилось. Нажми «Завершить».' };
-        }
+      // Expire the round server-side even if the player closed the Mini App
+      // and the browser timer never got a chance to send the finish action.
+      if (elapsed >= GAME_CONFIG.reaction.durationMs) {
+        session.status = 'expired';
+        message = 'Время раунда закончилось';
+      } else if (body.action === 'hit') {
         const target = Number(body.target);
         if (!Number.isInteger(target) || target !== Number(state.target)) {
           await client.query('ROLLBACK');
@@ -267,11 +268,8 @@ async function performMiniGameAction(pool, telegramId, sessionId, body = {}) {
         state.target = randomInt(9);
         score = state.hits;
       } else if (body.action === 'finish') {
-        if (elapsed < GAME_CONFIG.reaction.durationMs) {
-          await client.query('ROLLBACK');
-          return { status: 409, error: 'Раунд ещё идёт.' };
-        }
-        session.status = 'completed';
+        await client.query('ROLLBACK');
+        return { status: 409, error: 'Раунд ещё идёт.' };
       } else {
         await client.query('ROLLBACK');
         return { status: 400, error: 'Неизвестное действие' };
