@@ -3,6 +3,7 @@ import os
 import asyncio
 import random
 import sqlite3
+import hashlib
 import aiohttp
 
 from aiogram import Bot, Dispatcher, F
@@ -690,12 +691,16 @@ async def referral_button(callback: CallbackQuery):
 @dp.callback_query(F.data == "spin")
 async def spin(callback: CallbackQuery):
     user = callback.from_user
+    request_id = hashlib.sha256(
+        f"{user.id}:{callback.id}".encode("utf-8")
+    ).hexdigest()
     try:
         await shared_user(user)
         result = await internal_api("/api/internal/bot/spin", "POST", {
             "telegram_id": str(user.id),
             "username": user.username,
-            "first_name": user.first_name
+            "first_name": user.first_name,
+            "request_id": request_id
         })
     except Exception as error:
         await callback.message.answer(f"Не удалось выполнить прокрутку: {error}")
@@ -703,40 +708,30 @@ async def spin(callback: CallbackQuery):
         return
 
     prize = result.get("prize")
-    if prize == "rare":
+    gift = result.get("gift") or {}
+    if prize != "nothing" and gift.get("name"):
+        value = int(gift.get("stars") or 0)
+        if result.get("welcome_gift"):
+            headline = "🎁 Приветственный подарок!"
+        elif prize == "rare":
+            headline = "🏆 РЕДКИЙ ВЫИГРЫШ!"
+        elif prize == "unusual":
+            headline = "💜 НЕОБЫЧНЫЙ ВЫИГРЫШ!"
+        else:
+            headline = "🎉 ПОЗДРАВЛЯЕМ!"
         await callback.message.answer(
-            "🎉🎉🎉 ДЖЕКПОТ!\n\nТы выиграл редкий NFT-подарок! "
-            "Администратор свяжется с тобой после проверки."
+            f"{headline}\n\n"
+            f"{gift.get('emoji', '🎁')} {gift['name']} — {value} ⭐\n"
+            "Подарок добавлен в твой NFT-инвентарь. "
+            "Оформи вывод в Mini App, чтобы получить его."
         )
         if ADMIN_ID:
             await bot.send_message(
                 ADMIN_ID,
-                "🏆 НОВЫЙ РЕДКИЙ ПОБЕДИТЕЛЬ!\n"
-                f"ID: {user.id}\nUsername: @{user.username or 'нет'}\n"
-                f"Заявка: #{result.get('claim_id')}"
-            )
-    elif prize == "ordinary":
-        await callback.message.answer(
-            "🎉 Поздравляем! Ты выиграл обычный NFT-подарок! "
-            "Администратор свяжется с тобой для выдачи."
-        )
-        if ADMIN_ID:
-            await bot.send_message(
-                ADMIN_ID,
-                "🎁 НОВЫЙ ПОБЕДИТЕЛЬ!\n"
-                f"ID: {user.id}\nUsername: @{user.username or 'нет'}\n"
-                f"Заявка: #{result.get('claim_id')}"
-            )
-    elif prize == "unusual":
-        await callback.message.answer(
-            "💜 Поздравляем! Ты выиграл необычный NFT-подарок! "
-            "Администратор свяжется с тобой для выдачи."
-        )
-        if ADMIN_ID:
-            await bot.send_message(
-                ADMIN_ID,
-                f"💜 НЕОБЫЧНЫЙ NFT! ID: {user.id}; "
-                f"Username: @{user.username or 'нет'}; "
+                f"🎁 НОВЫЙ ВЫИГРЫШ!\n"
+                f"Игрок: {user.first_name or 'Без имени'}"
+                f"{' (@' + user.username + ')' if user.username else ''}\n"
+                f"Подарок: {gift['name']} — {value} ⭐\n"
                 f"Заявка: #{result.get('claim_id')}"
             )
     else:
