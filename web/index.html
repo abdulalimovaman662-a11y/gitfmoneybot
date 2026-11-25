@@ -2611,6 +2611,7 @@ initHomeProfileTile();
 
 let referralLink = '';
 let spinning = false;
+let pendingSpinRequestId = null;
 let catalogLoaded = false;
 
 (function initChristmasDecor(){
@@ -3548,7 +3549,9 @@ async function spin() {
  button.disabled=true;
  message.textContent='🎰 Лента подарков запускается...';
  try {
-  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({})});
+  if(!pendingSpinRequestId) pendingSpinRequestId=crypto.randomUUID();
+  const data=await api('/api/spin',{method:'POST',body:JSON.stringify({request_id:pendingSpinRequestId})});
+  pendingSpinRequestId=null;
   if(!['none','ordinary','unusual','rare'].includes(data.result)) {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
