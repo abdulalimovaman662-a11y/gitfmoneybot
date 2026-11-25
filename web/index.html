@@ -1878,6 +1878,16 @@ body.gd-legal-locked{overflow:hidden}
 @media(hover:hover){.gd-game-card:hover{transform:translateY(-3px);border-color:rgba(244,223,165,.42);box-shadow:0 17px 38px rgba(0,0,0,.28)}}
 @media(prefers-reduced-motion:reduce){.gd-game-card,.gd-reaction-target,.gd-memory-card{transition:none!important;animation:none!important}}
 
+
+/* Consistent low-latency motion across the Mini App */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.tab-page.active,.tab-page.is-leaving{will-change:opacity,transform;backface-visibility:hidden}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
 </style>
 </head>
 <body>
@@ -2286,7 +2296,7 @@ body.gd-legal-locked{overflow:hidden}
    <div class="stat"><small>Стоимость запуска</small><strong>15</strong></div>
    <div class="stat"><small>Серебро на балансе</small><strong id="gdMiniBalance">—</strong></div>
   </div>
-  <div class="notice">Лимиты в сутки: Реакция — 5 запусков, Сейф — 3, Память — 5. Повторное нажатие не спишет серебро дважды.</div>
+  <div class="notice">Лимиты в сутки (UTC): Реакция — 5 запусков, Сейф — 3, Память — 5. Повторное нажатие не спишет серебро дважды.</div>
  </div>
  <div class="gd-games-grid" id="gdMiniGameList">
   <article class="gd-game-card">
@@ -2468,6 +2478,13 @@ async function loadRecentWins() {
 
 
 const gdMini = { session:null, timer:null, locked:false, safeHistory:[], memoryHideAt:0 };
+async function loadGdMiniBalance() {
+ try {
+  const data=await api('/api/me');
+  const balance=document.getElementById('gdMiniBalance');
+  if(balance)balance.textContent=String(data.silver??'—');
+ } catch(error) {}
+}
 function gdMiniMessage(message) {
  const node=document.getElementById('gdMiniMessage');
  if(node) node.textContent=message||'';
@@ -2643,6 +2660,7 @@ function showTab(name) {
  },440);
  if(name==='home'){animateHomeBalanceTile();return;}
  if(name==='battles') loadNftBattles();
+ if(name==='minigames') loadGdMiniBalance();
   if(name==='progress') loadCore();
  if(name==='friends') loadReferrals();
  if(name==='balance') loadAccount();
