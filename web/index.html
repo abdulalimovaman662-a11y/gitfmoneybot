@@ -2516,7 +2516,7 @@ function renderGdMiniGame() {
  const stage=document.getElementById('gdMiniStage');
  gdMiniStopTimer();
  if(s.status!=='active') {
-  stage.innerHTML='<div class="gd-game-result"><strong>Раунд завершён</strong><span>'+escapeGdText(s.message||'Результат сохранён')+'</span><p>Результат: '+Number(s.score||0)+'</p></div><button class="secondary gd-game-back" onclick="closeGdMiniGame()">ВЕРНУТЬСЯ К ИГРАМ</button>';
+  stage.innerHTML='<div class="gd-game-result"><strong>Раунд завершён</strong><span>'+escapeGdText(s.message||'Результат сохранён')+'</span><p>Результат: '+Number(s.score||0)+'</p><p>Опыт: +'+Number(s.xp_awarded||0)+' XP</p></div><button class="secondary gd-game-back" onclick="closeGdMiniGame()">ВЕРНУТЬСЯ К ИГРАМ</button>';
   return;
  }
  if(s.game==='reaction') {
