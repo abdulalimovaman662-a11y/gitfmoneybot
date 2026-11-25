@@ -201,6 +201,14 @@ async function initDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS spin_requests (
+      telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
+      request_id TEXT NOT NULL,
+      response JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (telegram_id, request_id)
+    );
+
     CREATE TABLE IF NOT EXISTS prize_claims (
       id BIGSERIAL PRIMARY KEY,
       spin_history_id BIGINT NOT NULL UNIQUE REFERENCES spin_history(id),
