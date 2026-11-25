@@ -199,7 +199,32 @@ test('mini-games use an isolated PostgreSQL schema and keep charges atomic', {
   assert.equal(xpAfterEmptyExpiry, xpBeforeEmptyExpiry, 'an empty expired round must not add XP');
 
   await pool.query(`INSERT INTO xp_ledger (telegram_id, amount, source_type, source_id, idempotency_key)
-    VALUES (103, 23, 'minigame', 'seed-cap', 'seed-cap')`);
+    VALUES (103, 23, 'minigame', 'seed-cap', 'seed-cap'),
+           (107, 20, 'minigame', 'seed-concurrent-cap', 'seed-concurrent-cap')`);
+  const capReaction = await startMiniGame(pool, '107', 'reaction', 'reaction_concurrent_cap_01');
+  const capSafe = await startMiniGame(pool, '107', 'safe', 'safe_concurrent_cap_01');
+  const capSafeRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [capSafe.session.id])).rows[0];
+  await pool.query(
+    "UPDATE minigame_sessions SET created_at = NOW() - INTERVAL '31 seconds', state = jsonb_set(state, '{hits}', '1'::jsonb) WHERE id = $1",
+    [capReaction.session.id]
+  );
+  const [capReactionResult, capSafeResult] = await Promise.all([
+    performMiniGameAction(pool, '107', capReaction.session.id, {
+      action: 'finish', action_id: 'reaction_concurrent_cap_action'
+    }),
+    performMiniGameAction(pool, '107', capSafe.session.id, {
+      action: 'guess', guess: capSafeRow.state.secret, action_id: 'safe_concurrent_cap_action'
+    })
+  ]);
+  assert.equal(
+    capReactionResult.session.xp_awarded + capSafeResult.session.xp_awarded,
+    5,
+    'two simultaneous successful games must share the remaining daily XP cap'
+  );
+  assert.equal(Number((await pool.query(
+    "SELECT SUM(amount) AS total FROM xp_ledger WHERE telegram_id = 107 AND source_type = 'minigame'"
+  )).rows[0].total), 25, 'concurrent completions must never exceed the daily XP cap');
+
   const cappedSafe = await startMiniGame(pool, '103', 'safe', 'safe_request_cap_1');
   const cappedRow = (await pool.query('SELECT state FROM minigame_sessions WHERE id = $1', [cappedSafe.session.id])).rows[0];
   const cappedResult = await performMiniGameAction(pool, '103', cappedSafe.session.id, { action: 'guess', guess: cappedRow.state.secret, action_id: 'safe_cap_solve_0001' });
