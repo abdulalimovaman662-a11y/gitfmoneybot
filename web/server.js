@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { initProgressionDatabase, awardXp, recordActivity, recordDailyVisit, claimMission, claimAchievement, getCoreOverview } = require('./progression');
 const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 8080;
@@ -395,6 +396,7 @@ async function initDatabase() {
     CREATE INDEX IF NOT EXISTS nft_battles_opponent_idx
       ON nft_battles(opponent_id, created_at DESC);
   `);
+  await initProgressionDatabase(pool);
 }
 
 function send(res, status, data) {
@@ -511,6 +513,11 @@ async function ensureUser(user, req) {
     user.username || null,
     user.first_name || null
   ]);
+
+  if (upsert.rows[0]?.was_created) {
+    await awardXp(pool, telegramId, 50, 'welcome', `welcome:${telegramId}`);
+    await recordActivity(pool, telegramId, 'daily_visit', `welcome-visit:${telegramId}`);
+  }
 
   // Разовая стартовая выдача только аккаунту с точным username @RichGues.
   await pool.query(`
@@ -886,7 +893,8 @@ const server = http.createServer(async (req, res) => {
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
           [telegramId, prize]
         );
-        await client.query('UPDATE users SET xp = xp + 10 WHERE telegram_id = $1', [telegramId]);
+        await awardXp(client, telegramId, 10, 'spin', `spin:${history.rows[0].id}`);
+        await recordActivity(client, telegramId, 'spin_completed', `spin:${history.rows[0].id}`);
         let claimId = null;
         if (prize !== 'nothing') {
           const claim = await client.query(
@@ -894,6 +902,7 @@ const server = http.createServer(async (req, res) => {
             [history.rows[0].id, telegramId, prize]
           );
           claimId = claim.rows[0].id;
+          await recordActivity(client, telegramId, 'nft_collected', `claim:${claimId}`);
         }
         const updated = await client.query('SELECT silver, free_spins FROM users WHERE telegram_id = $1', [telegramId]);
         await client.query('COMMIT');
@@ -1373,14 +1382,8 @@ const server = http.createServer(async (req, res) => {
 
       await ensureUser(user, req);
 
-      // Ежедневный опыт за вход: один раз в сутки, независимо от числа обновлений.
-      await pool.query(`
-        UPDATE users
-        SET xp = xp + 20,
-            last_xp_date = CURRENT_DATE
-        WHERE telegram_id = $1
-          AND last_xp_date IS DISTINCT FROM CURRENT_DATE
-      `, [String(user.id)]);
+      // Ежедневный опыт и событие посещения начисляются ровно один раз за UTC-день.
+      await recordDailyVisit(pool, String(user.id));
 
       const result = await pool.query(`
         SELECT silver, free_spins, referral_count, xp, rank_bonus_openings, selected_wings
@@ -1419,6 +1422,34 @@ const server = http.createServer(async (req, res) => {
         remaining: 10 - (referralCount % 10),
         referral_link: `https://t.me/${BOT_USERNAME}?startapp=ref_${user.id}`
       });
+    }
+
+    // GiftsDrop Core: единый обзор прогресса, заданий и достижений.
+    if (url.pathname === '/api/core' && req.method === 'GET') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      await recordDailyVisit(pool, String(user.id));
+      const overview = await getCoreOverview(pool, String(user.id));
+      return send(res, 200, overview);
+    }
+
+    const missionClaimMatch = url.pathname.match(/^\\/api\\/missions\\/(\\d+)\\/claim$/);
+    if (missionClaimMatch && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const result = await claimMission(pool, String(user.id), Number(missionClaimMatch[1]));
+      return send(res, result.status, result.status === 200 ? { success: true, reward: result.reward } : { error: result.error || 'Задание не найдено' });
+    }
+
+    const achievementClaimMatch = url.pathname.match(/^\\/api\\/achievements\\/(\\d+)\\/claim$/);
+    if (achievementClaimMatch && req.method === 'POST') {
+      const user = getTelegramUser(req);
+      if (!user) return send(res, 401, { error: 'Ошибка авторизации Telegram' });
+      await ensureUser(user, req);
+      const result = await claimAchievement(pool, String(user.id), Number(achievementClaimMatch[1]));
+      return send(res, result.status, result.status === 200 ? { success: true, reward: result.reward } : { error: result.error || 'Достижение не найдено' });
     }
 
     // Серверный NFT-инвентарь. Записи создаются только из подтверждённых выигрышей.
@@ -1900,7 +1931,7 @@ const server = http.createServer(async (req, res) => {
             }
             drops.push({ prize, gift: winningGift, value: winningGift ? winningGift.stars : 0 });
           }
-          await client.query('UPDATE users SET xp = xp + $1 WHERE telegram_id = $2', [spins * 10, telegramId]);
+          await awardXp(client, telegramId, spins * 10, 'nft_battle', `nft-battle:${battleId}:${telegramId}`);
           return { drops, score };
         };
 
@@ -1911,6 +1942,8 @@ const server = http.createServer(async (req, res) => {
         const winnerId = creatorResult.score === opponentResult.score
           ? null
           : (creatorResult.score > opponentResult.score ? creatorId : opponentId);
+        await recordActivity(client, creatorId, 'battle_completed', `battle:${battleId}`);
+        await recordActivity(client, opponentId, 'battle_completed', `battle:${battleId}`);
 
         await client.query(`
           UPDATE nft_battles
@@ -2097,6 +2130,7 @@ const server = http.createServer(async (req, res) => {
             RETURNING id
           `, [history.rows[0].id, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
           claimId = claim.rows[0].id;
+          await recordActivity(client, String(user.id), 'nft_collected', `claim:${claimId}`);
           await client.query(`
             INSERT INTO user_inventory
               (source_claim_id, telegram_id, prize_type, prize_name, prize_stars, prize_image_url)
@@ -2104,6 +2138,9 @@ const server = http.createServer(async (req, res) => {
             ON CONFLICT (source_claim_id) DO NOTHING
           `, [claimId, String(user.id), prize, winningGift.name, winningGift.stars, winningGift.image_url]);
         }
+
+        await awardXp(client, String(user.id), 10, 'spin', `spin:${history.rows[0].id}`);
+        await recordActivity(client, String(user.id), 'spin_completed', `spin:${history.rows[0].id}`);
 
         const updated = await client.query(`
           SELECT silver, free_spins
