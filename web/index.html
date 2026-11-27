@@ -2980,7 +2980,7 @@ async function loadPrizeClaims() {
    const title=document.createElement('b');
    title.textContent='Заявка на NFT №'+claim.id;
    const info=document.createElement('div');
-   const category={ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'}[claim.prize_type]||claim.prize_type;
+   const category={ordinary:'Сердечко / Мишка',unusual:'Старый тип приза',rare:'NFT до 500 ⭐'}[claim.prize_type]||claim.prize_type;
    info.textContent='Игрок: '+(claim.first_name||'Без имени')+
     (claim.username?' (@'+claim.username+')':'')+
     '\nTelegram ID: '+claim.telegram_id+
