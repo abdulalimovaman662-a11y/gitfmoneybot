@@ -1978,10 +1978,9 @@ body.gd-legal-locked{overflow:hidden}
    <div class="roulette-caption">ПРИЗ ОСТАНОВИТСЯ ПОД УКАЗАТЕЛЕМ</div>
   </div>
   <div class="wheel-legend" aria-label="Сектора рулетки">
-   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>79,999%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Обычный NFT</span><b>15%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot unusual-dot"></i><span>Необычный NFT</span><b>5%</b></div>
-   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>Редкий NFT</span><b>0,001%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot empty-dot"></i><span>Без выигрыша</span><b>89,9999999%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot nft-dot"></i><span>Сердечко / Мишка · 15–100 ⭐</span><b>10%</b></div>
+   <div class="wheel-legend-item"><i class="legend-dot rare-dot"></i><span>NFT · 101–500 ⭐</span><b>0,0000001%</b></div>
   </div>
   <button id="spinButton" onclick="spin()">КРУТИТЬ РУЛЕТКУ ✦</button>
   <div id="message"></div>
@@ -1993,20 +1992,18 @@ body.gd-legal-locked{overflow:hidden}
  <div class="card">
   <div class="section-tag">WINNING PROBABILITIES</div>
   <h2>Шансы выпадения</h2>
-  <div class="odds"><span>🫧 Без выигрыша</span><b>79,999%</b></div>
-  <div class="odds"><span>🎁 Обычный NFT · 15–100 ⭐</span><b>15%</b></div>
-  <div class="odds"><span>💜 Необычный NFT · 300–1000 ⭐</span><b>5%</b></div>
-  <div class="odds"><span>💎 Редкий NFT · 1000–10000 ⭐</span><b>0,001%</b></div>
+  <div class="odds"><span>🫧 Без выигрыша</span><b>89,9999999%</b></div>
+  <div class="odds"><span>🎁 Сердечко / Мишка · 15–100 ⭐</span><b>10%</b></div>
+  <div class="odds"><span>💎 NFT · 101–500 ⭐</span><b>0,0000001%</b></div>
  </div>
 </section>
 
 <section class="tab-page" id="tab-prizes">
  <div class="section-back"><button type="button" onclick="showTab('home')">← ГЛАВНАЯ</button><span>ПРИЗЫ И ШАНСЫ</span></div>
- <div class="page-intro"><span class="eyebrow">GIFTSDROP • ПРАВИЛА</span><h1>Призы и шансы</h1><p>Все результаты определяются сервером. Здесь указаны действующие вероятности выпадения.</p></div>
- <div class="prize-card prize-empty"><div class="prize-emoji">🫧</div><div><b>Без выигрыша</b><span>Попробуй удачу ещё раз</span></div><strong>79,999%</strong></div>
- <div class="prize-card"><div class="prize-emoji">🎁</div><div><b>Обычный NFT</b><span>Коллекционные подарки стоимостью 15–100 ⭐</span></div><strong>15%</strong></div>
- <div class="prize-card"><div class="prize-emoji">💜</div><div><b>Необычный NFT</b><span>Коллекционные подарки стоимостью 300–1000 ⭐</span></div><strong>5%</strong></div>
- <div class="prize-card rare-prize"><div class="prize-emoji">💎</div><div><b>Редкий NFT</b><span>Коллекционные подарки стоимостью 1000–10000 ⭐</span></div><strong>0,001%</strong></div>
+ <div class="page-intro"><span class="eyebrow">GIFTSDROP • ПРАВИЛА</span><h1>Призы и шансы</h1><p>Первый прокрут нового аккаунта гарантированно приносит подарок стоимостью 15–100 ⭐. Далее шансы определяются сервером.</p></div>
+ <div class="prize-card prize-empty"><div class="prize-emoji">🫧</div><div><b>Без выигрыша</b><span>Попробуй удачу ещё раз</span></div><strong>89,9999999%</strong></div>
+ <div class="prize-card"><div class="prize-emoji">🎁</div><div><b>Сердечко / Мишка</b><span>Подарки стоимостью 15–100 ⭐</span></div><strong>10%</strong></div>
+ <div class="prize-card rare-prize"><div class="prize-emoji">💎</div><div><b>NFT до 500 ⭐</b><span>Коллекционные подарки стоимостью 101–500 ⭐</span></div><strong>0,0000001%</strong></div>
  <div class="card"><div class="section-tag">КАК ЭТО РАБОТАЕТ</div><h2>Просто и прозрачно</h2><div class="rule-row"><span>🎟️</span><p><b>3 бесплатные попытки</b><br>Доступны при первом запуске.</p></div><div class="rule-row"><span>🪙</span><p><b>20 серебра за прокрутку</b><br>После использования бесплатных попыток.</p></div><div class="rule-row"><span>🛡️</span><p><b>Серверный результат</b><br>Анимация колеса не влияет на шанс выигрыша.</p></div></div>
 </section>
 
@@ -2871,16 +2868,11 @@ async function buildRoulette(result,winningGift=null) {
  const track=document.getElementById('rouletteTrack');
  const viewport=track.parentElement;
  const catalog=await getRouletteCatalog();
- const unusual=catalog.filter(p=>Number(p.stars)>=300&&Number(p.stars)<=1000).map(rouletteGiftCard);
- const rare=catalog.filter(p=>Number(p.stars)>=1000&&Number(p.stars)<=10000).map(rouletteGiftCard);
- const pools={
-  ordinary:ORDINARY_NFT_GIFTS,
-  unusual:unusual.length?unusual:catalog.slice(0,8).map(rouletteGiftCard),
-  rare:rare.length?rare:catalog.slice(-8).map(rouletteGiftCard)
- };
- const labels={none:'Без выигрыша',ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'};
+ const rare=catalog.filter(p=>Number(p.stars)>=101&&Number(p.stars)<=500).map(rouletteGiftCard);
+ const pools={ordinary:ORDINARY_NFT_GIFTS,rare};
+ const labels={none:'Без выигрыша',ordinary:'Сердечко / Мишка',rare:'NFT до 500 ⭐'};
  const targetIndex=25;
- const allGifts=[...pools.ordinary,...pools.unusual,...pools.rare];
+ const allGifts=[...pools.ordinary,...pools.rare];
  const randomGift=type=>{
   const pool=pools[type]||[];
   return pool.length?pool[Math.floor(Math.random()*pool.length)]:{name:labels[type]||'Подарок',emoji:'🎁'};
@@ -2890,7 +2882,7 @@ async function buildRoulette(result,winningGift=null) {
  track.style.transform='translateX(0px)';
  let targetCard=null;
  for(let i=0;i<33;i++) {
-  const type=i===targetIndex?result:(Math.random()<.34?'none':Math.random()<.58?'ordinary':Math.random()<.78?'unusual':'rare');
+  const type=i===targetIndex?result:(Math.random()<.45?'none':Math.random()<.99?'ordinary':'rare');
   const gift=type==='none'?null:(i===targetIndex&&winningGift?winningGift:randomGift(type));
   const card=document.createElement('div');
   card.className='roulette-item';
@@ -3004,16 +2996,15 @@ async function spin() {
  message.textContent='🎰 Лента подарков запускается...';
  try {
   const data=await api('/api/spin',{method:'POST',body:JSON.stringify({})});
-  if(!['none','ordinary','unusual','rare'].includes(data.result)) {
+  if(!['none','ordinary','rare'].includes(data.result)) {
    throw new Error('Сервер вернул неизвестный результат прокрутки.');
   }
   await buildRoulette(data.result,data.gift||null);
   if(data.result!=='none') triggerWinCelebration(data.result);
   else triggerLossCelebration();
   if(data.result==='none') message.textContent='😢 В этот раз без выигрыша. Попробуй ещё раз!';
-  else if(data.result==='ordinary') message.textContent='🎉 Обычный NFT! Заявка на выдачу оформлена.';
-  else if(data.result==='unusual') message.textContent='💜 Необычный NFT! Заявка на выдачу оформлена.';
-  else message.textContent='✨ ЛЕГЕНДАРНЫЙ ВЫИГРЫШ! Редкий NFT — заявка на выдачу оформлена.';
+  else if(data.result==='ordinary') message.textContent='🎉 Подарок получен! Заявка на выдачу оформлена.';
+  else message.textContent='✨ Невероятная удача! NFT до 500 ⭐ — заявка на выдачу оформлена.';
   await loadAccount();
  } catch(error) {
   message.textContent=error.message;
@@ -3124,7 +3115,7 @@ async function loadPrizeClaims() {
    const title=document.createElement('b');
    title.textContent='Заявка на NFT №'+claim.id;
    const info=document.createElement('div');
-   const category={ordinary:'Обычный NFT',unusual:'Необычный NFT',rare:'Редкий NFT'}[claim.prize_type]||claim.prize_type;
+   const category={ordinary:'Сердечко / Мишка',unusual:'Старый тип приза',rare:'NFT до 500 ⭐'}[claim.prize_type]||claim.prize_type;
    info.textContent='Игрок: '+(claim.first_name||'Без имени')+
     (claim.username?' (@'+claim.username+')':'')+
     '\nTelegram ID: '+claim.telegram_id+
