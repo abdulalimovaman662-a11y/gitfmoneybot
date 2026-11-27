@@ -896,8 +896,19 @@ const server = http.createServer(async (req, res) => {
         } else {
           await client.query('UPDATE users SET silver = silver - 20 WHERE telegram_id = $1', [telegramId]);
         }
-        const roll = crypto.randomInt(100000);
-        const prize = roll >= 99999 ? 'rare' : (roll >= 94999 ? 'unusual' : (roll >= 79999 ? 'ordinary' : 'nothing'));
+        const previousSpins = await client.query(
+          'SELECT EXISTS (SELECT 1 FROM spin_history WHERE telegram_id = $1) AS has_spun',
+          [telegramId]
+        );
+        let prize;
+        if (!previousSpins.rows[0].has_spun) {
+          prize = 'ordinary';
+        } else {
+          const roll = crypto.randomInt(1_000_000_000);
+          prize = roll === 999_999_999
+            ? 'rare'
+            : (roll < 100_000_000 ? 'ordinary' : 'nothing');
+        }
         const history = await client.query(
           'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
           [telegramId, prize]
@@ -1762,11 +1773,10 @@ const server = http.createServer(async (req, res) => {
           const drops = [];
           let score = 0;
           for (let i = 0; i < spins; i++) {
-            const chance = crypto.randomInt(100000);
-            let prize = 'nothing';
-            if (chance >= 99999) prize = 'rare';
-            else if (chance >= 94999) prize = 'unusual';
-            else if (chance >= 79999) prize = 'ordinary';
+            const chance = crypto.randomInt(1_000_000_000);
+            let prize = chance === 999_999_999
+              ? 'rare'
+              : (chance < 100_000_000 ? 'ordinary' : 'nothing');
 
             const history = await client.query(
               'INSERT INTO spin_history (telegram_id, prize_type) VALUES ($1, $2) RETURNING id',
@@ -1776,9 +1786,7 @@ const server = http.createServer(async (req, res) => {
             if (prize !== 'nothing') {
               const giftPool = prize === 'ordinary'
                 ? ordinaryGifts
-                : PRODUCTS.filter(product => prize === 'unusual'
-                  ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
-                  : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+                : PRODUCTS.filter(product => Number(product.stars) >= 101 && Number(product.stars) <= 500);
               if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
               const selected = giftPool[crypto.randomInt(giftPool.length)];
               winningGift = {
@@ -1951,15 +1959,18 @@ const server = http.createServer(async (req, res) => {
           `, [String(user.id)]);
         }
 
-        const chance = crypto.randomInt(100000);
-        let prize = 'nothing';
-
-        if (chance >= 99999) {
-          prize = 'rare';
-        } else if (chance >= 94999) {
-          prize = 'unusual';
-        } else if (chance >= 79999) {
+        const previousSpins = await client.query(
+          'SELECT EXISTS (SELECT 1 FROM spin_history WHERE telegram_id = $1) AS has_spun',
+          [String(user.id)]
+        );
+        let prize;
+        if (!previousSpins.rows[0].has_spun) {
           prize = 'ordinary';
+        } else {
+          const chance = crypto.randomInt(1_000_000_000);
+          prize = chance === 999_999_999
+            ? 'rare'
+            : (chance < 100_000_000 ? 'ordinary' : 'nothing');
         }
 
         const history = await client.query(`
@@ -1986,9 +1997,7 @@ const server = http.createServer(async (req, res) => {
           ];
           const giftPool = prize === 'ordinary'
             ? ordinaryGifts
-            : PRODUCTS.filter(product => prize === 'unusual'
-              ? Number(product.stars) >= 300 && Number(product.stars) <= 1000
-              : Number(product.stars) >= 1000 && Number(product.stars) <= 10000);
+            : PRODUCTS.filter(product => Number(product.stars) >= 101 && Number(product.stars) <= 500);
           if (!giftPool.length) throw new Error('В каталоге нет подарков для выпавшей категории');
           const selected = giftPool[crypto.randomInt(giftPool.length)];
           winningGift = {
